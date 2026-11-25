@@ -1,11 +1,44 @@
 {
   "title": "Library",
   "tabs": { "scores": "Scores", "setlists": "Setlists" },
-  "import": { "button": "Import" },
+  "import": {
+    "button": "Import",
+    "progress": "Importing {{current}} ({{done}}/{{total}})…",
+    "result": {
+      "imported_one": "{{count}} score imported",
+      "imported_other": "{{count}} scores imported",
+      "duplicates_one": "{{count}} already in the library",
+      "duplicates_other": "{{count}} already in the library",
+      "failed_one": "{{count}} could not be imported",
+      "failed_other": "{{count}} could not be imported"
+    },
+    "errors": {
+      "unsupportedFormat": "{{name}}: unsupported file type. Use .mscz, .mscx, .mxl or .musicxml.",
+      "emptyFile": "{{name}} is empty.",
+      "engineFailed": "{{name}} could not be read. If it comes from a recent MuseScore version, export it as MusicXML (.mxl) and import that file.",
+      "invalidMusicXml": "{{name}} contains no part.",
+      "unknown": "{{name}} could not be imported."
+    }
+  },
   "empty": {
     "title": "No scores yet",
     "body": "Import MuseScore (.mscz, .mscx) or MusicXML (.mxl, .musicxml) files to get started."
   },
+  "search": "Search title or composer",
+  "noMatch": "No score matches “{{query}}”.",
+  "sort": {
+    "label": "Sort by",
+    "recent": "Recently opened",
+    "title": "Title",
+    "composer": "Composer",
+    "imported": "Date imported"
+  },
+  "card": {
+    "parts_one": "{{count}} instrument",
+    "parts_other": "{{count}} instruments"
+  },
+  "rename": { "title": "Rename score", "placeholder": "Title (empty = original title)" },
+  "delete": { "title": "Delete score?", "message": "“{{title}}” will be removed from this device." },
   "setlists": { "empty": "No setlists yet" },
   "settings": "Settings"
 }

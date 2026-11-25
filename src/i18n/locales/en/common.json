@@ -6,7 +6,8 @@
     "delete": "Delete",
     "rename": "Rename",
     "open": "Open",
-    "close": "Close"
+    "close": "Close",
+    "ok": "OK"
   },
   "comingSoon": "Coming soon"
 }
