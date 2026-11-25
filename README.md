@@ -1,6 +1,6 @@
 # Pupitre *(nom de travail)*
 
-**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur Android (d'abord) puis iOS, **100 % hors ligne**. Interface en anglais, conçue pour être traduite.
+**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur Android (d'abord) puis iOS, **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
 
 > 🟢 **Statut : phase 2 terminée (2026-11-25).** L'application Android fonctionne (APK de debug produit par la CI) et a été essayée sur un vrai téléphone ([retours](docs/TESTS_APPAREIL.md)). Prochaine étape : phase 3 (traduction française, finitions, publication). Voir la [roadmap](ROADMAP.md).
 
@@ -34,7 +34,7 @@
 | Rendu | **[Verovio](https://www.verovio.org)** 6.4 (LGPL-3.0), dans un Web Worker | Mise en page adaptée à l'écran, transposition, projet très actif |
 | Stockage | Fichiers locaux + index JSON | Simple, hors ligne |
 | Défilement et métronome | Horloge commune sur Web Audio (sons générés, aucun fichier audio) | Précis, léger, toujours synchronisés |
-| i18n | i18next + react-i18next, anglais de référence | Traductions faciles à ajouter (le français en premier) |
+| i18n | i18next + react-i18next, anglais de référence, français | Traductions faciles à ajouter ; notation des notes C D E / Do Ré Mi / C D E H |
 
 Détails et justification : voir la documentation ci-dessous.
 
@@ -103,6 +103,7 @@ node e2e/transpose.mjs "$PWD" /tmp/shots     # transposition, préférence ♯/�
 node e2e/setlists.mjs "$PWD" /tmp/shots      # setlists, morceau suivant, pré-chargement
 node e2e/profile.mjs "$PWD" /tmp/shots       # profil « My instrument »
 node e2e/settings.mjs "$PWD" /tmp/shots      # couleurs de partition
+node e2e/i18n-fr.mjs "$PWD" /tmp/shots       # interface en français, langue, notation des notes, débordements
 ```
 
 | Dossier | Contenu |
@@ -114,7 +115,7 @@ node e2e/settings.mjs "$PWD" /tmp/shots      # couleurs de partition
 | `src/screens/settings/` | Paramètres, capture des touches du pédalier |
 | `src/core/` | Logique sans interface, testée : `import/`, `musicxml/`, `render/`, `timeline/`, `playback/`, `navigation/`, `music/`, `setlists/`, `profile/`, `storage/` |
 | `src/state/` | Stores Zustand (bibliothèque, setlists, paramètres) |
-| `src/i18n/` | Traductions (`locales/en` = référence) |
+| `src/i18n/` | Traductions (`locales/en` = référence, `locales/fr`) |
 | `e2e/` | Scripts de bout en bout (Playwright) |
 | `android/` | Projet Android généré par Capacitor (intent « Ouvrir avec ») |
 | `spikes/` | Code jetable de la phase 0 |

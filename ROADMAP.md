@@ -112,8 +112,9 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 ## Phase 3 — v1.0 : finition, publication Android, préparation iOS
 
 - ⬜ **Essais sur téléphone** : mode Continu, « Ouvrir avec… », pédalier Bluetooth réel, temps d'import/d'ouverture, mémoire (pré-chargement, gros conducteurs), régularité du métronome.
-- ⬜ **Traduction française** (première langue ajoutée, qui valide la chaîne i18n) et choix de la langue dans les paramètres. Ouverture d'une plateforme de traduction (Weblate ou Crowdin).
-- ⬜ **Notation des notes** (C D E / Do Ré Mi / C D E H), liée à la traduction.
+- ✅ **Traduction française** (première langue ajoutée, qui valide la chaîne i18n) : `locales/fr`, typographie française (espaces insécables, « guillemets »), pluriels selon les catégories de chaque langue (test de complétude adapté), réglage **Langue** (langue de l'appareil / English / Français) appliqué immédiatement et au démarrage (`<html lang>` compris), libellés trop longs raccourcis ou passés à la ligne (e2e `i18n-fr.mjs` : textes clés, débordements, captures).
+- ⬜ Ouverture d'une plateforme de traduction (Weblate ou Crowdin).
+- ✅ **Notation des notes** (automatique selon la langue / C D E / Do Ré Mi / C D E H avec B = Si♭) : tonalités et préréglages de transposition (« Instrument en Si♭ »), dans la fenêtre Transposition et les paramètres.
 - ⬜ Paramètres restants : police musicale, numéros de mesure, en-têtes, largeur des zones de tap, animation de tournage, avance de tournage, verrouillage de l'orientation, métronome actif par défaut / accent / indicateur visuel, stockage (espace utilisé).
 - ⬜ « Share to » (intent `SEND`) ; départ du défilement depuis une mesure touchée.
 - ⬜ Deux pages côte à côte sur tablette en paysage.

@@ -38,7 +38,7 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | Écran allumé | `@capacitor-community/keep-awake` | |
 | Ouvrir avec | `@capacitor/app` (`appUrlOpen`, URL de lancement) + `intent-filter` `VIEW` | ✏️ Pas de plugin « send-intent » : « Partager vers » ⬜ |
 | Survie au sélecteur de fichiers | `@capacitor/app` (`appRestoredResult`) | Android peut tuer l'activité pendant le sélecteur (phase 0) |
-| i18n | **i18next 27** + **react-i18next** + `eslint-plugin-i18next` | EN (référence) ; FR en phase 3 |
+| i18n | **i18next 27** + **react-i18next** + `eslint-plugin-i18next` | EN (référence), FR |
 | Tests | **Vitest 5** (unitaires, environnement Node ; Verovio WASM chargé dans certains tests) + **Playwright** (scripts `e2e/`, Chromium headless) | |
 | Lint | ESLint 10 + typescript-eslint + `eslint-plugin-react-hooks` 7 (règles du compilateur React) | ✏️ Pas de Prettier |
 | CI | **GitHub Actions** : web + APK de debug (ADR-015, ADR-016) | ✏️ Pas de runner iOS pour l'instant |
@@ -104,7 +104,7 @@ mscz_viewer/
 │   │   └── settings.ts          # AppSettings, valeurs par défaut, chargement
 │   ├── state/                   # stores Zustand
 │   ├── ui/                      # formatage (durées…)
-│   └── i18n/                    # locales/en/*.json (référence), test de complétude
+│   └── i18n/                    # locales/en/*.json (référence), locales/fr, test de complétude
 ├── e2e/                         # scripts Playwright (voir §13)
 ├── android/                     # projet Capacitor (intent-filter « Ouvrir avec »)
 ├── spikes/                      # code jetable de la phase 0
@@ -320,9 +320,11 @@ Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
 
 - **Anglais = langue de référence** : `src/i18n/locales/en/` (`common`, `library`, `viewer`, `settings`, `setlists`).
 - **Aucune chaîne visible en dur** : la règle `i18next/no-literal-string` bloque le lint (et la CI). `src/i18n/i18n.test.ts` vérifie la complétude des langues.
-- Pluriels i18next (`_one` / `_other`) ; durées formatées via `Intl`.
-- Noms de tonalités en notation anglaise (C, D♭…) dans le code (`core/music/keys.ts`) ; ⬜ notation localisable (Do Ré Mi, C D E H) en phase 3.
-- ⬜ Traduction française et choix de la langue (phase 3) ; plateforme de traduction ensuite.
+- Pluriels i18next selon les catégories `Intl.PluralRules` de chaque langue (`_one` / `_other` ; `_many` du français facultatif : i18next retombe sur `_other`) ; dates et durées formatées via `Intl` avec la langue courante.
+- Traduction française : espaces insécables (`\u00a0`) avant « : ; ! ? % » et dans les « guillemets », vérifiées par le test i18n ; placeholders `{{…}}` identiques à l'anglais.
+- Noms de tonalités en notation anglaise (C, D♭…) dans le code (`core/music/keys.ts`), convertis à l'affichage par `noteName` / `keyName(…, naming)` : anglaise, latine (Do Ré Mi, accents compris) ou allemande (H = Si, B = Si♭). Réglage `noteNaming` (`auto` = latine en français, anglaise sinon ; hook `useNoteNaming`).
+- ✅ Traduction française et réglage `language` (`system` = langue de l'appareil si traduite, sinon anglais), appliqué par `applyLanguage` (i18n.changeLanguage + `<html lang>`) au chargement des paramètres et à chaque changement. ⬜ Plateforme de traduction ensuite.
+- Les scripts e2e existants forcent `locale: 'en-US'` (ils cherchent des libellés anglais) ; `e2e/i18n-fr.mjs` teste l'interface en français.
 - Libellés prévus pour supporter +40 % de longueur ; CSS en propriétés logiques quand c'est possible.
 
 ## 12. Taille et ressources
@@ -339,8 +341,8 @@ Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, termin
 ## 13. Qualité et tests
 
 - **Corpus** (`test-scores/`, non versionné, fichiers du porteur) : MuseScore 2.1, 3.6.2, 4.5.2, 4.6.2 ; reprises et voltas, nombreux changements de tempo et de métrique, marques de répétition, instruments transpositeurs, batterie, parties masquées. ⬜ À compléter : grilles d'accords, paroles, D.S. al Coda, piano, tablature.
-- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 160 tests) : filtrage MusicXML, silences multi-mesures, parties masquées, formats et import, « Ouvrir avec », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n.
-- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`. Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
+- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 180 tests) : filtrage MusicXML, silences multi-mesures, parties masquées, formats et import, « Ouvrir avec », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes.
+- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
 - ⬜ **Tests de non-régression visuels** (phase 3).
 - **Tests sur appareil** (manuels) : voir [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 

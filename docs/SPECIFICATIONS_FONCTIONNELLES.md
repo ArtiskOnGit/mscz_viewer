@@ -2,7 +2,7 @@
 
 > Nom de travail de l'application : **Pupitre** (provisoire, voir [DECISIONS.md](DECISIONS.md)).
 >
-> **Langue de l'interface : anglais d'abord**, internationalisation prévue dès le départ (ADR-009). Les libellés de ce document sont en français pour la lisibilité ; dans l'application, ils sont en anglais (ex. « Importer » → *Import*).
+> **Langue de l'interface : anglais d'abord**, internationalisation prévue dès le départ (ADR-009) ; **traduction française** depuis la phase 3. Les libellés de ce document sont en français pour la lisibilité ; dans l'application anglaise, ils sont en anglais (ex. « Importer » → *Import*).
 >
 > **État au 2026-11-25 (fin de la phase 2)** : chaque fonction est marquée ✅ fait, 🟨 partiel, ⬜ pas fait (phase prévue entre parenthèses), ✏️ **écart** avec la spécification d'origine (ce qui a été construit diffère, et pourquoi). Essais sur téléphone : [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 
@@ -123,7 +123,7 @@ Options de navigation :
 
 #### 3.2.4 Transposition
 - ✅ Demi-tons (−11…+11) et **octave** (−2…+2), plus des préréglages « instrument en Sib / Mib / Fa ». ✏️ Pas de choix direct d'une tonalité cible : on règle les demi-tons et la tonalité résultante s'affiche.
-- ✅ Affiche la tonalité résultante (« C major → D major »), en notation anglaise.
+- ✅ Affiche la tonalité résultante (« C major → D major », « Do majeur → Ré majeur »), selon la notation des notes choisie.
 - ✅ Bascule **« Concert pitch »** (hauteur réelle) pour les instruments transpositeurs.
 - ✅ **Préférence d'altérations** (*Spelling of the key*) : Auto / ♯ / ♭, proposée quand la tonalité d'arrivée a un équivalent enharmonique (ex. +1 depuis Do : Ré♭ ou Do♯ ; Sol♭/Fa♯ ; Si/Do♭). Auto = le moins d'altérations (♭ en cas d'égalité). La tonalité affichée est exactement celle du rendu (ADR-020).
 - 🟨 Les grilles d'accords sont transposées par Verovio (corpus sans grilles d'accords : non vérifié).
@@ -196,7 +196,7 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | | Silences multi-mesures regroupés (vue filtrée) | oui / non | oui | ✅ |
 | | Zoom par défaut (première ouverture) | 50–200 % du zoom automatique | 100 % (le zoom automatique dépend du nombre de portées) | ✅ |
 | | Police musicale | Leipzig / Bravura / Leland | Leipzig | ⬜ (phase 3) |
-| | Notation des notes | anglaise / latine / allemande | selon la langue | ⬜ (phase 3) |
+| | Notation des notes | anglaise / latine / allemande | selon la langue | ✅ |
 | | Numéros de mesure | aucun / début de système / toutes / toutes les 5 | début de système (rendu Verovio) | ⬜ (phase 3) |
 | | Afficher titre et en-têtes | oui / non | — | ✏️ toujours masqués (gain de place) |
 | **Navigation** | Mode d'affichage des nouvelles partitions | Pages / Continu | Pages | ✅ |
@@ -216,7 +216,7 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | | Activé par défaut, son on/off, accent, indicateur visuel | | | ⬜ (phase 3) |
 | **Système** | Écran toujours allumé | oui / non | oui | ✅ |
 | | Verrouiller l'orientation | non / portrait / paysage | non | ⬜ (phase 3) |
-| | Langue | système / English / Français… | système | ⬜ (phase 3, avec la traduction française) |
+| | Langue | système / English / Français… | système | ✅ |
 | | Réinitialiser les paramètres | | | ✅ |
 | **Stockage** | Espace utilisé, vider le cache, export/import de la bibliothèque | | | ⬜ (phases 3–4) |
 | **À propos** | Version, **licences open source** (GPL, Verovio, webmscore…), lien vers les sources, crédits, mention de marque MuseScore | | | ✅ |

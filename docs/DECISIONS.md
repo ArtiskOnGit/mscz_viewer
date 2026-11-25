@@ -60,10 +60,10 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - **Résultat de S3** : l'ordre de jeu est identique entre MuseScore et Verovio (en retirant les suffixes `-rendN` de Verovio). Le filtrage des parties doit **recopier les tempos et repères** de la première partie (ADR-012).
 
 ### ADR-009 — Internationalisation : anglais d'abord, i18n dès le départ — *Acceptée*
-- Langue de référence de l'interface : **anglais**. Le français sera la première traduction ajoutée.
+- Langue de référence de l'interface : **anglais**. Le français est la première traduction ajoutée (phase 3) ; réglage « Langue » (langue de l'appareil par défaut).
 - **i18next + react-i18next**. **Aucune chaîne en dur** dans les composants, ce qui est vérifié par une règle de lint (`eslint-plugin-i18next`).
 - Clés structurées par écran (`library.import.button`), pluriels ICU, formats de date et de nombre via `Intl`.
-- Noms de notes et de tonalités localisables : *C/D/E* en anglais, *Do/Ré/Mi* en français, et un réglage « notation des notes » indépendant de la langue.
+- Noms de notes et de tonalités localisables : *C/D/E* en anglais, *Do/Ré/Mi* en français, et un réglage « notation des notes » indépendant de la langue (fait en phase 3 ; allemande *C D E … H*, B = Si♭).
 - Interface prête pour les langues de droite à gauche (CSS logique : `margin-inline-start`…), sans en faire une priorité.
 - La documentation du projet reste en français pour l'instant.
 
