@@ -1,0 +1,36 @@
+# Partitions de test personnelles : jamais dans le dépôt
+/test-scores/
+*.mscz
+*.mscx
+*.mscz,
+*.mscbackup
+*.mxl
+*.musicxml
+
+# Dépendances / builds
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# Sorties générées par les spikes
+spikes/**/out/
+
+# Capacitor / natif
+android/app/build/
+android/.gradle/
+android/local.properties
+ios/App/Pods/
+ios/DerivedData/
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Claude Code (réglages locaux)
+.claude/settings.local.json
