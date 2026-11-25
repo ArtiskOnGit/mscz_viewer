@@ -106,6 +106,8 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     metronome,
     settings,
   });
+  // Tap on the metronome button / pedal "metronome" action: metronome with the auto-scroll on/off (stops "metronome only").
+  const toggleMetronome = () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome }));
   const setTempo = (f: number) => v.update({ tempoFactor: Math.round(Math.min(1.5, Math.max(0.5, f)) * 100) / 100 });
   // --- end auto-scroll & metronome ---
 
@@ -159,6 +161,9 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
       if (!action) return;
       e.preventDefault();
       if (action === 'playPause') togglePlay();
+      else if (action === 'metronome') toggleMetronome();
+      else if (action === 'nextPiece') sp.goNext(); // setlists (no-op outside a setlist or on the last piece)
+      else if (action === 'previousPiece') sp.goPrev();
       else if (action === 'prev') turnPrev();
       else if (sp.active && v.page >= v.pageCount) sp.nextAtEnd(); // setlists: last page → next piece
       else turnNext();
@@ -205,7 +210,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   );
   const metronomePress = useLongPress(
     () => void pb.toggleMetronomeOnly(),
-    () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome })),
+    toggleMetronome,
     METRONOME_ONLY_PRESS_MS,
   );
   // --- end lock mode & metronome only ---
@@ -323,6 +328,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               title={t('playback.metronomeHint')}
               data-testid="metronome-button"
               data-metronome-only={String(pb.metronomeOnly)}
+              data-metronome={String(metronome)}
             >
               <IonIcon slot="icon-only" icon={timerOutline} />
             </IonButton>

@@ -78,6 +78,9 @@ describe('pedal keys', () => {
     expect(pedalAction('PageDown', DEFAULT_PEDAL_KEYS)).toBe('next');
     expect(pedalAction('ArrowUp', DEFAULT_PEDAL_KEYS)).toBe('prev');
     expect(pedalAction('KeyP', DEFAULT_PEDAL_KEYS)).toBe('playPause');
+    expect(pedalAction('KeyM', DEFAULT_PEDAL_KEYS)).toBe('metronome');
+    expect(pedalAction('MediaTrackNext', DEFAULT_PEDAL_KEYS)).toBe('nextPiece');
+    expect(pedalAction('MediaTrackPrevious', DEFAULT_PEDAL_KEYS)).toBe('previousPiece');
     expect(pedalAction('KeyZ', DEFAULT_PEDAL_KEYS)).toBeUndefined();
   });
 
@@ -94,6 +97,11 @@ describe('pedal keys', () => {
   it('normalizes stored values', () => {
     expect(normalizePedalKeys(undefined)).toEqual(DEFAULT_PEDAL_KEYS);
     expect(normalizePedalKeys({ next: ['KeyN'], prev: 'oops' })).toEqual({ ...DEFAULT_PEDAL_KEYS, next: ['KeyN'] });
+    // Settings saved before the metronome / piece actions existed: KeyM already bound to "next" stays there.
+    const old = normalizePedalKeys({ next: ['KeyM'], prev: ['ArrowLeft'], playPause: ['KeyP'] });
+    expect(old.metronome).toEqual([]);
+    expect(old.nextPiece).toEqual(['MediaTrackNext']);
+    expect(pedalAction('KeyM', old)).toBe('next');
   });
 });
 

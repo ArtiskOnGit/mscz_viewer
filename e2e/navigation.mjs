@@ -136,6 +136,13 @@ check('manual page turn while the metronome clicks', (await pageNumber()) === 2)
 await page.locator('[data-testid=metronome-button]').click();
 await page.waitForTimeout(200);
 check('metronome only stopped', (await page.locator('[data-testid=metronome-button]').getAttribute('data-metronome-only')) === 'false' && !(await page.locator('.beat-dot').isVisible()));
+// Pedal action "metronome" (default key M): toggles the metronome of the auto-scroll.
+const metronomePressed = () => page.locator('[data-testid=metronome-button]').getAttribute('data-metronome');
+const before = await metronomePressed();
+await key('KeyM');
+check('pedal "metronome" toggles the metronome', (await metronomePressed()) !== before, `${before} → ${await metronomePressed()}`);
+await key('KeyM');
+check('pedal "metronome" again restores it', (await metronomePressed()) === before);
 await key('ArrowLeft');
 await page.waitForTimeout(600); // debounced save of the last page
 
@@ -183,6 +190,10 @@ await page.waitForSelector('[data-testid=pedal-reset]');
 await page.locator('[data-testid=pedal-reset]').click();
 await page.waitForTimeout(300);
 check('pedal keys reset', (await page.locator('[data-testid=pedal-keys-next]').innerText()).startsWith('ArrowRight'));
+check('dedicated actions listed (metronome, next / previous piece)',
+  (await page.locator('[data-testid=pedal-keys-metronome]').innerText()) === 'KeyM' &&
+  (await page.locator('[data-testid=pedal-keys-nextPiece]').innerText()) === 'MediaTrackNext' &&
+  (await page.locator('[data-testid=pedal-set-previousPiece]').count()) === 1);
 
 const realErrors = errors.filter((e) => !/Outdated Optimize Dep/.test(e));
 check('no page errors', realErrors.length === 0, realErrors.join(' | '));

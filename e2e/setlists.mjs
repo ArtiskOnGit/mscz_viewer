@@ -87,6 +87,18 @@ await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.i
 check(true, 'previous piece');
 await page.waitForSelector('.ion-page:not(.ion-page-hidden) .score-page svg', { timeout: 60000 });
 
+// Dedicated pedal actions: next / previous piece (default keys MediaTrackNext / MediaTrackPrevious), no confirmation.
+const titleIs = (name) =>
+  page.waitForFunction((n) => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-header ion-title')].some((e) => e.textContent?.includes(n)), name, { timeout: 30000 });
+await page.keyboard.press('MediaTrackNext');
+await titleIs('unity transpos');
+await page.waitForSelector('.ion-page:not(.ion-page-hidden) .score-page svg', { timeout: 60000 });
+check(true, 'pedal "next piece" opens the next piece at once');
+await page.keyboard.press('MediaTrackPrevious');
+await titleIs('Toccata');
+await page.waitForSelector('.ion-page:not(.ion-page-hidden) .score-page svg', { timeout: 60000 });
+check(true, 'pedal "previous piece"');
+
 // --- Per-piece transposition: applied in play mode, stored in the setlist item, not in the score. ---
 const visible = '.ion-page:not(.ion-page-hidden)';
 const badge = () => page.locator(`${visible} [data-testid=transpose-button]`).last().innerText();
