@@ -81,7 +81,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - 🟨 **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ✅ ; mode « métronome seul » et écran de réglages (volume, décompte) à faire.
 - ⬜ **Mode Continu** (rouleau vertical) avec ligne de lecture.
 - ✅ **Transposition** : demi-tons, octave, préréglages Sib/Mib/Fa, tonalité résultante affichée, hauteur réelle (concert). *(Préférence ♯/♭ : à faire.)*
-- ⬜ **Setlists** : création, ajout de partitions, réordonnancement par glisser-déposer, notes, surcharge des instruments et de la transposition par entrée, mode « Play » avec morceau suivant/précédent (pédalier inclus), pré-chargement du morceau suivant.
+- ✅ **Setlists** : création, renommage, duplication, ajout de partitions (plusieurs fois possible), réordonnancement par glisser-déposer, notes, instruments par morceau, mode « Play » avec morceau suivant/précédent, double appui pédale en fin de morceau. *(Pré-chargement du morceau suivant et transposition par morceau : à faire.)*
 - ⬜ **Pédalier Bluetooth** : actions configurables (page, lecture, métronome, morceau suivant), écran de capture de touche.
 - ⬜ **Demi-page**.
 - ⬜ **Aller à la mesure / marque de répétition**.
