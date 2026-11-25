@@ -59,12 +59,22 @@ Détails et justification : voir la documentation ci-dessous.
 
 ## Installer l'APK sur un téléphone
 
-Le dépôt GitHub est **privé** (`ArtiskOnGit/mscz_viewer`). À chaque push sur `main`, la CI (GitHub Actions, `.github/workflows/ci.yml`) lance lint, typecheck, tests et build web, puis produit un **APK de debug** (artefact `pupitre-debug-apk`, conservé 14 jours).
+**Le plus simple :** télécharger le fichier `pupitre-vX.Y.Z.apk` de la dernière version dans les [**Releases**](https://github.com/ArtiskOnGit/mscz_viewer/releases/latest), directement depuis le téléphone, puis l'ouvrir (autoriser l'installation d'applications depuis cette source).
 
-1. `gh run download --name pupitre-debug-apk` (ou télécharger l'artefact depuis l'onglet *Actions* du dépôt) ;
-2. copier `app-debug.apk` sur le téléphone et l'ouvrir (autoriser l'installation d'applications inconnues pour le gestionnaire de fichiers).
+Les APK sont signés avec une **clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`, ADR-016) : une nouvelle version s'installe par-dessus la précédente sans perdre les partitions. Ce sont encore des versions de test (signature « debug ») ; la signature de publication pour les stores viendra en phase 3.
 
-Les APK de debug sont signés avec une **clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`, ADR-016) : une nouvelle version s'installe par-dessus la précédente sans perdre les données. Si le secret est perdu, en générer un nouveau (une seule désinstallation sera nécessaire).
+### Publier une nouvelle version
+
+```bash
+npm version 0.3.0 --no-git-tag-version   # met à jour package.json
+git commit -am "Release 0.3.0" && git tag v0.3.0 && git push && git push --tags
+```
+
+Le workflow `.github/workflows/release.yml` (déclenché par un tag `v*`) lance lint et tests, compile l'APK (versionName = tag, versionCode = numéro de build) et crée la release GitHub avec `pupitre-v0.3.0.apk` en pièce jointe.
+
+### APK de développement
+
+À chaque push sur `main`, la CI (`.github/workflows/ci.yml`) lance lint, typecheck, tests et build web, puis produit aussi un APK (artefact `pupitre-debug-apk`, conservé 14 jours) : `gh run download --name pupitre-debug-apk`.
 
 ## Développement
 

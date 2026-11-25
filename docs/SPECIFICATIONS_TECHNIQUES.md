@@ -346,14 +346,14 @@ Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, termin
 
 ## 14. Licence et conformité
 
-- Licence de l'application : **GPL-3.0-or-later** (à cause de webmscore), fichier `LICENSE`. Voir ADR-003. Le dépôt est privé pendant le développement (écart noté dans l'ADR-003).
+- Licence de l'application : **GPL-3.0-or-later** (à cause de webmscore), fichier `LICENSE`. Voir ADR-003. Le dépôt est public depuis le 2026-11-25.
 - Écran « Licenses » dans l'application : liste des composants tiers et de leurs licences (`src/app/thirdPartyLicenses.ts`, maintenue à la main). ✏️ Pas de génération automatique.
 - Lien vers le dépôt des sources dans « About ».
 - Ne pas utiliser le nom ni le logo « MuseScore » dans le nom, l'icône ou la fiche store. Mention de marque dans « About ».
 
 ## 15. Intégration continue et distribution
 
-- **CI** (`.github/workflows/ci.yml`, dépôt privé `ArtiskOnGit/mscz_viewer`), à chaque push sur `main` et à chaque pull request :
+- **CI** (`.github/workflows/ci.yml`, dépôt public `ArtiskOnGit/mscz_viewer` ; releases : `.github/workflows/release.yml`, ADR-023), à chaque push sur `main` et à chaque pull request :
   1. job *web* : `npm ci`, lint, typecheck, tests unitaires, build web (artefact `web-dist`) ;
   2. job *android* : build web, `npx cap sync android`, `./gradlew assembleDebug` (JDK 21) → artefact **`pupitre-debug-apk`** (14 jours).
 - **Signature** : clé de debug fixe restaurée depuis le secret `ANDROID_DEBUG_KEYSTORE_B64` (ADR-016), pour que chaque APK s'installe par-dessus le précédent.

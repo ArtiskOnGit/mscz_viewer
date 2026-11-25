@@ -33,7 +33,7 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-003 — Licence de l'application : GPL-3.0-or-later — *Acceptée*
 - Imposée par webmscore. Verovio (LGPL), les polices (OFL) et les dépendances MIT/BSD sont compatibles.
-- **Écart** : pendant le développement, le dépôt est **privé** (`ArtiskOnGit/mscz_viewer`). Il devra être rendu public (ou les sources fournies avec l'application) au plus tard à la première distribution hors du cercle du porteur, comme l'exige la GPL. Le lien « Source code » de l'écran À propos pointe déjà vers ce dépôt.
+- Le dépôt `ArtiskOnGit/mscz_viewer` a été privé pendant le développement, puis **rendu public le 2026-11-25** (obligation GPL : sources disponibles). Le lien « Source code » de l'écran À propos pointe vers ce dépôt.
 
 ### ADR-004 — Framework : Capacitor + Ionic **React** + TypeScript — *Acceptée*
 - **Critère du porteur** : le plus simple et le plus multiplateforme.
@@ -93,7 +93,7 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-015 — APK compilé par GitHub Actions, pas de SDK Android en local — *Acceptée*
 - **Contexte** : le poste de développement n'a pas de SDK Android ; l'installer (Android Studio, ~10 Go) seulement pour produire un APK de test est lourd.
-- **Décision** : la CI (`.github/workflows/ci.yml`, dépôt privé `ArtiskOnGit/mscz_viewer`) fait lint, typecheck, tests et build web, puis `cap sync android` et `gradlew assembleDebug` (JDK 21) sur un runner Ubuntu. L'APK est un artefact téléchargeable (`pupitre-debug-apk`, `gh run download`). Le développement courant se fait dans le navigateur et avec les scripts e2e (Chromium headless, émulation Pixel 7).
+- **Décision** : la CI (`.github/workflows/ci.yml`, dépôt `ArtiskOnGit/mscz_viewer`) fait lint, typecheck, tests et build web, puis `cap sync android` et `gradlew assembleDebug` (JDK 21) sur un runner Ubuntu. L'APK est un artefact téléchargeable (`pupitre-debug-apk`, `gh run download`). Le développement courant se fait dans le navigateur et avec les scripts e2e (Chromium headless, émulation Pixel 7).
 - **Conséquence** : chaque essai sur téléphone passe par un push sur `main`. Compiler en local reste possible (`npm run android`).
 
 ### ADR-016 — APK de debug signés avec une clé fixe stockée dans les secrets — *Acceptée*
@@ -129,6 +129,10 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-022 — TypeScript 6 épinglé — *Acceptée (à revoir)*
 - `typescript-eslint` ne prend pas encore en charge TypeScript 7. La version est épinglée à `~6.0.3` dans `package.json`. On montera de version quand typescript-eslint le permettra.
+
+### ADR-023 — Distribution des APK par les Releases GitHub — *Acceptée*
+- Le dépôt est public (2026-11-25). Un tag `vX.Y.Z` déclenche `.github/workflows/release.yml` : lint + tests, APK (versionName = tag, versionCode = numéro de build, même clé fixe que la CI) publié comme release GitHub (`pupitre-vX.Y.Z.apk`).
+- Ce sont des versions de test signées « debug » ; la signature de publication (Play Store / F-Droid) reste à faire en phase 3.
 
 ## Questions encore ouvertes
 

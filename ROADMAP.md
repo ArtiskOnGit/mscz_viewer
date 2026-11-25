@@ -45,7 +45,7 @@ Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ report
 **Socle**
 - ✅ Initialiser le projet : Vite + React + Ionic + TypeScript + Capacitor (Android), ESLint, Vitest, Playwright (scripts `e2e/`).
 - ✅ **i18n dès le premier écran** : i18next + react-i18next, fichiers `en` de référence, règle de lint « pas de chaîne en dur », test de complétude des langues.
-- ✅ CI GitHub Actions (dépôt privé `ArtiskOnGit/mscz_viewer`) : lint, typecheck, tests, build web, **APK de debug signé avec une clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`), donc les mises à jour s'installent sans désinstaller (ADR-015, ADR-016).
+- ✅ CI GitHub Actions (dépôt **public** `ArtiskOnGit/mscz_viewer` depuis le 2026-11-25 ; APK publiés dans les [Releases](https://github.com/ArtiskOnGit/mscz_viewer/releases) à chaque tag `v*`) : lint, typecheck, tests, build web, **APK de debug signé avec une clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`), donc les mises à jour s'installent sans désinstaller (ADR-015, ADR-016).
 - ✅ Navigation entre les 3 écrans (Bibliothèque avec onglets Partitions/Setlists, Visualisation, Paramètres), thème clair/sombre (système).
 - ✅ `LibraryRepository` / `ViewStateRepository` / `SetlistRepository` : index JSON, fichiers, écritures atomiques.
 
