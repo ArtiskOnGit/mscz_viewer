@@ -1,0 +1,12 @@
+{
+  "appName": "Pupitre",
+  "actions": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "rename": "Rename",
+    "open": "Open",
+    "close": "Close"
+  },
+  "comingSoon": "Coming soon"
+}

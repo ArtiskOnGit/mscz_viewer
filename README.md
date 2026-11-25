@@ -54,11 +54,29 @@ Détails et justification : voir la documentation ci-dessous.
 
 *MuseScore est une marque de ses propriétaires respectifs. Ce projet n'est ni affilié à MuseScore ni approuvé par MuseScore.*
 
-## Développement *(à venir, phase 1)*
+## Développement
+
+Prérequis : Node.js ≥ 22. Pour compiler l'APK : JDK 21 + Android SDK (le plus simple : Android Studio).
 
 ```bash
-npm install
-npm run dev            # version web dans le navigateur
-npx cap sync android
-npx cap open android   # Android Studio
+npm install            # copie aussi les fichiers de webmscore dans public/
+npm run dev            # application dans le navigateur (http://localhost:5173)
+npm test               # tests unitaires (Vitest)
+npm run lint           # ESLint (dont la règle « pas de texte en dur », ADR-009)
+npm run typecheck
+npm run build          # build web dans dist/
+npm run android        # build + synchronisation Capacitor + ouverture dans Android Studio
+node e2e/smoke.mjs "$PWD"   # test de fumée des 3 écrans dans Chromium headless
 ```
+
+La CI (GitHub Actions, `.github/workflows/ci.yml`) lance lint, typecheck, tests et build, puis produit un **APK de debug** téléchargeable dans les artefacts.
+
+| Dossier | Contenu |
+|---|---|
+| `src/app/` | Coquille de l'application, routes |
+| `src/screens/` | Écrans Bibliothèque, Visualisation, Paramètres |
+| `src/core/` | Logique sans interface : modèle, filtrage MusicXML, timeline… (testée) |
+| `src/i18n/` | Traductions (`locales/en` = référence) |
+| `android/` | Projet Android généré par Capacitor |
+| `spikes/` | Code jetable de la phase 0 |
+| `test-scores/` | Partitions de test personnelles (**non versionnées**) |

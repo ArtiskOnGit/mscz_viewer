@@ -1,0 +1,8 @@
+{
+  "title": "Settings",
+  "sections": { "display": "Display", "about": "About" },
+  "about": {
+    "license": "Free software under the GNU GPL v3 or later.",
+    "credits": "Uses webmscore (MuseScore engine) and Verovio."
+  }
+}

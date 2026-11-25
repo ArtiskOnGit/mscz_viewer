@@ -1,0 +1,6 @@
+/* App theme. Score themes (light / sepia / dark) are applied on the score container only. */
+:root {
+  --ion-color-primary: #3b5bdb;
+  --pupitre-score-bg: #ffffff;
+  --pupitre-score-ink: #000000;
+}

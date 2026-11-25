@@ -1,0 +1,11 @@
+{
+  "title": "Library",
+  "tabs": { "scores": "Scores", "setlists": "Setlists" },
+  "import": { "button": "Import" },
+  "empty": {
+    "title": "No scores yet",
+    "body": "Import MuseScore (.mscz, .mscx) or MusicXML (.mxl, .musicxml) files to get started."
+  },
+  "setlists": { "empty": "No setlists yet" },
+  "settings": "Settings"
+}

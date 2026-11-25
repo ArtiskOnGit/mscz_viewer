@@ -84,6 +84,10 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 ### ADR-013 — Moteurs embarqués : tailles réelles — *Information*
 - webmscore ~18 Mo (wasm 9,2 + mem 4,2 + data 4,1 + JS), Verovio ~8,4 Mo (WASM intégré au JS). Total des moteurs : **~27 Mo** dans l'APK.
 
+### ADR-014 — React Router 6 malgré des alertes `npm audit` — *Acceptée (à revoir)*
+- Ionic React 9 n'accepte que React Router `>=6.4 <7`. `npm audit` signale 3 vulnérabilités « modérées » corrigées en v7. Elles concernent les fonctions serveur et chargement de données, que nous n'utilisons pas : l'application n'a pas de serveur et ses routes sont locales.
+- On repassera en v7 dès qu'Ionic le prendra en charge.
+
 ## Questions encore ouvertes
 
 1. **Nom de l'application** (ADR-006).

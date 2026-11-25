@@ -47,7 +47,9 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | Lint/format | ESLint + Prettier | |
 | CI | GitHub Actions (web + APK Android ; iOS sur runner macOS) | |
 
-Cibles minimales envisagées : **Android 8.0+ (API 26)**, **iOS 15+**. On les ajustera selon la version de Capacitor et la prise en charge de WASM et des Web Workers dans les WebView.
+Cibles : **Android 7.0+ (API 24, valeur par défaut de Capacitor 8)**, cible API 36 ; **iOS 15+**. La WebView Android se met à jour via le Play Store, donc WASM et les Web Workers sont disponibles.
+
+Versions retenues au démarrage de la phase 1 (2026-11-25) : Capacitor 8.6, Ionic React 9, React 19, React Router 6 (Ionic 9 ne prend pas encore la v7), Vite 8, Vitest 5, **TypeScript 6.0** (TypeScript 7 n'est pas encore pris en charge par typescript-eslint), i18next 27, Verovio 6.4.1, webmscore 1.2.1.
 
 ## 2. Architecture
 

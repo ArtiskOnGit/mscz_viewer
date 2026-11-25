@@ -41,10 +41,10 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 **Objectif** : ouvrir un `.mscz`, choisir ses instruments, lire et tourner les pages, sans réseau.
 
 **Socle**
-- ⬜ Initialiser le projet : Vite + React + Ionic + TypeScript + Capacitor (Android), ESLint/Prettier, Vitest, Playwright.
-- ⬜ **i18n dès le premier écran** : i18next + react-i18next, fichiers `en` de référence, règle de lint « pas de chaîne en dur », formats via `Intl`.
-- ⬜ CI GitHub Actions : lint (avec la règle i18n), tests, build web, build APK de debug.
-- ⬜ Navigation entre les 3 écrans (Bibliothèque avec onglets Partitions/Setlists, Visualisation, Paramètres), thème clair/sombre.
+- ✅ Initialiser le projet : Vite + React + Ionic + TypeScript + Capacitor (Android), ESLint, Vitest, Playwright (test de fumée).
+- ✅ **i18n dès le premier écran** : i18next + react-i18next, fichiers `en` de référence, règle de lint « pas de chaîne en dur », test de complétude des langues.
+- 🟨 CI GitHub Actions : lint (avec la règle i18n), typecheck, tests, build web, build APK de debug. Workflow écrit, **à valider au premier push sur GitHub**.
+- ✅ Navigation entre les 3 écrans (Bibliothèque avec onglets Partitions/Setlists, Visualisation, Paramètres), thème clair/sombre (système).
 - ⬜ `LibraryRepository` / `ViewStateRepository` : index JSON, fichiers, migrations, écritures atomiques.
 
 **Bibliothèque**
@@ -58,7 +58,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 **Visualisation**
 - ⬜ Worker de rendu Verovio (mise en page adaptée à l'écran), rendu paresseux et pré-rendu des pages voisines.
 - ⬜ Mode Pages : balayage, zones de tap, boutons, indicateur de page.
-- ⬜ Choix des instruments (sélection multiple, filtrage MusicXML).
+- 🟨 Choix des instruments (sélection multiple, filtrage MusicXML). Module `core/musicxml/filterParts` fait et testé ; reste l'interface.
 - ⬜ Zoom (pincement + boutons, relayout).
 - ⬜ Écran toujours allumé.
 - ⬜ Silences multi-mesures regroupés dans la vue filtrée.
