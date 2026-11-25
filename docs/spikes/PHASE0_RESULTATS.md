@@ -121,6 +121,8 @@ Test automatique dans **Chromium headless (émulation Pixel 7)**, sur les 3 fich
 
 **À faire par le porteur du projet** (voir [spikes/README.md](../../spikes/README.md)) : ouvrir le banc de test sur un téléphone Android, avec un pédalier Bluetooth si possible, puis relever les Stats.
 
+> **Suite (fin de la phase 2)** : le banc de test n'a pas pu charger de fichier sur le téléphone ; les essais ont été faits directement avec l'APK de l'application. Résultats : [TESTS_APPAREIL.md](../TESTS_APPAREIL.md) (pas de pédalier Bluetooth disponible, son du métronome qui fonctionne, mesures chiffrées encore à faire).
+
 ## Ajouts du 2026-11-25 (fichier MuseScore 3.6)
 
 - **Toccata (3.6.2)** : chargement en 0,8 s (Node) / 1,7 s (Chromium), MusicXML et positions OK. 158 événements dans l'ordre de jeu, **ordre identique** dans Verovio.

@@ -2,6 +2,8 @@
 
 Code jetable qui valide les choix techniques. Résultats : [docs/spikes/PHASE0_RESULTATS.md](../docs/spikes/PHASE0_RESULTATS.md).
 
+> **Archive de la phase 0 (close le 2026-11-25).** L'application elle-même (dossier `src/` à la racine) a remplacé ce banc de test : pour essayer sur un téléphone, installer l'APK de debug produit par la CI (voir le [README](../README.md#installer-lapk-sur-un-téléphone)) ; retours dans [docs/TESTS_APPAREIL.md](../docs/TESTS_APPAREIL.md). Ces scripts restent utiles pour interroger webmscore ou Verovio hors de l'application (ex. `node s2-verovio/run.mjs … --transpose=m2`).
+
 Les partitions de test vont dans `../test-scores/`. Ce dossier est **ignoré par git** : n'y mettez que des fichiers à vous ou dont vous avez le droit d'usage. Tous les dossiers `out/` (sorties générées) sont ignorés aussi.
 
 ## Installation

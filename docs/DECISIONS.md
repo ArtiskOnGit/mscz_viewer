@@ -23,7 +23,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 ### ADR-001 — Lecture des `.mscz` : webmscore, à l'import uniquement — *Acceptée* (S1 validé le 2026-11-25, voir [résultats de la phase 0](spikes/PHASE0_RESULTATS.md))
 - **Contexte** : aucune bibliothèque de rendu ne lit le format MuseScore, qui n'est pas documenté et change d'une version à l'autre. Il faut prendre en charge les fichiers **MuseScore 3.0 à 4.x et plus**.
 - **Décision** : utiliser **webmscore** (MuseScore 4.0 compilé en WASM) pour convertir les fichiers en MusicXML et extraire les métadonnées et la timeline. MuseScore 4.0 sait ouvrir les fichiers 3.x, ce qui couvre normalement la plage 3.0–3.6.
-- **Résultat de S1** : les fichiers **2.1, 4.5.2 et 4.6.2** du corpus se chargent. `savePositions(true)` plante et corrompt l'instance WASM. Règle : **un worker neuf par import**, positions des mesures seulement. Il reste à tester un fichier 3.x et à mesurer les temps sur téléphone.
+- **Résultat de S1** : les fichiers **2.1, 3.6.2, 4.5.2 et 4.6.2** du corpus se chargent. `savePositions(true)` plante et corrompt l'instance WASM. Règle : **un worker neuf par import**, positions des mesures seulement. Import vérifié sur un vrai téléphone Android ; temps à mesurer.
+- **Depuis** : webmscore sert aussi à importer le MusicXML (ADR-017) ; les parties masquées sont rendues visibles avant conversion (ADR-018).
 - **Plans B** : a) recompiler webmscore sur un MuseScore récent ; b) convertisseur `.mscx` → MusicXML maison ; c) demander un export MusicXML (toujours pris en charge).
 
 ### ADR-002 — Rendu : Verovio sur MusicXML, mise en page adaptée à l'écran — *Acceptée* (S2 et S4 validés le 2026-11-25)
@@ -31,7 +32,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - **Non retenu** : le mode « mise en page d'origine » (SVG de webmscore). Il reste seulement un plan B technique si la qualité de Verovio est insuffisante.
 
 ### ADR-003 — Licence de l'application : GPL-3.0-or-later — *Acceptée*
-- Imposée par webmscore. Le code est publié dans un dépôt public. Verovio (LGPL), les polices (OFL) et les dépendances MIT/BSD sont compatibles.
+- Imposée par webmscore. Verovio (LGPL), les polices (OFL) et les dépendances MIT/BSD sont compatibles.
+- **Écart** : pendant le développement, le dépôt est **privé** (`ArtiskOnGit/mscz_viewer`). Il devra être rendu public (ou les sources fournies avec l'application) au plus tard à la première distribution hors du cercle du porteur, comme l'exige la GPL. Le lien « Source code » de l'écran À propos pointe déjà vers ce dépôt.
 
 ### ADR-004 — Framework : Capacitor + Ionic **React** + TypeScript — *Acceptée*
 - **Critère du porteur** : le plus simple et le plus multiplateforme.
@@ -72,7 +74,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-011 — Setlists dans la v1 — *Acceptée*
 - Les setlists (programmes de répétition ou de concert) font partie de la v1, et sont prévues en phase 2.
-- Une entrée de setlist pointe vers une partition. Elle utilise les réglages mémorisés de la partition (instruments, transposition, zoom), avec une **surcharge optionnelle** propre à l'entrée (en v1 : instruments et transposition).
+- Une entrée de setlist pointe vers une partition. Elle utilise les réglages mémorisés de la partition (instruments, transposition, zoom), avec une **surcharge optionnelle** propre à l'entrée (en v1 : instruments et transposition, préférence ♯/♭ comprise).
+- **Fait en phase 2** (2026-11-25), avec le pré-chargement du morceau suivant (ADR-021).
 
 ---
 
@@ -88,9 +91,50 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - Ionic React 9 n'accepte que React Router `>=6.4 <7`. `npm audit` signale 3 vulnérabilités « modérées » corrigées en v7. Elles concernent les fonctions serveur et chargement de données, que nous n'utilisons pas : l'application n'a pas de serveur et ses routes sont locales.
 - On repassera en v7 dès qu'Ionic le prendra en charge.
 
+### ADR-015 — APK compilé par GitHub Actions, pas de SDK Android en local — *Acceptée*
+- **Contexte** : le poste de développement n'a pas de SDK Android ; l'installer (Android Studio, ~10 Go) seulement pour produire un APK de test est lourd.
+- **Décision** : la CI (`.github/workflows/ci.yml`, dépôt privé `ArtiskOnGit/mscz_viewer`) fait lint, typecheck, tests et build web, puis `cap sync android` et `gradlew assembleDebug` (JDK 21) sur un runner Ubuntu. L'APK est un artefact téléchargeable (`pupitre-debug-apk`, `gh run download`). Le développement courant se fait dans le navigateur et avec les scripts e2e (Chromium headless, émulation Pixel 7).
+- **Conséquence** : chaque essai sur téléphone passe par un push sur `main`. Compiler en local reste possible (`npm run android`).
+
+### ADR-016 — APK de debug signés avec une clé fixe stockée dans les secrets — *Acceptée*
+- **Contexte** : chaque runner génère sa propre clé de debug ; Android refuse alors d'installer la nouvelle version par-dessus l'ancienne (il faut désinstaller, donc perdre la bibliothèque).
+- **Décision** : un `debug.keystore` fixe, encodé en base64 dans le secret `ANDROID_DEBUG_KEYSTORE_B64`, est restauré dans `~/.android/` avant la compilation. Ce n'est **pas** une clé de publication : la release (phase 3) aura sa propre clé.
+- **Si le secret est perdu** : en générer un nouveau ; une seule désinstallation sera nécessaire.
+
+### ADR-017 — webmscore pour tous les imports, MusicXML compris — *Acceptée* (écart avec la spécification initiale)
+- **Spécification initiale** : analyser le MusicXML directement et calculer sa timeline avec la timemap de Verovio à la première ouverture.
+- **Décision** : les `.mxl` / `.musicxml` passent aussi par webmscore (`WebMscore.load('mxl' | 'musicxml', …)`). On obtient le même MusicXML normalisé, les mêmes métadonnées et la même timeline (positions MuseScore, reprises dépliées) pour tous les formats : un seul chemin de code, testé.
+- **Conséquence** : la timemap de Verovio n'est pas utilisée. Une variante iOS sans webmscore (ADR-005, option 3) devra la réintroduire.
+
+### ADR-018 — Parties masquées rendues visibles à l'import ; version du pipeline et réimport automatique — *Acceptée*
+- **Constat** (sur téléphone, fichier MuseScore 4.5) : les parties masquées dans MuseScore n'ont **pas de ligatures** dans le MusicXML exporté, car MuseScore ne les met pas en page.
+- **Décision** : avant la conversion, une copie du fichier est modifiée pour rendre visibles toutes les parties et portées (`<Part><show>`, `<Staff><isStaffVisible>` en MuseScore 4, `<Staff><invisible>` en MuseScore 3). La visibilité d'origine est conservée pour choisir les parties affichées par défaut.
+- Chaque partition mémorise `importerVersion`. Quand le pipeline change (`IMPORTER_VERSION`, actuellement 2), la bibliothèque **réimporte automatiquement** les partitions plus anciennes à partir du fichier d'origine conservé, en gardant identifiant, titre et réglages.
+
+### ADR-019 — Mode Continu : pages Verovio empilées, rendu paresseux — *Acceptée*
+- **Options étudiées** : une seule page très haute (une seule `renderToSVG`, mais un SVG énorme et un rendu long pour les gros conducteurs) ; pages de la largeur de l'écran avec `adjustPageHeight` empilées dans un défilement natif.
+- **Décision** : la seconde. Le même worker Verovio produit des pages de la largeur de l'écran dont la hauteur suit le contenu. Seules les pages proches de la position de lecture sont dans le DOM (fenêtre de 4 pages rendues, 8 gardées) ; les autres sont des emplacements de hauteur mesurée ou estimée. La vue gère elle-même l'ancrage du défilement (`overflow-anchor: none`) pour que la musique lue ne bouge pas quand une page au-dessus est rendue.
+- **Défilement automatique** : la position cible met le système de la mesure courante à la ligne de lecture et avance vers le système suivant au fil des mesures ; un ressort à amortissement critique (solution exacte, indépendante de la fréquence d'images) lisse le mouvement. Saut immédiat pour une reprise (retour de plus de 10 % d'écran) ou une cible lointaine ; le suivi se suspend 1,5 s quand l'utilisateur fait défiler au doigt.
+- **Taps** : centre = barres d'outils ; tiers gauche/droit = un écran vers le haut/bas (comme le pédalier, 85 % d'écran). Choix fait pour que les zones de tap gardent le même rôle (« précédent / suivant ») dans les deux modes.
+
+### ADR-020 — Transposition passée à Verovio sous forme d'intervalle ; préférence ♯/♭ — *Acceptée*
+- **Contexte** : Verovio accepte pour `transpose` un nombre de demi-tons (`+1`), un intervalle (`m2`, `-A1`, `M9`) ou une tonique (`Db`, `C#`). Vérifié avec Verovio 6.4 dans Node (test `src/core/music/accidentals.test.ts`) : une tonique choisit elle-même le sens (pas de contrôle de l'octave), alors qu'un intervalle fixe à la fois l'orthographe et l'octave.
+- **Décision** : quand la tonalité écrite est connue, l'application calcule la tonalité d'arrivée (préférence auto / ♯ / ♭ ; auto = le moins d'altérations, ♭ en cas d'égalité, tonalité écrite gardée pour une transposition d'octaves) puis l'**intervalle** correspondant, qu'elle passe à Verovio. La tonalité affichée dans la fenêtre de transposition est donc exactement celle du rendu. En hauteur réelle, on part de la tonalité sonnante de la première partie. Sans tonalité connue, on garde le nombre de demi-tons.
+- La préférence est mémorisée par partition et dans les surcharges de setlist.
+
+### ADR-021 — Setlists : pré-chargement du morceau suivant dans un second worker — *Acceptée*
+- Pendant la lecture d'un morceau en mode setlist, le morceau suivant est préparé en arrière-plan : lecture des fichiers, XML affiché, **chargement et mise en page dans un second worker Verovio**, rendu de sa première page. Le viewer suivant reprend ce worker tel quel. Ouverture mesurée en e2e : ≈ 1,5 s sans pré-chargement, ≈ 0,4 s avec.
+- Un seul emplacement (le morceau suivant) pour borner la mémoire : au plus deux instances Verovio en même temps. Mémoire réelle à mesurer sur téléphone.
+- Autres choix de la visualisation faits pendant la phase 2 : le **mode verrouillé** vaut pour la session (il n'est pas enregistré) ; la **demi-page** coupe entre deux systèmes (jamais à travers une portée) ; l'appui long sur le métronome lance le **métronome seul**.
+
+### ADR-022 — TypeScript 6 épinglé — *Acceptée (à revoir)*
+- `typescript-eslint` ne prend pas encore en charge TypeScript 7. La version est épinglée à `~6.0.3` dans `package.json`. On montera de version quand typescript-eslint le permettra.
+
 ## Questions encore ouvertes
 
 1. **Nom de l'application** (ADR-006).
 2. **Stratégie iOS / App Store** (ADR-005) : à trancher avant la phase 3.
 3. **Téléphone ou tablette en priorité** pour les tests et l'ergonomie Android ? Par défaut, les deux sont prévus, avec le téléphone en priorité.
-4. **Langue de la documentation et du code** : documentation en français, code et commentaires en anglais (proposé).
+4. **Pédalier Bluetooth** : le porteur n'en a pas ; faut-il en emprunter un avant la v1, ou se contenter d'un clavier Bluetooth pour valider la réception des touches dans la WebView ?
+5. **Dépôt public** : quand rendre le dépôt public (ADR-003) ?
+6. **Langue de la documentation et du code** : documentation en français, code et commentaires en anglais (appliqué depuis la phase 1).

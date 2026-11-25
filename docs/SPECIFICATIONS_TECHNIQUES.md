@@ -1,6 +1,8 @@
 # Spécifications techniques
 
-Voir aussi : [Spécifications fonctionnelles](SPECIFICATIONS_FONCTIONNELLES.md) · [Étude des bibliothèques de rendu](ETUDE_RENDU_PARTITIONS.md) · [Décisions](DECISIONS.md)
+Voir aussi : [Spécifications fonctionnelles](SPECIFICATIONS_FONCTIONNELLES.md) · [Étude des bibliothèques de rendu](ETUDE_RENDU_PARTITIONS.md) · [Décisions](DECISIONS.md) · [Tests sur appareil](TESTS_APPAREIL.md)
+
+> **État au 2026-11-25 (fin de la phase 2)** : ce document décrit ce qui est **construit**. Les écarts avec la spécification d'origine sont signalés par ✏️, ce qui reste à faire par ⬜.
 
 ## 1. Choix de la plateforme
 
@@ -15,113 +17,103 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | React Native + WebView | Même problème de passerelle | Très bonne | Deux mondes (RN + WebView) | 🟡 |
 | Natif (Kotlin + Swift) avec Verovio C++ | Verovio natif possible, **mais webmscore n'existe qu'en WASM** | Excellente | Deux applications à écrire | ❌ |
 
-**Choix : Capacitor + Ionic React + TypeScript** (ADR-004 acceptée). React est retenu parce que c'est l'option la plus simple et la mieux documentée. Ionic prend officiellement en charge Angular, React et Vue, mais pas Svelte.
-- Une seule base de code pour Android, iOS et **navigateur**. On peut développer et tester sur ordinateur dans Chrome, et la même application peut servir de PWA.
-- Les moteurs WASM tournent dans des **Web Workers** pour ne pas bloquer l'interface.
-- L'accès natif nécessaire (fichiers, écran allumé, « Ouvrir avec », orientation) passe par des plugins Capacitor.
-- Point faible : les performances de rendu SVG sur les appareils d'entrée de gamme. On le mesure en phase 0. Le plan B consiste à utiliser Verovio natif (C++) via un plugin Capacitor personnalisé, si nécessaire.
+**Choix : Capacitor + Ionic React + TypeScript** (ADR-004). Une seule base de code pour Android, iOS et **navigateur** : on développe et on teste sur ordinateur (Vite + Chromium headless), les moteurs WASM tournent dans des **Web Workers**, l'accès natif passe par des plugins Capacitor. Plan B si le rendu SVG est trop lent sur les appareils modestes : Verovio natif (C++) via un plugin.
 
-### 1.2 Pile technique
+### 1.2 Pile technique (telle que construite)
 
 | Domaine | Choix | Rôle |
 |---|---|---|
-| Langage | **TypeScript** (strict) | |
-| Build | **Vite** | |
-| UI | **React** + **Ionic React** | Composants mobiles (listes, modales, curseurs, action sheets), gestes, navigation |
-| État | **Zustand** | Stores simples (bibliothèque, visionneuse, paramètres) |
-| Workers | **Comlink** | Appels de fonctions vers les Web Workers |
-| Import MuseScore | **webmscore** (WASM) | `.mscz`/`.mscx` → MusicXML + métadonnées + positions |
-| Rendu | **Verovio** (`verovio` sur npm, build WASM) | MusicXML → SVG, transposition, timemap |
-| ZIP | **fflate** | Lire les `.mscz` (miniature) et les `.mxl` |
-| Coquille native | **Capacitor** (dernière version stable) | Android + iOS |
-| Fichiers | `@capacitor/filesystem` | Stockage des partitions dans l'espace privé de l'application |
-| Préférences | `@capacitor/preferences` | Paramètres globaux |
-| Sélecteur de fichiers | `@capawesome/capacitor-file-picker` (à confirmer) | Import multi-fichiers |
+| Langage | **TypeScript 6.0** (strict), épinglé `~6.0.3` (ADR-022) | |
+| Build | **Vite 8** | Workers en modules ES ; Verovio exclu du pré-bundling |
+| UI | **React 19** + **Ionic React 9** + **React Router 6** (ADR-014) | Composants mobiles (listes, modales, segments, toasts), navigation |
+| État | **Zustand** | `libraryStore`, `setlistStore`, `settingsStore` |
+| Workers | **Comlink** | Appels vers le worker Verovio |
+| Import | **webmscore 1.2.1** (MuseScore 4.0 en WASM) | **Tous les formats** (`.mscz`, `.mscx`, `.mxl`, `.musicxml`) → MusicXML + métadonnées + positions (ADR-017) |
+| Rendu | **Verovio 6.4.1** (`verovio/wasm` + `verovio/esm`) | MusicXML → SVG, transposition |
+| ZIP | **fflate** | Miniature des `.mscz`, parties masquées (ADR-018), `.mxl` |
+| Coquille native | **Capacitor 8.6** | Android (iOS en phase 3) |
+| Fichiers | `@capacitor/filesystem` | Partitions dans l'espace privé (`Directory.Data`) |
+| Préférences | `@capacitor/preferences` | Paramètres globaux (clé `settings`) |
+| Sélecteur de fichiers | `@capawesome/capacitor-file-picker` | Import multi-fichiers |
 | Écran allumé | `@capacitor-community/keep-awake` | |
-| Orientation | `@capacitor/screen-orientation` | |
-| Ouvrir avec / partage entrant | `@capacitor/app` (`appUrlOpen`) + configuration native (intent-filters Android, `CFBundleDocumentTypes` iOS) ou plugin « send-intent » | |
-| Survie au sélecteur de fichiers | `@capacitor/app` (`appRestoredResult`) | Android peut tuer l'activité pendant que le sélecteur est ouvert (constaté en phase 0) : on récupère le résultat et on restaure l'écran |
-| i18n | **i18next** + **react-i18next** + `eslint-plugin-i18next` | **EN (langue de référence)**, puis FR et d'autres (voir §11) |
-| Tests unitaires | **Vitest** | |
-| Tests E2E | **Playwright** sur la version web | |
-| Lint/format | ESLint + Prettier | |
-| CI | GitHub Actions (web + APK Android ; iOS sur runner macOS) | |
+| Ouvrir avec | `@capacitor/app` (`appUrlOpen`, URL de lancement) + `intent-filter` `VIEW` | ✏️ Pas de plugin « send-intent » : « Partager vers » ⬜ |
+| Survie au sélecteur de fichiers | `@capacitor/app` (`appRestoredResult`) | Android peut tuer l'activité pendant le sélecteur (phase 0) |
+| i18n | **i18next 27** + **react-i18next** + `eslint-plugin-i18next` | EN (référence) ; FR en phase 3 |
+| Tests | **Vitest 5** (unitaires, environnement Node ; Verovio WASM chargé dans certains tests) + **Playwright** (scripts `e2e/`, Chromium headless) | |
+| Lint | ESLint 10 + typescript-eslint + `eslint-plugin-react-hooks` 7 (règles du compilateur React) | ✏️ Pas de Prettier |
+| CI | **GitHub Actions** : web + APK de debug (ADR-015, ADR-016) | ✏️ Pas de runner iOS pour l'instant |
 
-Cibles : **Android 7.0+ (API 24, valeur par défaut de Capacitor 8)**, cible API 36 ; **iOS 15+**. La WebView Android se met à jour via le Play Store, donc WASM et les Web Workers sont disponibles.
+✏️ Non utilisé : `@capacitor/screen-orientation` (l'orientation suit l'appareil ; verrouillage ⬜).
 
-Versions retenues au démarrage de la phase 1 (2026-11-25) : Capacitor 8.6, Ionic React 9, React 19, React Router 6 (Ionic 9 ne prend pas encore la v7), Vite 8, Vitest 5, **TypeScript 6.0** (TypeScript 7 n'est pas encore pris en charge par typescript-eslint), i18next 27, Verovio 6.4.1, webmscore 1.2.1.
+Cibles : **Android 7.0+ (API 24, défaut de Capacitor 8)**, cible API 36 ; iOS 15+ en phase 3. La WebView Android se met à jour via le Play Store, donc WASM et les Web Workers sont disponibles.
 
 ## 2. Architecture
 
 ### 2.1 Vue d'ensemble
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                      Thread principal (UI React/Ionic)               │
-│  Écrans : Bibliothèque · Visualisation · Paramètres                  │
-│  Stores : libraryStore · viewerStore · settingsStore                 │
-│  Services : LibraryRepository · ImportService · RenderService ·      │
-│             AutoScrollEngine · InputController (tap/swipe/pédalier)  │
-└───────────────┬───────────────────────────────┬──────────────────────┘
-                │ Comlink                       │ Comlink
-     ┌──────────▼───────────┐       ┌───────────▼────────────┐
-     │ import.worker.ts     │       │ render.worker.ts       │
-     │  webmscore (WASM)    │       │  Verovio (WASM)        │
-     │  chargé à la demande │       │  chargé à l'ouverture  │
-     │  uniquement à        │       │  d'une partition       │
-     │  l'import            │       │                        │
-     └──────────┬───────────┘       └───────────┬────────────┘
-                │                               │
-     ┌──────────▼───────────────────────────────▼────────────┐
+┌──────────────────────────────────────────────────────────────────────────┐
+│                      Thread principal (UI React/Ionic)                    │
+│  Écrans : Bibliothèque (Scores | Setlists) · Détail setlist ·             │
+│           Visualisation (Pages | ContinuousView) · Paramètres             │
+│  Stores : libraryStore · setlistStore · settingsStore                     │
+│  Services : LibraryRepository · ViewStateRepository · SetlistRepository · │
+│             importScore · RenderService · PlaybackEngine (horloge Web     │
+│             Audio + clics) · gestes / pédalier (usePageGestures, keydown) │
+└───────────────┬────────────────────────────────┬─────────────────────────┘
+                │ webmscore (worker interne)     │ Comlink
+     ┌──────────▼───────────┐        ┌───────────▼────────────┐ ┌────────────────────────┐
+     │ worker webmscore     │        │ render.worker.ts       │ │ 2e render.worker.ts    │
+     │  MuseScore 4.0 WASM  │        │  Verovio (WASM)        │ │  (setlist : morceau    │
+     │  chargé à l'import,  │        │  un par partition      │ │  suivant pré-chargé,   │
+     │  un neuf par fichier │        │  ouverte               │ │  ADR-021)              │
+     └──────────┬───────────┘        └───────────┬────────────┘ └────────────────────────┘
+                │                                │
+     ┌──────────▼────────────────────────────────▼───────────┐
      │  Stockage : Filesystem (Directory.Data) + Preferences │
      └───────────────────────────────────────────────────────┘
-                │
-     ┌──────────▼───────────┐
-     │ Capacitor (Android / │  plugins natifs : fichiers, keep-awake,
-     │ iOS)                 │  orientation, ouverture de fichiers
-     └──────────────────────┘
 ```
 
-### 2.2 Organisation du code (proposition)
+### 2.2 Organisation du code
 
 ```
 mscz_viewer/
 ├── README.md, ROADMAP.md, docs/
+├── .github/workflows/ci.yml     # lint, typecheck, tests, build web, APK de debug
+├── scripts/copy-webmscore.mjs   # copie les fichiers de webmscore dans public/ (postinstall)
 ├── src/
-│   ├── app/                  # Routage, layout, providers (i18n, thème)
+│   ├── app/                     # App, routes, thème, licences tierces
 │   ├── screens/
-│   │   ├── library/          # LibraryScreen (onglets Partitions | Setlists), ScoreCard, ImportButton, ScoreInfoModal
-│   │   ├── setlists/         # SetlistList, SetlistDetail (glisser-déposer), AddScoresModal
-│   │   ├── viewer/           # ViewerScreen, ScoreCanvas, Toolbar, PartsPicker,
-│   │   │                     # TransposePanel, ZoomControl, AutoScrollBar, GoToMeasure
-│   │   └── settings/         # SettingsScreen, PedalKeyCapture, LicensesScreen
-│   ├── core/
-│   │   ├── model/            # Types : Score, Part, Timeline, ViewState, Settings
-│   │   ├── storage/          # LibraryRepository, SetlistRepository, ViewStateRepository, migrations
-│   │   ├── import/           # ImportService, détection de format, import.worker.ts
-│   │   ├── musicxml/         # Filtrage des parties, utilitaires XML
-│   │   ├── render/           # RenderService, render.worker.ts, cache SVG
-│   │   ├── timeline/         # Construction et requêtes de la timeline
-│   │   ├── clock/            # PlaybackClock partagée (temps partition, facteur de tempo)
-│   │   ├── autoscroll/       # AutoScrollEngine (mapping temps → position)
-│   │   ├── metronome/        # MetronomeEngine (Web Audio, ordonnanceur avec anticipation)
-│   │   └── input/            # Gestes, zones de tap, clavier/pédalier
-│   ├── ui/                   # Composants génériques, thèmes
-│   └── i18n/                 # locales/en/*.json (référence), locales/fr/*.json…
-├── public/
-│   ├── webmscore/            # Fichiers WASM/JS de webmscore + polices
-│   └── verovio/              # (si non intégré par le bundler)
-├── tests/
-│   ├── fixtures/scores/      # Corpus : MS 3.6, MS 4.0, 4.2, 4.4, 4.6, MusicXML…
-│   ├── unit/
-│   └── e2e/
-├── android/                  # Généré par Capacitor
-└── ios/                      # Généré par Capacitor
+│   │   ├── library/             # LibraryScreen, ScoreItem, ScoreInfoModal, miniatures
+│   │   ├── setlists/            # SetlistsTab, SetlistDetailScreen, SetlistBar, useSetlistPlayback, preloadNext
+│   │   ├── viewer/              # ViewerScreen, ContinuousView, useScoreViewer, usePlayback, usePageGestures,
+│   │   │                        # useLongPress, PartsModal, TransposeModal, GoToModal, pieceData
+│   │   └── settings/            # SettingsScreen, PedalKeysSection
+│   ├── core/                    # logique sans interface, testée (Vitest)
+│   │   ├── model/               # types : Score, Part, Timeline, ScoreViewState, Setlist
+│   │   ├── storage/             # FileStore, LibraryRepository, ViewStateRepository, SetlistRepository
+│   │   ├── import/              # importScore (+ réimport), formats, webmscoreEngine, unhideParts, openWith
+│   │   ├── musicxml/            # filterParts (ADR-012), multiRests, prepareDisplay
+│   │   ├── render/              # RenderService, render.worker.ts, options Verovio, transposeOption
+│   │   ├── timeline/            # timeline depuis les positions webmscore, métriques
+│   │   ├── playback/            # PlaybackClock, clics du métronome, PlaybackEngine, table des mesures
+│   │   ├── navigation/          # aller à, demi-page, touches du pédalier, mode Continu (fenêtre, lissage)
+│   │   ├── music/               # tonalités, transposition, préférence ♯/♭
+│   │   ├── setlists/            # réglages effectifs (surcharge d'entrée)
+│   │   ├── profile/             # « My instrument »
+│   │   └── settings.ts          # AppSettings, valeurs par défaut, chargement
+│   ├── state/                   # stores Zustand
+│   ├── ui/                      # formatage (durées…)
+│   └── i18n/                    # locales/en/*.json (référence), test de complétude
+├── e2e/                         # scripts Playwright (voir §13)
+├── android/                     # projet Capacitor (intent-filter « Ouvrir avec »)
+├── spikes/                      # code jetable de la phase 0
+└── test-scores/                 # corpus personnel, non versionné
 ```
 
 ## 3. Modèle de données
 
-### 3.1 Types principaux
+### 3.1 Types principaux (extrait de `src/core/model/types.ts`)
 
 ```ts
 type ScoreId = string; // UUID v4
@@ -132,60 +124,41 @@ interface Score {
   originalTitle: string;
   subtitle?: string;
   composer?: string;
-  arranger?: string;
   sourceFormat: 'mscz' | 'mscx' | 'mxl' | 'musicxml';
   sourceFileName: string;
-  sourceHash: string;       // SHA-256 du fichier d'origine (détection des doublons)
+  sourceHash: string;       // SHA-256 du fichier d'origine (doublons)
   importedAt: string;       // ISO 8601
   lastOpenedAt?: string;
-  importerVersion: string;  // version du pipeline d'import (pour refaire l'import si besoin)
-  museScoreVersion?: string;// ex. "4.4.2" (si connu)
+  importerVersion: number;  // version du pipeline d'import : réimport automatique si < IMPORTER_VERSION (ADR-018)
+  museScoreVersion?: string;
   measures: number;
   durationSec?: number;
   initialTempoBpm?: number;
-  keySignature?: number;    // nombre d'altérations, -7..+7
-  timeSignature?: string;   // "4/4"
   parts: Part[];
   rehearsalMarks: { label: string; measureIndex: number }[];
-  tags: string[];           // v2
+  tags: string[];           // phase 4
 }
 
 interface Part {
-  index: number;            // ordre dans la partition
-  musicXmlId: string;       // identifiant <score-part id="P1">
-  name: string;             // "Trompette en Sib 1"
-  instrumentName?: string;
+  index: number;
+  musicXmlId: string;       // <score-part id="P1">
+  name: string;
   instrumentId?: string;    // identifiant MuseScore (ex. "bb-trumpet")
   midiProgram?: number;
-  staves: number;
-  transposition?: { chromatic: number; diatonic: number; octave: number }; // <transpose> MusicXML
-  hasTab: boolean;
-  hasDrums: boolean;
+  hiddenInSource?: boolean; // masquée dans MuseScore : pas affichée par défaut
 }
 
 /** Ordre de jeu réel, reprises dépliées. */
 interface Timeline {
-  source: 'webmscore' | 'verovio';
+  source: 'webmscore' | 'verovio';   // toujours 'webmscore' aujourd'hui (ADR-017)
   events: TimelineEvent[];
   totalMs: number;
 }
-
 interface TimelineEvent {
   measureIndex: number;     // rang de la mesure dans le MusicXML (0-based)
   startMs: number;          // au tempo d'origine
   durationMs: number;
-  timeSig: { beats: number; beatType: number }; // pour le métronome
-  bpm: number;              // tempo en vigueur au début de la mesure (noire = 1)
-  beatOffsetsMs?: number[]; // début de chaque temps si le tempo change dans la mesure
-}
-
-interface Setlist {
-  id: string;
-  name: string;
-  date?: string;            // ISO 8601, optionnelle
-  createdAt: string;
-  updatedAt: string;
-  items: SetlistItem[];
+  timeSig: { beats: number; beatType: number };
 }
 
 interface SetlistItem {
@@ -193,18 +166,18 @@ interface SetlistItem {
   scoreId: ScoreId;
   note?: string;
   override?: Partial<Pick<ScoreViewState,
-    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch'>>;
+    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference'>>;
 }
 
-/** Réglages mémorisés pour chaque partition. */
+/** Réglages mémorisés pour chaque partition (viewstates.json). */
 interface ScoreViewState {
   scoreId: ScoreId;
-  selectedParts: string[];  // musicXmlId[] ; vide = toutes
+  selectedParts: string[];  // vide = parties par défaut (visibles dans MuseScore)
   transposeSemitones: number;
   transposeOctave: number;
   concertPitch: boolean;
   accidentalPreference: 'auto' | 'sharps' | 'flats';
-  zoom: number | 'fit-width';
+  zoom: number | 'auto';    // facteur relatif au zoom automatique
   layoutMode: 'pages' | 'continuous';
   lastPage: number;
   lastMeasureIndex?: number;
@@ -213,183 +186,176 @@ interface ScoreViewState {
 }
 ```
 
+✏️ Écarts avec le modèle d'origine : pas de `arranger`, `keySignature`, `timeSignature` dans `Score` ; `Part` sans `staves` / `transposition` / `hasTab` / `hasDrums` (lus dans le MusicXML au besoin) ; pas de `bpm` / `beatOffsetsMs` dans la timeline (le métronome bat les temps de la métrique sur la durée de la mesure).
+
+**Paramètres globaux** (`AppSettings`, `src/core/settings.ts`, clé Preferences `settings`, fusionnés avec les valeurs par défaut au chargement) : `appTheme`, `scoreTheme`, `partNames`, `multiRests`, `tapZones`, `swipe`, `keepAwake`, `defaultZoom`, `countInMeasures`, `countInSound`, `metronomeVolume`, `highlightMeasure`, `tapPauses`, `myInstrument` (noms + identifiants d'instruments), `defaultTranspose`, `pedalKeys` (codes de touches par action : `next`, `prev`, `playPause`, `metronome`, `nextPiece`, `previousPiece`), `halfPageTurn`, `defaultLayoutMode`, `readingLine`.
+
 ### 3.2 Stockage sur l'appareil
 
 ```
 Directory.Data/
-├── library.json                    # { schemaVersion, scores: Score[] }
+├── library.json                    # index des partitions
 ├── viewstates.json                 # { [scoreId]: ScoreViewState }
-├── setlists.json                   # { schemaVersion, setlists: Setlist[] }
-├── scores/<scoreId>/
-│   ├── original.mscz               # fichier d'origine (conservé pour refaire l'import)
-│   ├── score.musicxml              # MusicXML complet (sortie de l'import)
-│   ├── timeline.json
-│   └── thumbnail.png
-└── cache/render/<scoreId>/<renderKey>/page-<n>.svg   # cache SVG (vidable)
+├── setlists.json                   # setlists
+└── scores/<scoreId>/
+    ├── original.<ext>              # fichier d'origine (conservé pour le réimport)
+    ├── score.musicxml              # MusicXML complet (sortie de l'import)
+    ├── timeline.json
+    └── thumbnail.png               # si présente dans le .mscz
 ```
 
-- `renderKey` = hash des paramètres de rendu : parties, transposition, zoom, taille d'écran, police, thème de mise en page.
-- Les paramètres globaux sont dans `@capacitor/preferences` (clé `settings`, objet JSON versionné).
-- Les écritures d'index sont **atomiques** : on écrit dans un fichier temporaire, puis on le renomme.
-- `schemaVersion` et des **migrations** sont prévus dès le MVP.
-- Si l'index dépasse quelques centaines de partitions ou si la recherche devient lente, on passe à SQLite (`@capacitor-community/sqlite`) derrière la même interface `LibraryRepository`.
-- iOS : on pourra exposer un dossier « Boîte de réception » dans l'application Fichiers (`UIFileSharingEnabled`, `LSSupportsOpeningDocumentsInPlace`) pour déposer des `.mscz` (v2).
+- Écritures d'index **atomiques** (fichier temporaire puis renommage), file d'attente d'écritures par dépôt.
+- ⬜ Cache disque des SVG (phase 3) : aujourd'hui, les pages rendues sont gardées **en mémoire** jusqu'à la mise en page suivante.
+- Migrations : par `importerVersion` pour les partitions (réimport) et par fusion avec les valeurs par défaut pour les paramètres et les réglages de partition.
+- Passage à SQLite derrière les mêmes interfaces si le volume l'exige.
 
-## 4. Pipeline d'import
+## 4. Pipeline d'import (`src/core/import/importScore.ts`)
 
-Exécuté dans `import.worker.ts`. webmscore n'est chargé que dans ce worker, et seulement quand on importe.
+webmscore n'est chargé qu'au premier import (script `webmscore.js` + fichiers `webmscore.lib.*` servis à la racine des assets, copiés par `scripts/copy-webmscore.mjs`).
 
-1. **Lecture** des octets du fichier (sélecteur ou « Ouvrir avec »).
-2. **Empreinte** SHA-256 (WebCrypto `crypto.subtle.digest`) → détection des doublons.
-3. **Détection du format** : extension + signature (`PK` = ZIP). Pour un ZIP, on regarde le contenu : `.mscx` → mscz ; `META-INF/container.xml` qui pointe un `.musicxml` → mxl.
-4. **Si mscz/mscx** :
-   1. **Un Web Worker webmscore neuf pour chaque fichier** : une erreur WASM rend l'instance inutilisable (phase 0). `await WebMscore.ready` puis `WebMscore.load('mscz', data, fonts)`. Les fichiers `webmscore.lib.wasm`, `.mem.wasm` et `.data` sont servis **à côté de la page HTML**, à la racine des assets web.
-   2. `metadata()` → titre, compositeur, parties, tempo, mesures, version de MuseScore.
-   3. `saveXml()` → **MusicXML complet** (toutes les parties).
-   4. `savePositions(false)` → **timeline** des mesures dans l'ordre de jeu, reprises et voltas dépliées (validé en phase 0 : `events[].elid` = rang de la mesure, `events[].position` = ms). ⚠️ **Ne jamais appeler `savePositions(true)`** (positions des segments) : il plante systématiquement. On l'enrichit avec la **métrique** et le **tempo** de chaque mesure, lus dans le MusicXML (`<time>`, `<sound tempo>`, `<metronome>`), pour le métronome.
-   5. Miniature : on extrait directement `Thumbnails/thumbnail.png` de l'archive avec fflate (rapide). Sinon `savePng(0)`.
-   6. `destroy()` pour libérer la mémoire du worker.
-5. **Si MusicXML/MXL** : on analyse le XML directement (titre, `<part-list>`, tempo). La timeline sera calculée par Verovio (`renderToTimemap({ includeMeasures: true })`) à la première ouverture, puis mise en cache.
-6. **Post-traitement du MusicXML** : extraction des marques de répétition (`<rehearsal>`) et des transpositions de parties (`<transpose>`).
-7. **Écriture** des fichiers puis mise à jour de l'index.
-8. **Erreurs** : chaque étape lève une erreur typée (`UnsupportedFormat`, `UnsupportedMuseScoreVersion`, `CorruptedFile`, `OutOfMemory`…). L'interface affiche un message adapté.
-
-Objectif de performance : l'import d'une partition typique (environ 10 parties, 150 mesures) prend **moins de 10 s** sur un téléphone milieu de gamme récent. L'initialisation de webmscore est comprise dans ce temps.
+1. **Lecture** des octets (sélecteur de fichiers, ou URL `content://` / `file://` d'un intent « Ouvrir avec »).
+2. **Empreinte** SHA-256 (WebCrypto) → un fichier identique n'est pas réimporté.
+3. **Détection du format** : extension + signature (`PK` = ZIP ; contenu `.mscx` → mscz, `META-INF/container.xml` → mxl).
+4. **Parties masquées** (mscz/mscx, ADR-018) : une copie du fichier rend visibles toutes les parties et portées ; les index des parties masquées sont mémorisés (`hiddenInSource`).
+5. **Conversion par webmscore** (tous les formats, ADR-017) : `WebMscore.load(format, bytes)` démarre **un worker neuf par fichier** (une erreur WASM rend l'instance inutilisable), puis `metadata()`, `saveXml()` (MusicXML complet), `savePositions(false)` (positions des mesures dans l'ordre de jeu, reprises dépliées). ⚠️ **Jamais `savePositions(true)`** (plante). `destroy()` termine le worker.
+6. **Timeline** : positions webmscore + **métrique de chaque mesure** lue dans le MusicXML.
+7. **Métadonnées** : titre (textes d'exemple de MuseScore ignorés), compositeur, parties, mesures, durée, tempo initial, marques de répétition, version de MuseScore.
+8. **Miniature** : `Thumbnails/thumbnail.png` de l'archive (fflate).
+9. **Écriture** des fichiers puis de l'index.
+10. **Erreurs typées** (`unsupportedFormat`, `emptyFile`, `engineFailed`, `invalidMusicXml`) → message adapté dans l'interface.
+11. **Réimport automatique** : au chargement de la bibliothèque, les partitions dont `importerVersion < IMPORTER_VERSION` sont reconverties depuis `original.<ext>` (identifiant, titre et réglages conservés).
 
 ## 5. Pipeline de rendu
 
-Exécuté dans `render.worker.ts` (Verovio WASM). Verovio reste chargé tant qu'une partition est ouverte.
+Exécuté dans `render.worker.ts` (Verovio WASM, via Comlink). Une instance par partition ouverte, terminée à la fermeture.
 
-1. **Filtrage des parties** (`core/musicxml`) : DOMParser dans le worker (ou un parseur XML léger si `DOMParser` manque dans le worker). On supprime les `<score-part>` et `<part>` non sélectionnés, ainsi que les `<part-group>` devenus vides. **On recopie les indications système** (tempo, métronome, repères, sauts) de la première partie vers la première partie conservée (ADR-012 ; prototype `spikes/shared/filter-parts.mjs`). Option « noms d'instruments » : on retire `<part-name-display>` et `<part-abbreviation-display>`, ou on met `print-object="no"`, à valider. Le résultat est mis en cache en mémoire par combinaison de parties.
-1 bis. **Silences multi-mesures** (vue filtrée) : on regroupe les mesures de silence consécutives en ajoutant `<measure-style><multiple-rest>N</multiple-rest></measure-style>`. MuseScore n'en exporte pas, mais Verovio les dessine (validé en phase 0). On coupe le groupe aux repères, changements d'armure, de métrique ou de tempo, reprises, voltas et doubles barres. Verovio **fusionne** les N mesures en une seule : la table des mesures (§6.1) doit le refléter.
-2. **Options Verovio** calculées à partir de l'écran et du ViewState :
-   - `pageWidth` / `pageHeight` : dimensions de la zone d'affichage converties en unités Verovio, en tenant compte de `scale` (le zoom) ;
-   - `scale` : zoom ;
-   - `breaks: 'auto'` : mise en page **toujours** adaptée à l'écran. Les sauts d'origine sont ignorés (ADR-002) ;
-   - `adjustPageHeight: true` en mode Continu (une seule « page » longue, ou des pages enchaînées sans marge) ;
-   - `transpose` : intervalle ou tonalité cible (*syntaxe exacte à confirmer dans la doc Verovio, chapitre Transposition*) ; `transposeToSoundingPitch` pour la bascule ut / hauteur écrite ;
-   - `font` : Leipzig, Bravura, ou une police ajoutée via `fontAddCustom` ;
-   - options d'affichage : numéros de mesure, en-tête/pied de page, silences multi-mesures (*à vérifier : prise en charge de `<multiple-rest>` à l'import MusicXML et option de regroupement*).
-3. `loadData(xml)` → `getPageCount()`.
-4. **Rendu paresseux** : `renderToSVG(n)` pour la page courante, puis **pré-rendu** de n+1 et n−1 en arrière-plan. Cache LRU en mémoire (environ 10 pages) et cache disque optionnel.
-5. **Index des mesures** : après chaque rendu de page, on relève l'ordre des `g.measure` (identifiants) → table `measureIndex ↔ { page, id }`. Les rectangles exacts (bbox) sont lus côté UI dans le DOM SVG.
-6. **Relayout** (`redoLayout()`) déclenché quand : l'orientation ou la taille d'écran change, le zoom est validé (fin du pincement + 300 ms d'anti-rebond), ou un paramètre d'affichage change. Changer les parties ou la transposition demande un nouveau `loadData`.
+1. **XML affiché** (`prepareDisplay`, thread principal) :
+   - **filtrage des parties** : on retire les `<score-part>` / `<part>` non sélectionnés et les groupes vides, en **recopiant les indications système** (tempo, métronome, repères, sauts) vers la première partie conservée (ADR-012) ;
+   - **silences multi-mesures** regroupés (`<multiple-rest>`), coupés aux repères, changements d'armure/métrique/tempo, reprises, voltas et doubles barres ; la table « mesure MusicXML → mesure rendue » en tient compte ;
+   - **noms d'instruments** masqués pour une partie seule (option) ;
+   - **tonalité** de la première partie affichée (et `<transpose><chromatic>` pour la hauteur réelle).
+2. **Options Verovio** (`verovioOptions`) : `scale` (zoom automatique selon le nombre de portées × zoom de la partition), `pageWidth` / `pageHeight` = zone d'affichage en unités Verovio, marges 40, `breaks: 'auto'` (ADR-002), `adjustPageHeight` **vrai en mode Continu** (ADR-019), `header` / `footer: 'none'`, `systemDivider: 'none'`, `svgViewBox`, `transpose`, `transposeToSoundingPitch` (hauteur réelle).
+3. **Transposition** (ADR-020) : quand la tonalité est connue, `transpose` reçoit un **intervalle** (`m2`, `-A1`, `M9`, `-d2`…) calculé à partir de la tonalité d'arrivée choisie (préférence auto/♯/♭) ; sinon un nombre de demi-tons. Comportement vérifié contre Verovio 6.4 dans les tests unitaires.
+4. `loadData(xml)` quand le contenu change (parties, transposition, options d'affichage) ; `redoLayout()` quand seule la géométrie change (taille, rotation, zoom, mode Pages/Continu). Après chaque mise en page : nombre de pages, identifiants des mesures (`getMEI()`), page de chaque mesure (`getPageWithElement`).
+5. **Rendu paresseux** :
+   - mode **Pages** : page courante puis pré-rendu de n+1, n−1, n+2 ; cache en mémoire jusqu'à la mise en page suivante ;
+   - mode **Continu** : pages empilées dans un défilement natif ; seules les pages proches de la position de lecture sont dans le DOM (4 rendues, 8 gardées), les autres sont des emplacements de hauteur mesurée ou estimée ; ancrage du défilement géré par la vue (`overflow-anchor: none`).
+6. **Position conservée** à chaque nouvelle mise en page : première mesure de la page (mode Pages) ou première mesure à l'écran (mode Continu), retrouvée avec `getPageWithElement`.
 
-**Thèmes** : le SVG est inséré dans le DOM (pas en `<img>`), ce qui permet de le styler en CSS (couleur de trait via `currentColor` si Verovio le produit, sinon `fill`/`stroke` surchargés). Le mode sombre se fait par feuille de style. En dernier recours : `filter: invert(1) hue-rotate(180deg)`.
+**Thèmes** : le SVG est inséré dans le DOM ; Verovio dessine en `currentColor`, la couleur vient de variables CSS par thème de partition (`data-score-theme`).
 
-**Objectifs de performance** (téléphone milieu de gamme) :
-- ouverture d'une partition déjà importée → première page affichée en **moins de 1,5 s** ;
-- tournage de page avec page pré-rendue en **moins de 100 ms** ;
-- relayout après zoom en **moins de 1 s** pour une partie seule de 200 mesures.
+**Objectifs de performance** (téléphone milieu de gamme, à mesurer) : première page en moins de 1,5 s ; tournage de page pré-rendue en moins de 100 ms ; relayout après zoom en moins de 1 s pour une partie seule de 200 mesures. Mesures e2e (PC, Chromium) : ouverture du morceau suivant d'une setlist ≈ 1,5 s, ≈ 0,4 s pré-chargé.
 
 ## 6. Défilement automatique et métronome
 
 ### 6.1 Timeline
 
-- **Source principale** : webmscore à l'import. Les positions MuseScore donnent l'ordre de jeu réel, avec reprises, voltas, D.C./D.S./Coda et changements de tempo.
-- **Source de repli** : la timemap de Verovio (`renderToTimemap({ includeMeasures: true })`) pour les fichiers MusicXML. Le dépliage des reprises par Verovio est à vérifier. Sinon, on implémente nous-mêmes le dépliage des reprises MusicXML (`<repeat>`, `<ending>`, `<sound dacapo/dalsegno/coda/fine>`).
-- **Correspondance des mesures** : `measureIndex` = rang de la mesure dans le MusicXML (0-based). Côté Verovio, c'est le rang du `<measure>` dans le MEI (`getMEI()`). Dans la timemap, les mesures répétées ont un identifiant suffixé `-rend2`, `-rend3`… qu'il faut retirer. L'export de webmscore garde l'ordre des mesures. Attention aux **anacrouses** et aux **mesures numérotées de façon irrégulière** : on se base toujours sur le rang, jamais sur le numéro affiché.
+- **Source** : positions webmscore à l'import (ordre de jeu réel : reprises, voltas, D.C./D.S./Coda, changements de tempo), pour tous les formats (ADR-017).
+- **Correspondance des mesures** : `measureIndex` = rang de la mesure dans le MusicXML (0-based) → mesure rendue par Verovio (table tenant compte des silences multi-mesures fusionnés) → identifiant SVG → page. On se base toujours sur le rang, jamais sur le numéro affiché ; « Aller à » accepte le numéro imprimé (`number` du MusicXML) ou le rang.
 
 ### 6.2 Horloge partagée (`PlaybackClock`)
 
-Le défilement automatique et le métronome lisent la **même horloge**, ce qui garantit qu'ils restent synchronisés :
-- temps partition = `(maintenant − départ) × tempoFactor + offset`. Changer le facteur de tempo recalcule l'offset, sans saut ;
-- source de temps : `AudioContext.currentTime` quand le métronome est actif (précis, et c'est l'horloge qui produit le son), sinon `performance.now()`.
+Le défilement et le métronome lisent la **même horloge** : temps partition = temps écoulé × facteur de tempo + décalage ; changer le facteur recalcule le décalage, sans saut. Source de temps : `AudioContext.currentTime`.
 
-### 6.3 Moteur de défilement (`AutoScrollEngine`)
+### 6.3 Moteur (`PlaybackEngine`) et défilement
 
-```
-t_partition = (now - t_départ) × tempoFactor + t_offset
-événement courant = recherche dichotomique dans timeline.events
-progression dans la mesure = (t_partition - start) / duration
-position cible = interpolation entre la bbox de la mesure courante et celle de la suivante
-```
+- Chaque image (`requestAnimationFrame`) : événement courant de la timeline (recherche dichotomique) et progression dans la mesure → `onFrame(index, progression)`.
+- **Mode Pages** : surlignage de la mesure courante ; la page tourne quand la moitié de la dernière mesure de la page est jouée ; saut arrière immédiat pour une reprise. ⬜ Avance de N mesures.
+- **Mode Continu** (ADR-019) : position cible = haut du système de la mesure courante, interpolé vers le système suivant selon (rang de la mesure dans le système + progression) / nombre de mesures du système ; `scrollTop` cible = cette hauteur − ligne de lecture × hauteur d'écran. Lissage par un **ressort à amortissement critique** (solution exacte sur le pas de temps : stable et sans oscillation à toute fréquence d'images ; retard ≈ 2v/ω, ω = 5 s⁻¹) ; saut immédiat si la cible recule de plus de 10 % d'écran (reprise) ou avance de plus de 75 % ; suivi suspendu 1,5 s après un défilement au doigt. Le surlignage est réappliqué quand la page de la mesure courante vient d'être rendue.
+- **Départ** : position de pause si elle est à l'écran, sinon première mesure de la page (Pages) ou première mesure à l'écran (Continu), ou mesure choisie par « Aller à ».
+- **Décompte** : N mesures de la métrique de la première mesure jouée, clic sonore en option même métronome coupé.
+- **Pause** : toucher (option), pédalier, passage en arrière-plan.
 
-- L'horloge est `requestAnimationFrame` + `performance.now()`. Changer le tempo pendant la lecture recalcule `t_offset`, ce qui évite les sauts.
-- **Mode Continu** : `scrollTop` cible = y du système courant − hauteur de lecture, avec un lissage critique-amorti (pas de saccades au changement de système).
-- **Mode Pages** : on tourne la page quand la mesure courante (+ l'avance de N mesures) se trouve sur la page suivante. En mode demi-page, on déclenche le demi-tournage quand la lecture passe la moitié de la page.
-- **Saut arrière** (reprise) : si la mesure suivante est sur une page précédente, on y retourne immédiatement.
-- **Décompte** : N mesures dont la métrique et le tempo sont ceux de la première mesure jouée. Le clic passe par le métronome (voir 6.4).
-- **Pause** au toucher, au pédalier, ou quand l'application passe en arrière-plan.
+### 6.4 Métronome
 
-### 6.4 Métronome (`MetronomeEngine`)
-
-Il n'y a **aucune lecture audio de la partition** (ADR-010). Le métronome est le seul son de l'application.
-
-- **Génération du son** : Web Audio. Un `OscillatorNode` court (environ 30 ms, enveloppe via `GainNode`) avec une fréquence plus aiguë pour l'accent du premier temps. Aucun fichier audio.
-- **Ordonnancement précis** : la technique « lookahead scheduler » (minuterie toutes les ~25 ms qui programme à l'avance les clics des ~100 ms suivantes avec `osc.start(t)`). On ne déclenche jamais de son directement depuis un `setTimeout`, qui n'est pas assez précis.
-- **Temps des clics** :
-  - mode synchronisé : calculés à partir de la timeline (`startMs`, `timeSig`, `beatOffsetsMs`) divisée par le facteur de tempo. Les reprises sont donc gérées naturellement. Pour les métriques composées (6/8, 9/8, 12/8), on bat à la noire pointée par défaut, ce qui est réglable plus tard ;
-  - mode seul : à partir du `bpm` et de la `timeSig` de la mesure affichée, ou d'un BPM saisi par l'utilisateur.
-- **Indicateur visuel** : déclenché par `requestAnimationFrame`, en comparant `AudioContext.currentTime` aux temps programmés. Le flash est ainsi aligné avec le son.
-- **Contraintes plateforme** : l'`AudioContext` doit être créé ou repris après un geste de l'utilisateur (tap sur ▶ ou sur le bouton métronome). iOS (phase 3) : le bouton silencieux coupe Web Audio, ce qui sera signalé dans l'interface ou contourné par une session audio native.
-- **Latence** : sur Android, la latence de sortie (`AudioContext.outputLatency` / `baseLatency`) est compensée en avançant les clics, avec un réglage manuel de calibration (v2).
+Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
+- **Son** : Web Audio, oscillateur court avec enveloppe, fréquence plus aiguë pour l'accent du premier temps. Aucun fichier audio.
+- **Ordonnancement** : « lookahead scheduler » (minuterie toutes les 25 ms qui programme les clics des 120 ms suivantes avec `osc.start(t)`). Jamais de son déclenché par `setTimeout`.
+- **Temps des clics** : calculés depuis la timeline (métrique de chaque mesure, reprises comprises) et le facteur de tempo.
+- **Métronome seul** : le même moteur suit la timeline depuis la première mesure de la page affichée, sans décompte, surlignage ni tournage.
+- **Indicateur visuel** : point clignotant à chaque temps.
+- ⬜ Compensation de latence (`outputLatency`), subdivisions, BPM saisi.
 
 ## 7. Entrées utilisateur
 
-- **Gestes** (Ionic Gesture / pointer events) : tap par zones, balayage horizontal, pincement (CSS `transform: scale` pendant le geste, puis relayout Verovio à la fin), défilement natif en mode Continu.
-- **Clavier / pédalier** : écouteur `keydown` global sur l'écran Visualisation. La table de correspondance est configurable (`ArrowRight`, `ArrowDown`, `PageDown`, `Space`, `Enter` → suivant ; `ArrowLeft`, `ArrowUp`, `PageUp` → précédent). Un écran « appuyez sur votre pédale » capture le `code` de la touche. *À tester* : réception des touches d'un clavier Bluetooth dans la WebView Android/iOS quand aucun champ n'a le focus, et masquage du clavier virtuel.
-- **Actions du pédalier** : page suivante, page précédente, lecture/pause, métronome marche/arrêt, morceau suivant (setlist). Chaque action peut être associée à une touche, ou à un appui long.
-- **Mode verrouillé** : seuls les tournages de page (zones + pédalier) restent actifs.
+- **Gestes** (`usePageGestures`, pointer events) : tap par zones (tiers gauche/droit = précédent/suivant, centre = barres d'outils), balayage horizontal, pincement (CSS `transform: scale` pendant le geste, nouvelle mise en page à la fin). En mode Continu, la zone de partition a `touch-action: pan-y` : le défilement vertical est natif, les taps, balayages horizontaux et pincements restent en JS (pincement à vérifier sur téléphone).
+- **Appuis longs** (`useLongPress`) : 0,6 s sur le métronome = métronome seul ; 0,8 s sur le cadenas = déverrouillage.
+- **Clavier / pédalier** : écouteur `keydown` global sur la Visualisation (ignoré dans les champs de saisie et les modales), table `KeyboardEvent.code` → action configurable (`src/core/navigation/pedalKeys.ts`) :
+
+| Action | Touches par défaut |
+|---|---|
+| Page suivante (Continu : un écran plus bas) | `ArrowRight`, `ArrowDown`, `PageDown`, `Space`, `Enter`, `NumpadEnter` |
+| Page précédente | `ArrowLeft`, `ArrowUp`, `PageUp`, `Backspace` |
+| Lecture / pause | `KeyP`, `MediaPlayPause` |
+| Métronome marche/arrêt | `KeyM` |
+| Morceau suivant / précédent (setlist) | `MediaTrackNext` / `MediaTrackPrevious` |
+
+  Une touche n'appartient qu'à une action ; des paramètres enregistrés avant l'ajout d'une action reçoivent ses touches par défaut, sauf celles déjà prises. ✏️ Pas d'action sur appui long au pédalier. ⚠️ Réception des touches d'un vrai pédalier Bluetooth dans la WebView Android non vérifiée.
+- **Mode verrouillé** : seuls les tournages de page (zones, balayage, défilement natif) et le pédalier restent actifs ; pas de pincement.
 
 ## 8. Intégration native
 
-| Besoin | Android | iOS |
+| Besoin | Android (fait) | iOS (phase 3) |
 |---|---|---|
-| Ouvrir avec / partager vers | `intent-filter` `ACTION_VIEW` / `ACTION_SEND` (MIME `application/x-musescore`, `application/vnd.recordare.musicxml+xml`, `application/vnd.recordare.musicxml`, `application/octet-stream` + motif d'extension) | `CFBundleDocumentTypes` + `UTImportedTypeDeclarations` (UTI pour `.mscz`, `.mscx`, `.mxl`, `.musicxml`) |
-| Écran allumé | `FLAG_KEEP_SCREEN_ON` (plugin) | `isIdleTimerDisabled` (plugin) |
-| Réseau | **Retirer la permission `INTERNET`** si possible (l'application est 100 % hors ligne ; Capacitor sert les fichiers en local) | Pas de réseau nécessaire |
+| Ouvrir avec | ✅ `intent-filter` `ACTION_VIEW` (`content`/`file`, MIME `application/x-musescore`, MusicXML, `octet-stream`, `zip`, `xml`…) ; le contenu est vérifié avant l'import. ⚠️ Non essayé sur téléphone | `CFBundleDocumentTypes` + UTI |
+| Partager vers | ⬜ `ACTION_SEND` | Extension de partage |
+| Écran allumé | ✅ plugin keep-awake | plugin |
+| Réseau | ✏️ La permission `INTERNET` est encore déclarée (défaut de Capacitor) ; l'application ne fait aucun appel réseau. ⬜ La retirer avant publication | Pas de réseau |
 | Stockage | Stockage interne de l'application | `Library/` ou `Documents/` |
 
 ## 9. Setlists
 
-- Stockage : `setlists.json` via `SetlistRepository`, avec des écritures atomiques et un `schemaVersion`.
-- Les entrées référencent les partitions par `scoreId`. Quand on supprime une partition, ses entrées sont retirées des setlists, après un avertissement dans l'interface.
-- **Ouverture en mode setlist** : la route de l'écran Visualisation reçoit `setlistId` + `itemId`. On calcule les réglages effectifs ainsi : défauts globaux ← réglages de la partition ← surcharge de l'entrée. Les changements faits pendant la lecture en mode setlist sont enregistrés **dans la surcharge de l'entrée** s'ils portent sur les instruments ou la transposition, et dans les réglages de la partition sinon (zoom, page…).
-- **Pré-chargement** : pendant la lecture d'un morceau, le MusicXML filtré du morceau suivant est préparé en arrière-plan. La première page du suivant s'affiche ainsi en moins de 500 ms.
-- Durée totale estimée : somme des `Timeline.totalMs`.
+- Stockage : `setlists.json` via `SetlistRepository` (écritures atomiques).
+- Les entrées référencent les partitions par `scoreId`. Supprimer une partition retire ses entrées des setlists, avec un message listant les setlists concernées.
+- **Mode setlist** : route `/viewer/:scoreId?setlist=…&item=…`. Réglages effectifs = réglages de la partition ← surcharge de l'entrée. En mode setlist, les changements d'instruments et de transposition (préférence ♯/♭ comprise) vont **dans la surcharge** ; zoom, page, mode d'affichage, tempo vont dans les réglages de la partition. Changer de morceau remonte l'écran de visualisation.
+- **Pré-chargement** (ADR-021) : quand le morceau courant est affiché, le suivant est préparé dans un second worker Verovio (fichiers, XML affiché, mise en page, première page). Un seul emplacement. Ouverture ≈ 0,4 s au lieu de ≈ 1,5 s (e2e). ⬜ Mémoire à mesurer sur téléphone.
+- Durée totale : somme des durées des partitions.
 
 ## 10. Fonctionnement hors ligne
 
-- Tous les fichiers (JS, WASM webmscore/Verovio, polices SMuFL et texte) sont **embarqués dans l'application**. Aucun CDN.
-- Pas de télémétrie, pas d'analytics, pas d'appel réseau.
-- Version web/PWA (développement, bonus) : service worker (Workbox) pour mettre en cache tous les fichiers.
+- Tous les fichiers (JS, WASM webmscore/Verovio, polices) sont **embarqués dans l'application**. Aucun CDN, pas de télémétrie, aucun appel réseau.
+- ⬜ Version PWA (service worker) : non prévue pour l'instant.
 
 ## 11. Internationalisation (ADR-009)
 
-- **Anglais = langue de référence** : `src/i18n/locales/en/` fait foi, les autres langues sont des traductions.
-- Bibliothèques : `i18next` + `react-i18next`. Un fichier JSON par espace de noms (`library`, `viewer`, `settings`, `setlists`, `errors`, `music`).
-- **Aucune chaîne visible en dur** dans le code : la règle `eslint-plugin-i18next` (`no-literal-string`) bloque la CI.
-- Pluriels et variables avec le format ICU d'i18next (`{{count}} scores`).
-- Dates, nombres et durées formatés via `Intl.DateTimeFormat`, `Intl.NumberFormat` et `Intl.RelativeTimeFormat`, selon la langue.
-- **Vocabulaire musical** dans l'espace de noms `music` : noms de notes et de tonalités, avec un réglage « notation » indépendant de la langue (C D E / Do Ré Mi / C D E H). Les noms d'instruments viennent du fichier et ne sont pas traduits.
-- Langue : celle du système si elle est disponible, sinon l'anglais. Choix manuel possible dans les paramètres.
-- CSS en propriétés logiques (`margin-inline-start`, `padding-inline`…) pour rester compatible avec les langues de droite à gauche.
-- Les libellés doivent supporter environ +40 % de longueur (l'allemand et le français sont plus longs que l'anglais). On évite les largeurs fixes.
-- Plus tard, on pourra brancher une plateforme de traduction collaborative (Weblate, compatible F-Droid ou Crowdin).
+- **Anglais = langue de référence** : `src/i18n/locales/en/` (`common`, `library`, `viewer`, `settings`, `setlists`).
+- **Aucune chaîne visible en dur** : la règle `i18next/no-literal-string` bloque le lint (et la CI). `src/i18n/i18n.test.ts` vérifie la complétude des langues.
+- Pluriels i18next (`_one` / `_other`) ; durées formatées via `Intl`.
+- Noms de tonalités en notation anglaise (C, D♭…) dans le code (`core/music/keys.ts`) ; ⬜ notation localisable (Do Ré Mi, C D E H) en phase 3.
+- ⬜ Traduction française et choix de la langue (phase 3) ; plateforme de traduction ensuite.
+- Libellés prévus pour supporter +40 % de longueur ; CSS en propriétés logiques quand c'est possible.
 
 ## 12. Taille et ressources
 
-| Élément | Taille estimée |
+| Élément | Taille |
 |---|---|
 | webmscore (WASM + JS + données) | **~18 Mo** (mesuré en phase 0) |
-| Verovio (WASM intégré au JS) | **~8,4 Mo** (2,5 Mo gzip, mesuré) |
+| Verovio (WASM intégré au JS) | **~8,4 Mo** (2,5 Mo gzip) |
 | Application (JS/CSS) | moins de 2 Mo |
 | **Total de l'application installée** | **environ 30 Mo** |
 
-Mémoire : webmscore ne doit être chargé **qu'à l'import** et libéré ensuite (on termine le worker). Verovio n'est chargé que dans l'écran Visualisation. Il faut surveiller les gros conducteurs (30 parties et plus) sur les appareils modestes. Raison supplémentaire (constat de la phase 0) : sous Android, une application gourmande est tuée quand le sélecteur de fichiers passe au premier plan.
+Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, terminé ensuite). Verovio : une instance par partition ouverte, plus une pour le morceau suivant en setlist. En mode Continu, le nombre de pages dans le DOM est borné. À surveiller sur téléphone : gros conducteurs (30 parties et plus), appareils modestes, et Android qui tue une application gourmande quand le sélecteur de fichiers passe au premier plan.
 
 ## 13. Qualité et tests
 
-- **Corpus de test** (`tests/fixtures/scores`) : fichiers libres de droits (domaine public ou créés pour le projet) couvrant **MuseScore 3.0, 3.2, 3.5, 3.6, 4.0, 4.2, 4.4 et la dernière version** (fichiers réels fournis par le porteur du projet, en plus), plus du MusicXML d'autres logiciels. Il doit contenir : reprises et voltas, D.S. al Coda, changements de tempo et de mesure, anacrouse, instruments transpositeurs, piano (2 portées), batterie, tablature, paroles, grilles d'accords, silences multi-mesures, marques de répétition.
-- **Tests unitaires** : filtrage MusicXML, timeline (dépliage des reprises, recherche temps → mesure), calcul des temps du métronome (métriques simples et composées, changements de tempo, facteur de tempo), réglages effectifs des setlists, calcul des options Verovio, migrations du stockage, correspondance des touches, présence de toutes les clés i18n.
-- **Tests de non-régression visuels** : SVG de référence pour chaque fichier du corpus (comparaison d'images avec Playwright).
-- **Tests E2E** (Playwright, version web) : importer → ouvrir → choisir une partie → transposer → défilement automatique.
-- **Tests sur appareils** (manuels, avec une checklist) : Android milieu de gamme, tablette Android, iPhone, iPad. On teste le pédalier Bluetooth, la rotation et l'ouverture depuis une autre application.
+- **Corpus** (`test-scores/`, non versionné, fichiers du porteur) : MuseScore 2.1, 3.6.2, 4.5.2, 4.6.2 ; reprises et voltas, nombreux changements de tempo et de métrique, marques de répétition, instruments transpositeurs, batterie, parties masquées. ⬜ À compléter : grilles d'accords, paroles, D.S. al Coda, piano, tablature.
+- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 160 tests) : filtrage MusicXML, silences multi-mesures, parties masquées, formats et import, « Ouvrir avec », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n.
+- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`. Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
+- ⬜ **Tests de non-régression visuels** (phase 3).
+- **Tests sur appareil** (manuels) : voir [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 
 ## 14. Licence et conformité
 
-- Licence de l'application : **GPL-3.0-or-later** (à cause de webmscore). Voir [DECISIONS.md](DECISIONS.md), ADR-003.
-- Écran « Licences » dans l'application : texte de la GPL et des licences tierces (LGPL de Verovio, OFL des polices, MIT/BSD des dépendances JS), générées automatiquement à la compilation (`license-checker` ou un plugin Vite).
-- Lien vers le dépôt des sources dans « À propos ».
-- Ne pas utiliser le nom ni le logo « MuseScore » dans le nom, l'icône ou la fiche store. Formulation autorisée : « Lit les fichiers .mscz ».
+- Licence de l'application : **GPL-3.0-or-later** (à cause de webmscore), fichier `LICENSE`. Voir ADR-003. Le dépôt est privé pendant le développement (écart noté dans l'ADR-003).
+- Écran « Licenses » dans l'application : liste des composants tiers et de leurs licences (`src/app/thirdPartyLicenses.ts`, maintenue à la main). ✏️ Pas de génération automatique.
+- Lien vers le dépôt des sources dans « About ».
+- Ne pas utiliser le nom ni le logo « MuseScore » dans le nom, l'icône ou la fiche store. Mention de marque dans « About ».
+
+## 15. Intégration continue et distribution
+
+- **CI** (`.github/workflows/ci.yml`, dépôt privé `ArtiskOnGit/mscz_viewer`), à chaque push sur `main` et à chaque pull request :
+  1. job *web* : `npm ci`, lint, typecheck, tests unitaires, build web (artefact `web-dist`) ;
+  2. job *android* : build web, `npx cap sync android`, `./gradlew assembleDebug` (JDK 21) → artefact **`pupitre-debug-apk`** (14 jours).
+- **Signature** : clé de debug fixe restaurée depuis le secret `ANDROID_DEBUG_KEYSTORE_B64` (ADR-016), pour que chaque APK s'installe par-dessus le précédent.
+- **Installation** : `gh run download --name pupitre-debug-apk`, copie de `app-debug.apk` sur le téléphone (voir README).
+- ⬜ Phase 3 : APK/AAB de release signé avec une clé de publication, GitHub Releases, F-Droid, Google Play ; build iOS sur runner macOS.
