@@ -44,3 +44,6 @@ spikes/device-test-dist/
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# APK de debug téléchargés depuis la CI
+/apk/
