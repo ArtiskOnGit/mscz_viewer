@@ -1,4 +1,20 @@
 {
   "title": "Score",
-  "notFound": "This score could not be found."
+  "notFound": "This score could not be found.",
+  "loading": "Preparing the score…",
+  "renderError": "The score could not be displayed.",
+  "page": "{{page}} / {{count}}",
+  "previousPage": "Previous page",
+  "nextPage": "Next page",
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "zoomReset": "Automatic zoom",
+  "parts": {
+    "button": "Instruments",
+    "title": "Instruments to display",
+    "all": "All (full score)",
+    "staves_one": "{{count}} staff",
+    "staves_other": "{{count}} staves",
+    "apply": "Show"
+  }
 }

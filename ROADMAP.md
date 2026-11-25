@@ -45,26 +45,26 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - ✅ **i18n dès le premier écran** : i18next + react-i18next, fichiers `en` de référence, règle de lint « pas de chaîne en dur », test de complétude des langues.
 - ✅ CI GitHub Actions (dépôt privé `ArtiskOnGit/mscz_viewer`) : lint, typecheck, tests, build web, **APK de debug signé avec une clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`), donc les mises à jour s'installent sans désinstaller.
 - ✅ Navigation entre les 3 écrans (Bibliothèque avec onglets Partitions/Setlists, Visualisation, Paramètres), thème clair/sombre (système).
-- ⬜ `LibraryRepository` / `ViewStateRepository` : index JSON, fichiers, migrations, écritures atomiques.
+- ✅ `LibraryRepository` / `ViewStateRepository` : index JSON, fichiers, migrations, écritures atomiques.
 
 **Bibliothèque**
-- ⬜ Bouton Import (sélecteur de fichiers, multi-sélection).
-- ⬜ Worker d'import webmscore : MusicXML, métadonnées, miniature, timeline (avec métrique et tempo).
-- ⬜ Import direct des MusicXML/MXL.
-- ⬜ Liste des partitions avec miniature, titre et compositeur. Recherche et tri.
-- ⬜ Supprimer, renommer, informations.
-- ⬜ Détection des doublons. Messages d'erreur d'import compréhensibles.
+- ✅ Bouton Import (sélecteur de fichiers, multi-sélection).
+- ✅ Import webmscore (un worker par fichier) : MusicXML, métadonnées, miniature, timeline (avec métrique).
+- ✅ Import des MusicXML/MXL (via webmscore aussi, pour une timeline homogène).
+- ✅ Liste des partitions avec miniature, titre et compositeur. Recherche et tri.
+- 🟨 Supprimer, renommer ✅ ; écran d'informations à faire.
+- ✅ Détection des doublons. Messages d'erreur d'import compréhensibles.
 
 **Visualisation**
-- ⬜ Worker de rendu Verovio (mise en page adaptée à l'écran), rendu paresseux et pré-rendu des pages voisines.
-- ⬜ Mode Pages : balayage, zones de tap, boutons, indicateur de page.
-- 🟨 Choix des instruments (sélection multiple, filtrage MusicXML). Module `core/musicxml/filterParts` fait et testé ; reste l'interface.
-- ⬜ Zoom (pincement + boutons, relayout).
-- ⬜ Écran toujours allumé.
-- ⬜ Silences multi-mesures regroupés dans la vue filtrée.
-- ⬜ Survie au sélecteur de fichiers (`appRestoredResult`, chargement différé des moteurs).
+- ✅ Worker de rendu Verovio (mise en page adaptée à l'écran), rendu paresseux et pré-rendu des pages voisines.
+- ✅ Mode Pages : balayage, zones de tap, clavier/pédalier, boutons, indicateur de page ; tap au centre = masquer les barres.
+- ✅ Choix des instruments (sélection multiple, filtrage MusicXML, noms masqués pour une partie seule).
+- ✅ Zoom (pincement + boutons, relayout ; zoom automatique selon le nombre de portées).
+- ✅ Écran toujours allumé.
+- ✅ Silences multi-mesures regroupés (sous-agent, 19 tests).
+- ✅ Survie au sélecteur de fichiers (`appRestoredResult`, chargement différé des moteurs) — à vérifier sur téléphone.
 - ⬜ **Mesures sur téléphone** (reportées de la phase 0) : temps d'import et de rendu, mémoire, pédalier Bluetooth, régularité du métronome.
-- ⬜ Mémorisation par partition : instruments, zoom, page.
+- ✅ Mémorisation par partition : instruments, zoom, page.
 
 **Paramètres (version minimale)**
 - ⬜ Langue, thème, mode d'affichage par défaut, zoom par défaut, écran allumé, « About » + licences open source + lien vers les sources (GPL).

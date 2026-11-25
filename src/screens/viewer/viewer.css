@@ -1,0 +1,38 @@
+.score-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--pupitre-score-bg);
+  touch-action: none; /* gestures are handled in JS (tap zones, swipe, pinch) */
+  user-select: none;
+}
+.score-page {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+}
+.score-page svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--pupitre-score-ink);
+}
+.score-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: var(--ion-color-medium);
+}
+.score-chrome-hidden ion-header,
+.score-chrome-hidden ion-footer {
+  display: none;
+}
+.page-indicator {
+  font-variant-numeric: tabular-nums;
+  min-width: 5em;
+  text-align: center;
+}
