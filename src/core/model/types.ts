@@ -75,6 +75,7 @@ export interface ScoreViewState {
   transposeSemitones: number;
   transposeOctave: number;
   concertPitch: boolean;
+  /** Spelling of the transposed key when it has an enharmonic alternative (D♭/C♯…). */
   accidentalPreference: 'auto' | 'sharps' | 'flats';
   zoom: number | 'auto';
   layoutMode: LayoutMode;
@@ -88,7 +89,7 @@ export interface SetlistItem {
   id: string;
   scoreId: ScoreId;
   note?: string;
-  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch'>>;
+  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference'>>;
 }
 
 export interface Setlist {

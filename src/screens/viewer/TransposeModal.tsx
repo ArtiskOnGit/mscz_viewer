@@ -2,21 +2,25 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IonButton, IonButtons, IonChip, IonContent, IonFooter, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonModal, IonNote,
-  IonTitle, IonToggle, IonToolbar,
+  IonSegment, IonSegmentButton, IonTitle, IonToggle, IonToolbar,
 } from '@ionic/react';
 import { addCircleOutline, removeCircleOutline } from 'ionicons/icons';
-import { keyName, TRANSPOSE_PRESETS, transposeFifths } from '../../core/music/keys';
+import { baseKey, enharmonicKeys, keyName, targetFifths, TRANSPOSE_PRESETS, type AccidentalPreference, type KeySig } from '../../core/music/keys';
 
 export interface TransposeValue {
   transposeSemitones: number;
   transposeOctave: number;
   concertPitch: boolean;
+  accidentalPreference: AccidentalPreference;
 }
+
+const PREFERENCES: AccidentalPreference[] = ['auto', 'sharps', 'flats'];
 
 interface Props {
   isOpen: boolean;
   value: TransposeValue;
-  keySig: { fifths: number; mode: 'major' | 'minor' } | undefined;
+  /** Written key of the score (undefined when unknown, e.g. from a setlist: the ♯/♭ choice is then always offered). */
+  keySig: KeySig | undefined;
   onApply(v: TransposeValue): void;
   onDismiss(): void;
 }
@@ -27,8 +31,17 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
   const { t } = useTranslation(['viewer', 'common']);
   const [draft, setDraft] = useState<TransposeValue>(value);
 
-  const from = keySig && keyName(keySig.fifths, keySig.mode);
-  const to = keySig && keyName(transposeFifths(keySig.fifths, draft.transposeSemitones), keySig.mode);
+  const key = keySig && baseKey(keySig, draft.concertPitch);
+  const total = draft.transposeSemitones + 12 * draft.transposeOctave;
+  const from = key && keyName(key.fifths, key.mode);
+  const to = key && keyName(targetFifths(key.fifths, total, draft.accidentalPreference), key.mode);
+  // Enharmonic alternative (D♭/C♯…): let the user choose the spelling.
+  const choices = key ? enharmonicKeys(key.fifths, total) : [];
+  const showPreference = !key || choices.length > 1;
+  const choiceLabel = (p: AccidentalPreference) => {
+    const name = key && p !== 'auto' ? keyName(targetFifths(key.fifths, total, p), key.mode) : undefined;
+    return name ?? t(`transpose.accidentals.${p}`);
+  };
 
   return (
     <IonModal isOpen={isOpen} onWillPresent={() => setDraft(value)} onDidDismiss={onDismiss}>
@@ -43,7 +56,26 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
           {from && to && (
             <IonItem>
               <IonLabel>{t('transpose.key')}</IonLabel>
-              <IonNote slot="end" data-testid="transpose-key">{t('transpose.keyValue', { from, to, mode: t(`transpose.${keySig!.mode}`) })}</IonNote>
+              <IonNote slot="end" data-testid="transpose-key">{t('transpose.keyValue', { from, to, mode: t(`transpose.${key!.mode}`) })}</IonNote>
+            </IonItem>
+          )}
+          {showPreference && (
+            <IonItem lines="none">
+              <IonLabel className="ion-text-wrap">
+                {t('transpose.accidentals.label')}
+                <IonSegment
+                  value={draft.accidentalPreference}
+                  onIonChange={(e) => setDraft({ ...draft, accidentalPreference: e.detail.value as AccidentalPreference })}
+                  data-testid="accidental-preference"
+                  style={{ marginTop: 6 }}
+                >
+                  {PREFERENCES.map((p) => (
+                    <IonSegmentButton key={p} value={p} data-testid={`accidentals-${p}`}>
+                      <IonLabel>{choiceLabel(p)}</IonLabel>
+                    </IonSegmentButton>
+                  ))}
+                </IonSegment>
+              </IonLabel>
             </IonItem>
           )}
           <Stepper label={t('transpose.semitones')} value={draft.transposeSemitones} min={-11} max={11} testId="transpose-semitones" onChange={(n) => setDraft({ ...draft, transposeSemitones: n })} />
@@ -66,7 +98,7 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
       <IonFooter>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={() => setDraft({ transposeSemitones: 0, transposeOctave: 0, concertPitch: false })}>{t('transpose.reset')}</IonButton>
+            <IonButton onClick={() => setDraft({ transposeSemitones: 0, transposeOctave: 0, concertPitch: false, accidentalPreference: 'auto' })}>{t('transpose.reset')}</IonButton>
           </IonButtons>
           <IonButtons slot="end">
             <IonButton strong onClick={() => onApply(draft)}>{t('transpose.apply')}</IonButton>

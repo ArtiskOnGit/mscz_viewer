@@ -10,22 +10,28 @@ export function effectiveViewState(view: ScoreViewState, override?: SetlistOverr
   return result as unknown as ScoreViewState;
 }
 
-export type TransposeSettings = Pick<ScoreViewState, 'transposeSemitones' | 'transposeOctave' | 'concertPitch'>;
+export type TransposeSettings = Pick<ScoreViewState, 'transposeSemitones' | 'transposeOctave' | 'concertPitch'> &
+  Partial<Pick<ScoreViewState, 'accidentalPreference'>>;
 
 /**
  * Override patch for a transposition chosen for a setlist piece. Same as the score's own settings = no override
  * (undefined values clear the keys, see SetlistRepository.setOverride).
  */
 export function transposeOverride(value: TransposeSettings, base: TransposeSettings): SetlistOverride {
-  const same = value.transposeSemitones === base.transposeSemitones && value.transposeOctave === base.transposeOctave && value.concertPitch === base.concertPitch;
+  const pref = (t: TransposeSettings) => t.accidentalPreference ?? 'auto';
+  const same =
+    value.transposeSemitones === base.transposeSemitones &&
+    value.transposeOctave === base.transposeOctave &&
+    value.concertPitch === base.concertPitch &&
+    pref(value) === pref(base);
   return same
-    ? { transposeSemitones: undefined, transposeOctave: undefined, concertPitch: undefined }
-    : { transposeSemitones: value.transposeSemitones, transposeOctave: value.transposeOctave, concertPitch: value.concertPitch };
+    ? { transposeSemitones: undefined, transposeOctave: undefined, concertPitch: undefined, accidentalPreference: undefined }
+    : { transposeSemitones: value.transposeSemitones, transposeOctave: value.transposeOctave, concertPitch: value.concertPitch, accidentalPreference: pref(value) };
 }
 
 /** The override changes the transposition of the piece. */
 export function hasTransposeOverride(o: SetlistOverride | undefined): boolean {
-  return !!o && (o.transposeSemitones !== undefined || o.transposeOctave !== undefined || o.concertPitch !== undefined);
+  return !!o && (o.transposeSemitones !== undefined || o.transposeOctave !== undefined || o.concertPitch !== undefined || o.accidentalPreference !== undefined);
 }
 
 /** Toolbar/list badge value: " +2", " -15", " C" (concert pitch), "" (none). */

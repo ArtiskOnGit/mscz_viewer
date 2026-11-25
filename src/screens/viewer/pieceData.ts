@@ -4,6 +4,7 @@ import { libraryRepository, viewStateRepository } from '../../core/services';
 import { prepareDisplayXml, type DisplayXml } from '../../core/musicxml/prepareDisplay';
 import { initialViewState, type ProfileSettings } from '../../core/profile/myInstrument';
 import type { AppSettings } from '../../core/settings';
+import { baseKey } from '../../core/music/keys';
 import { autoScale, transposeOption, type ViewportOptions } from '../../core/render/renderService';
 
 export interface PieceData {
@@ -50,7 +51,7 @@ export function viewportOf(
     width: size.width,
     height: size.height,
     scale: Math.round(autoScale(display.staves, size.width) * factor),
-    transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave),
+    transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave, display.key && baseKey(display.key, shown.concertPitch), shown.accidentalPreference),
     concertPitch: shown.concertPitch,
   };
 }

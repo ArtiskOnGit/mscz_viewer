@@ -1,6 +1,7 @@
 // Main-thread side of the renderer: options from the screen/zoom, page cache, pre-rendering.
 import * as Comlink from 'comlink';
 import type { LayoutInfo, RenderApi } from './render.worker';
+import { targetFifths, transposeInterval, type AccidentalPreference } from '../music/keys';
 
 export interface ViewportOptions {
   width: number;
@@ -113,8 +114,16 @@ export function firstMeasureId(svg: string): string | undefined {
   return /<g\b[^>]*\bid="([^"]+)"[^>]*\bclass="measure\b/.exec(svg)?.[1] ?? /<g\b[^>]*\bclass="measure\b[^"]*"[^>]*\bid="([^"]+)"/.exec(svg)?.[1];
 }
 
-/** Semitones + octaves → Verovio "transpose" option. */
-export function transposeOption(semitones: number, octaves: number): string {
+/**
+ * Semitones + octaves → Verovio "transpose" option. With the written key known, an interval name ("m2", "-A1"…)
+ * is passed instead of a semitone count, so that the resulting key is the one shown in the Transpose dialog and
+ * follows the accidental preference (D♭ or C♯…). Verovio also accepts a key name ("Db"), but without octave control.
+ */
+export function transposeOption(semitones: number, octaves: number, key?: { fifths: number }, preference: AccidentalPreference = 'auto'): string {
   const total = semitones + 12 * octaves;
-  return total === 0 ? '' : total > 0 ? `+${total}` : `${total}`;
+  const plain = total === 0 ? '' : total > 0 ? `+${total}` : `${total}`;
+  if (!key) return plain;
+  const to = targetFifths(key.fifths, total, preference);
+  if (total === 0 && to === key.fifths) return '';
+  return transposeInterval(key.fifths, to, total) ?? plain;
 }

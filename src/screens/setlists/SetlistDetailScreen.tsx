@@ -164,6 +164,7 @@ export function SetlistDetailScreen() {
             transposeSemitones: transposeShown?.transposeSemitones ?? 0,
             transposeOctave: transposeShown?.transposeOctave ?? 0,
             concertPitch: transposeShown?.concertPitch ?? false,
+            accidentalPreference: transposeShown?.accidentalPreference ?? 'auto',
           }}
           onDismiss={() => setTransposeItem(undefined)}
           onApply={(value) => {

@@ -24,19 +24,21 @@ describe('transposeOverride', () => {
   const base = { transposeSemitones: 0, transposeOctave: 0, concertPitch: false };
 
   it('stores a transposition different from the score', () => {
-    expect(transposeOverride({ ...base, transposeSemitones: 2 }, base)).toEqual({ transposeSemitones: 2, transposeOctave: 0, concertPitch: false });
+    expect(transposeOverride({ ...base, transposeSemitones: 2 }, base)).toEqual({ transposeSemitones: 2, transposeOctave: 0, concertPitch: false, accidentalPreference: 'auto' });
     // Explicit zero: overrides a score transposed by itself.
-    expect(transposeOverride(base, { ...base, transposeSemitones: -3 })).toEqual(base);
+    expect(transposeOverride(base, { ...base, transposeSemitones: -3 })).toEqual({ ...base, accidentalPreference: 'auto' });
+    expect(transposeOverride({ ...base, accidentalPreference: 'sharps' }, base)).toMatchObject({ accidentalPreference: 'sharps' });
   });
 
   it('clears the override when back to the score settings', () => {
-    expect(transposeOverride(base, base)).toEqual({ transposeSemitones: undefined, transposeOctave: undefined, concertPitch: undefined });
+    expect(transposeOverride(base, base)).toEqual({ transposeSemitones: undefined, transposeOctave: undefined, concertPitch: undefined, accidentalPreference: undefined });
   });
 
   it('detects transposition overrides and formats badges', () => {
     expect(hasTransposeOverride(undefined)).toBe(false);
     expect(hasTransposeOverride({ selectedParts: ['P1'] })).toBe(false);
     expect(hasTransposeOverride({ transposeSemitones: 0 })).toBe(true);
+    expect(hasTransposeOverride({ accidentalPreference: 'flats' })).toBe(true);
     expect(transposeBadgeValue({ ...base, transposeSemitones: 2 })).toBe(' +2');
     expect(transposeBadgeValue({ ...base, transposeSemitones: -3, transposeOctave: -1 })).toBe(' -15');
     expect(transposeBadgeValue({ ...base, concertPitch: true })).toBe(' C');

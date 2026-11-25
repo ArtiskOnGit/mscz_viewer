@@ -51,7 +51,13 @@
     "concertPitchHint": "Show transposing instruments at sounding pitch",
     "reset": "Reset",
     "apply": "Apply",
-    "badge": "♯♭{{value}}"
+    "badge": "♯♭{{value}}",
+    "accidentals": {
+      "label": "Spelling of the key",
+      "auto": "Auto",
+      "sharps": "Sharps",
+      "flats": "Flats"
+    }
   },
   "myPart": "Showing your part: {{names}}",
   "pageHalf": "{{page}}½ / {{count}}",

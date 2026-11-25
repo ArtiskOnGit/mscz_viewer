@@ -216,6 +216,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     transposeSemitones: v.shown?.transposeSemitones ?? 0,
     transposeOctave: v.shown?.transposeOctave ?? 0,
     concertPitch: v.shown?.concertPitch ?? false,
+    accidentalPreference: v.shown?.accidentalPreference ?? 'auto',
   };
   const transposeBadge = transposeBadgeValue(transpose);
   const selectedCount = v.selectedParts.length;
