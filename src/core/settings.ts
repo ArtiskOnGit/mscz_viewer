@@ -3,6 +3,7 @@ import { Preferences } from '@capacitor/preferences';
 import type { PartNamesMode } from './musicxml/prepareDisplay';
 import type { MyInstrumentProfile } from './profile/myInstrument';
 import { DEFAULT_PEDAL_KEYS, normalizePedalKeys, type PedalKeys } from './navigation/pedalKeys';
+import type { LayoutMode } from './model/types';
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type ScoreTheme = 'light' | 'sepia' | 'dark' | 'highContrast';
@@ -32,6 +33,10 @@ export interface AppSettings {
   pedalKeys: PedalKeys;
   /** Page mode: "next" first replaces the top half of the screen with the top of the next page. */
   halfPageTurn: boolean;
+  /** Layout of a score opened for the first time (then remembered per score, toolbar toggle). */
+  defaultLayoutMode: LayoutMode;
+  /** Continuous mode auto-scroll: height of the reading line, as a fraction of the screen from the top. */
+  readingLine: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -53,6 +58,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultTranspose: 0,
   pedalKeys: DEFAULT_PEDAL_KEYS,
   halfPageTurn: false,
+  defaultLayoutMode: 'pages',
+  readingLine: 0.33,
 };
 
 const KEY = 'settings';

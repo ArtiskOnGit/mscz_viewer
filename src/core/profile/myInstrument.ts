@@ -1,5 +1,5 @@
 // "My instrument" profile (SPECIFICATIONS_FONCTIONNELLES §3.2.1, §3.4): the parts to preselect on the first opening of a score.
-import type { Part, ScoreViewState } from '../model/types';
+import type { LayoutMode, Part, ScoreViewState } from '../model/types';
 
 export interface MyInstrumentProfile {
   /** Free-text names, any language or abbreviation ("Trumpet", "Trompette en Si♭", "Tpt"). */
@@ -84,6 +84,8 @@ export function parseNames(text: string): string[] {
 export interface ProfileSettings {
   myInstrument: MyInstrumentProfile;
   defaultTranspose: number;
+  /** Layout (pages / continuous) of a score opened for the first time. */
+  defaultLayoutMode?: LayoutMode;
 }
 
 /**
@@ -99,6 +101,7 @@ export function initialViewState(
   if (hasSavedState || view.selectedParts.length) return { view, matchedParts: [] };
   const matchedParts = matchMyInstrument(parts, profile.myInstrument);
   const next = { ...view };
+  if (profile.defaultLayoutMode) next.layoutMode = profile.defaultLayoutMode;
   if (matchedParts.length) next.selectedParts = matchedParts;
   if (profile.defaultTranspose && !view.transposeSemitones && !view.transposeOctave) next.transposeSemitones = profile.defaultTranspose;
   return { view: next, matchedParts };

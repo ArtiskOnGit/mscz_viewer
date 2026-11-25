@@ -10,7 +10,8 @@ describe('renderService helpers', () => {
 
   it('converts the viewport to Verovio units', () => {
     const o = verovioOptions({ width: 400, height: 800, scale: 40, transpose: '', concertPitch: false });
-    expect(o).toMatchObject({ pageWidth: 1000, pageHeight: 2000, scale: 40, breaks: 'auto' });
+    expect(o).toMatchObject({ pageWidth: 1000, pageHeight: 2000, scale: 40, breaks: 'auto', adjustPageHeight: false });
+    expect(verovioOptions({ width: 400, height: 800, scale: 40, transpose: '', concertPitch: false, continuous: true })).toMatchObject({ adjustPageHeight: true });
   });
 
   it('finds the first measure id of an SVG page', () => {

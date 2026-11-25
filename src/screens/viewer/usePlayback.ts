@@ -6,6 +6,7 @@ import type { Timeline } from '../../core/model/types';
 import { PlaybackEngine } from '../../core/playback/playbackEngine';
 import { firstEventOfMeasure } from '../../core/navigation/navigation';
 import type { AppSettings } from '../../core/settings';
+import type { ContinuousHandle } from './ContinuousView';
 
 interface Args {
   timeline: Timeline | undefined;
@@ -19,6 +20,8 @@ interface Args {
   tempoFactor: number;
   metronome: boolean;
   settings: AppSettings;
+  /** Continuous mode: the view follows the current measure (no page turns) and tells what is on screen. */
+  continuous: RefObject<ContinuousHandle | null> | undefined;
 }
 
 export function usePlayback(a: Args) {
@@ -67,6 +70,16 @@ export function usePlayback(a: Args) {
         const rendered = renderedOfEvent(i);
         if (rendered !== current.current) highlight(rendered);
         if (rendered === undefined) return;
+        // --- continuous mode: smooth scroll keeping the current system at the reading line ---
+        const view = latest.current.continuous?.current;
+        if (view) {
+          const id = latest.current.measureIds[rendered];
+          if (id) view.follow(id, progress);
+          // Its page may have been rendered after the highlight was set.
+          if (latest.current.settings.highlightMeasure && !latest.current.stageRef.current?.querySelector('g.measure.current')) highlight(rendered);
+          return;
+        }
+        // --- end continuous mode ---
         // Turn the page when half of the last measure of the page is played; jumps back for repeats.
         let target = renderedPages[rendered] ?? page;
         const nextRendered = renderedOfEvent(i + 1);
@@ -95,8 +108,21 @@ export function usePlayback(a: Args) {
 
   /** First playing-order event of the current page (or the paused position if still on that page). */
   const startEvent = (useResume = true): number => {
-    const { timeline, renderedPages, page } = latest.current;
+    const { timeline, renderedPages, page, measureIds } = latest.current;
     if (!timeline) return 0;
+    // --- continuous mode: paused position if still on screen, else the first measure on screen ---
+    const view = latest.current.continuous?.current;
+    if (view) {
+      const r = resume.current;
+      const resumeId = r !== undefined ? measureIds[renderedOfEvent(r) ?? -1] : undefined;
+      if (useResume && r !== undefined && resumeId && view.isVisible(resumeId)) return r;
+      const top = view.firstVisible();
+      const m = top ? measureIds.indexOf(top) : -1;
+      if (m < 0) return 0;
+      const exact = timeline.events.findIndex((_, idx) => renderedOfEvent(idx) === m);
+      return Math.max(0, exact >= 0 ? exact : timeline.events.findIndex((_, idx) => (renderedOfEvent(idx) ?? -1) >= m));
+    }
+    // --- end continuous mode ---
     const r = resume.current;
     if (useResume && r !== undefined) {
       const rendered = renderedOfEvent(r);

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -6,7 +6,7 @@ import {
 } from '@ionic/react';
 import {
   addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline,
-  lockClosed, lockOpenOutline, navigateCircleOutline,
+  lockClosed, lockOpenOutline, navigateCircleOutline, documentOutline, reorderFourOutline,
 } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
@@ -26,6 +26,7 @@ import { pedalAction } from '../../core/navigation/pedalKeys';
 import { halfPageSplit, measureNumbers, nextPosition, pageOfMeasure, previousPosition } from '../../core/navigation/navigation';
 import { GoToModal } from './GoToModal';
 import { useLongPress } from './useLongPress';
+import { ContinuousView, type ContinuousHandle } from './ContinuousView';
 import './viewer.css';
 
 const UNLOCK_PRESS_MS = 800;
@@ -61,6 +62,19 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const { settings } = useSettings();
   const sp = useSetlistPlayback(); // setlists
   const v = useScoreViewer(scoreId, size, settings, sp.override);
+  // --- continuous mode ---
+  const contRef = useRef<ContinuousHandle>(null);
+  const continuous = v.continuous;
+  const pageOfId = useMemo(() => {
+    const map = new Map(v.measureIds.map((id, i) => [id, v.renderedPages[i] ?? 0]));
+    return (id: string) => map.get(id) || undefined;
+  }, [v.measureIds, v.renderedPages]);
+  const { setAnchor, goTo } = v;
+  const onVisible = useCallback((page: number, topMeasureId: string | undefined) => {
+    setAnchor(topMeasureId);
+    goTo(page);
+  }, [setAnchor, goTo]);
+  // --- end continuous mode ---
   // --- my instrument & setlist preload ---
   useMyPartToast(v.matchedParts, v.score?.parts ?? [], v.status === 'ready', !!sp.override?.selectedParts?.length);
   usePreloadNext(scoreId, sp.nextItem, v.status === 'ready', size, settings);
@@ -105,6 +119,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     tempoFactor,
     metronome,
     settings,
+    continuous: continuous ? contRef : undefined,
   });
   // Tap on the metronome button / pedal "metronome" action: metronome with the auto-scroll on/off (stops "metronome only").
   const toggleMetronome = () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome }));
@@ -112,13 +127,15 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   // --- end auto-scroll & metronome ---
 
   // --- page turns (full or half page) ---
-  const half = settings.halfPageTurn && halfOf === v.page && v.page < v.pageCount;
+  // Continuous mode: no half pages; "next" / "previous" scroll by about one screen.
+  const half = settings.halfPageTurn && !continuous && halfOf === v.page && v.page < v.pageCount;
   const turn = (to: { page: number; half: boolean }) => {
     setHalfOf(to.half ? to.page : undefined);
     v.goTo(to.page);
   };
-  const turnNext = () => turn(nextPosition({ page: v.page, half }, v.pageCount, settings.halfPageTurn));
-  const turnPrev = () => turn(previousPosition({ page: v.page, half }, settings.halfPageTurn));
+  const turnNext = () => (continuous ? contRef.current?.scrollScreen(1) : turn(nextPosition({ page: v.page, half }, v.pageCount, settings.halfPageTurn)));
+  const turnPrev = () => (continuous ? contRef.current?.scrollScreen(-1) : turn(previousPosition({ page: v.page, half }, settings.halfPageTurn)));
+  const atLastScreen = () => (continuous ? !!contRef.current?.atEnd() : v.page >= v.pageCount);
   const { svg: pageSvgShown, page: pageShown, pageSvg } = v;
   useEffect(() => {
     if (!half || !pageSvgShown) return;
@@ -165,7 +182,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
       else if (action === 'nextPiece') sp.goNext(); // setlists (no-op outside a setlist or on the last piece)
       else if (action === 'previousPiece') sp.goPrev();
       else if (action === 'prev') turnPrev();
-      else if (sp.active && v.page >= v.pageCount) sp.nextAtEnd(); // setlists: last page → next piece
+      else if (sp.active && atLastScreen()) sp.nextAtEnd(); // setlists: last page → next piece
       else turnNext();
     };
   });
@@ -197,7 +214,9 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     const target = pageOfMeasure(measureIndex, v.xmlToRendered, v.renderedPages);
     if (!target) return;
     setHalfOf(undefined);
-    v.goTo(target);
+    const id = v.measureIds[v.xmlToRendered[measureIndex] ?? -1];
+    if (continuous && id) contRef.current?.scrollToMeasure(id);
+    else v.goTo(target);
     pb.startFrom(measureIndex); // next ▶ starts from this bar
   };
   // --- end go to ---
@@ -254,6 +273,14 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               </IonButton>
             )}
             {!locked && <>
+            <IonButton
+              onClick={() => v.update({ layoutMode: continuous ? 'pages' : 'continuous' })}
+              aria-label={continuous ? t('layout.toPages') : t('layout.toContinuous')}
+              data-testid="layout-toggle"
+              data-layout={continuous ? 'continuous' : 'pages'}
+            >
+              <IonIcon slot="icon-only" icon={continuous ? documentOutline : reorderFourOutline} />
+            </IonButton>
             <IonButton onClick={() => setTransposeOpen(true)} aria-label={t('transpose.button')} data-testid="transpose-button">
               <span className="transpose-label">{t('transpose.badge', { value: transposeBadge })}</span>
             </IonButton>
@@ -265,8 +292,29 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         </IonToolbar>
       </IonHeader>
       <IonContent scrollY={false}>
-        <div ref={stageRef} className="score-stage" data-testid="score-stage" data-score-theme={settings.scoreTheme}>
-          {v.status === 'ready' && v.svg && topSvg && (
+        <div
+          ref={stageRef}
+          className={continuous ? 'score-stage continuous' : 'score-stage'}
+          data-testid="score-stage"
+          data-score-theme={settings.scoreTheme}
+          data-layout={continuous ? 'continuous' : 'pages'}
+        >
+          {v.status === 'ready' && continuous && v.pageCount > 0 && (
+            <ContinuousView
+              key={v.layoutVersion}
+              ref={contRef}
+              pageCount={v.pageCount}
+              page={v.page}
+              getAnchor={v.getAnchor}
+              pageSvg={v.pageSvg}
+              pageOfId={pageOfId}
+              estimate={size?.height ?? 800}
+              readingLine={settings.readingLine}
+              pinchScale={pinchScale}
+              onVisible={onVisible}
+            />
+          )}
+          {v.status === 'ready' && !continuous && v.svg && topSvg && (
             <div
               ref={halfRef}
               className="score-page score-half"
@@ -278,7 +326,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               <div className="half-separator" />
             </div>
           )}
-          {v.status === 'ready' && v.svg && !topSvg && (
+          {v.status === 'ready' && !continuous && v.svg && !topSvg && (
             <div
               className="score-page"
               style={pinchScale !== 1 ? { transform: `scale(${pinchScale})` } : undefined}
@@ -303,7 +351,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         ) : (
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={turnPrev} disabled={v.page <= 1 && !half} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
+            <IonButton onClick={turnPrev} disabled={!continuous && v.page <= 1 && !half} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
           </IonButtons>
           <div className="playback-bar">
             <IonButton fill="clear" onClick={togglePlay} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
@@ -336,7 +384,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           </div>
           <IonButtons slot="end">
             <IonButton onClick={() => setGotoOpen(true)} aria-label={t('goTo.button')} data-testid="goto-button"><IonIcon slot="icon-only" icon={navigateCircleOutline} /></IonButton>
-            <IonButton onClick={turnNext} disabled={v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
+            <IonButton onClick={turnNext} disabled={!continuous && v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
           </IonButtons>
         </IonToolbar>
         )}

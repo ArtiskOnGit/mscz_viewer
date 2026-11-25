@@ -150,9 +150,10 @@ export function useScoreViewer(
     };
   }, [viewport, display, contentKey]);
 
-  // 4. Render the current page, pre-render its neighbours.
+  // 4. Render the current page, pre-render its neighbours (page mode; the continuous view renders its own pages).
+  const continuous = viewport?.continuous ?? false;
   useEffect(() => {
-    if (status !== 'ready' || pageCount === 0) return;
+    if (status !== 'ready' || pageCount === 0 || continuous) return;
     let cancelled = false;
     const r = renderer.current!;
     void r.page(page).then((s) => {
@@ -164,7 +165,7 @@ export function useScoreViewer(
     return () => {
       cancelled = true;
     };
-  }, [status, page, pageCount, layoutVersion]);
+  }, [status, page, pageCount, layoutVersion, continuous]);
 
   // 5. Persist settings (debounced).
   useEffect(() => {
@@ -186,5 +187,11 @@ export function useScoreViewer(
   const key = display?.key;
   // Half-page turns: SVG of another page (cached by the renderer).
   const pageSvg = useCallback((n: number) => renderer.current!.page(n), []);
-  return { xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  // --- continuous mode: the view reports the first measure on screen, kept across relayouts (zoom, rotation…) ---
+  const setAnchor = useCallback((id: string | undefined) => {
+    if (id) anchor.current = id;
+  }, []);
+  const getAnchor = useCallback(() => anchor.current, []);
+  // --- end continuous mode ---
+  return { continuous, layoutVersion, setAnchor, getAnchor, xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }

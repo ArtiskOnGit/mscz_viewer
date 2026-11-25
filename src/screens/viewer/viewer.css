@@ -116,3 +116,27 @@
   border-top: 2px dashed color-mix(in srgb, var(--pupitre-score-ink) 45%, transparent);
   pointer-events: none;
 }
+
+/* Continuous mode: pages stacked into one native vertical scroll. */
+.score-stage.continuous {
+  touch-action: pan-y; /* native vertical scroll; taps, horizontal swipes and pinch stay in JS */
+}
+.score-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-anchor: none; /* the view anchors the scroll position itself */
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.score-continuous {
+  position: relative;
+  transform-origin: top center;
+}
+.score-page.continuous-page {
+  height: auto;
+}
+.continuous-placeholder {
+  height: 800px; /* replaced from the DOM by the measured / estimated page height */
+}

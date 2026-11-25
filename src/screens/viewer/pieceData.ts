@@ -53,6 +53,7 @@ export function viewportOf(
     scale: Math.round(autoScale(display.staves, size.width) * factor),
     transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave, display.key && baseKey(display.key, shown.concertPitch), shown.accidentalPreference),
     concertPitch: shown.concertPitch,
+    continuous: shown.layoutMode === 'continuous',
   };
 }
 
@@ -62,4 +63,4 @@ export function contentKeyOf(partsKey: string, viewport: ViewportOptions, s: Dis
 }
 
 export const sameViewport = (a: ViewportOptions | undefined, b: ViewportOptions) =>
-  !!a && a.width === b.width && a.height === b.height && a.scale === b.scale && a.transpose === b.transpose && a.concertPitch === b.concertPitch;
+  !!a && a.width === b.width && a.height === b.height && a.scale === b.scale && a.transpose === b.transpose && a.concertPitch === b.concertPitch && !!a.continuous === !!b.continuous;

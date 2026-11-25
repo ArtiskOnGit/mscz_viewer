@@ -71,6 +71,10 @@
     "marks": "Rehearsal marks",
     "noMarks": "No rehearsal marks in this score."
   },
+  "layout": {
+    "toContinuous": "Continuous scroll",
+    "toPages": "Pages"
+  },
   "lock": {
     "lock": "Lock (only page turns)",
     "unlock": "Locked: hold to unlock",

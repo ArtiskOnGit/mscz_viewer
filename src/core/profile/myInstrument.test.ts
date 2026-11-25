@@ -97,6 +97,11 @@ describe('initialViewState', () => {
     expect(r.view.transposeSemitones).toBe(2);
   });
 
+  it('applies the default layout mode on first opening only', () => {
+    expect(initialViewState(defaultViewState('s'), false, band, { ...settings, defaultLayoutMode: 'continuous' }).view.layoutMode).toBe('continuous');
+    expect(initialViewState(defaultViewState('s'), true, band, { ...settings, defaultLayoutMode: 'continuous' }).view.layoutMode).toBe('pages');
+  });
+
   it('never overrides a saved view state', () => {
     const saved = { ...defaultViewState('s'), selectedParts: [] };
     const r = initialViewState(saved, true, band, settings);

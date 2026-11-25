@@ -11,6 +11,8 @@ export interface ViewportOptions {
   /** Verovio "transpose" option ("" = none), e.g. "+2", "-3". */
   transpose: string;
   concertPitch: boolean;
+  /** Continuous mode: pages fitted to their content (stacked vertically by the viewer). */
+  continuous?: boolean;
 }
 
 /** Comfortable default scale for the number of staves shown, relative to a 412 px wide phone. */
@@ -30,7 +32,8 @@ export function verovioOptions(v: ViewportOptions): Record<string, unknown> {
     pageMarginLeft: margin,
     pageMarginRight: margin,
     breaks: 'auto', // ADR-002: always lay out for the screen
-    adjustPageHeight: false,
+    // Continuous mode: no blank space at the bottom of the pages, which are stacked into one vertical scroll.
+    adjustPageHeight: !!v.continuous,
     header: 'none',
     footer: 'none',
     svgViewBox: true,

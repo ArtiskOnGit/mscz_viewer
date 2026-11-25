@@ -104,6 +104,14 @@
     "label": "Default transposition",
     "hint": "Applied on the first opening of a score"
   },
+  "defaultLayoutMode": {
+    "label": "Layout of new scores",
+    "pages": "Pages",
+    "continuous": "Continuous scroll"
+  },
+  "readingLine": {
+    "label": "Reading line (continuous scroll): {{percent}} % from the top"
+  },
   "halfPageTurn": {
     "label": "Half-page turns",
     "hint": "Next page first shows the top of the next page above the end of the current one"

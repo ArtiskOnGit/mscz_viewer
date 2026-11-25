@@ -9,6 +9,7 @@ import { SOURCE_URL, THIRD_PARTY } from '../../app/thirdPartyLicenses';
 import { useSettings } from '../../state/settingsStore';
 import type { AppTheme, ScoreTheme } from '../../core/settings';
 import type { PartNamesMode } from '../../core/musicxml/prepareDisplay';
+import type { LayoutMode } from '../../core/model/types';
 import { COMMON_INSTRUMENTS, parseNames, type MyInstrumentProfile } from '../../core/profile/myInstrument';
 import { TRANSPOSE_PRESETS } from '../../core/music/keys';
 import { PedalKeysSection } from './PedalKeysSection';
@@ -16,6 +17,7 @@ import { PedalKeysSection } from './PedalKeysSection';
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
 const PART_NAMES: PartNamesMode[] = ['auto', 'full', 'hidden'];
+const LAYOUT_MODES: LayoutMode[] = ['pages', 'continuous'];
 
 export function SettingsScreen() {
   const { t } = useTranslation(['settings', 'common']);
@@ -70,6 +72,17 @@ export function SettingsScreen() {
           </IonItem>
 
           <IonListHeader>{t('sections.navigation')}</IonListHeader>
+          <IonItem>
+            <IonSelect
+              label={t('defaultLayoutMode.label')}
+              interface="popover"
+              value={settings.defaultLayoutMode}
+              data-testid="default-layout"
+              onIonChange={(e) => set('defaultLayoutMode', e.detail.value as LayoutMode)}
+            >
+              {LAYOUT_MODES.map((v) => <IonSelectOption key={v} value={v}>{t(`defaultLayoutMode.${v}`)}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
           <IonItem><IonToggle checked={settings.tapZones} onIonChange={(e) => set('tapZones', e.detail.checked)}>{t('tapZones.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.swipe} onIonChange={(e) => set('swipe', e.detail.checked)}>{t('swipe.label')}</IonToggle></IonItem>
           <IonItem>
@@ -102,6 +115,20 @@ export function SettingsScreen() {
               step={10}
               value={Math.round(settings.metronomeVolume * 100)}
               onIonChange={(e) => set('metronomeVolume', Number(e.detail.value) / 100)}
+            />
+          </IonItem>
+          <IonItem>
+            <IonRange
+              label={t('readingLine.label', { percent: Math.round(settings.readingLine * 100) })}
+              labelPlacement="stacked"
+              min={10}
+              max={60}
+              step={5}
+              snaps
+              pin
+              value={Math.round(settings.readingLine * 100)}
+              data-testid="reading-line"
+              onIonChange={(e) => set('readingLine', Number(e.detail.value) / 100)}
             />
           </IonItem>
           <IonItem><IonToggle checked={settings.highlightMeasure} onIonChange={(e) => set('highlightMeasure', e.detail.checked)}>{t('highlightMeasure.label')}</IonToggle></IonItem>
