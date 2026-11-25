@@ -8,7 +8,7 @@ const file = process.argv[4] ?? 'unity_transpos_.mscz';
 const server = await createServer({ root, configFile: `${root}/vite.config.ts`, server: { port: 5192, host: '127.0.0.1' }, logLevel: 'error' });
 await server.listen();
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-const page = await (await browser.newContext({ ...devices['Pixel 7'], deviceScaleFactor: 1 })).newPage();
+const page = await (await browser.newContext({ ...devices['Pixel 7'], deviceScaleFactor: 1, locale: 'en-US' })).newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));

@@ -47,7 +47,7 @@ export function SettingsScreen() {
             </IonSelect>
           </IonItem>
           <IonItem>
-            <IonSelect label={t('scoreTheme.label')} interface="popover" value={settings.scoreTheme} onIonChange={(e) => set('scoreTheme', e.detail.value as ScoreTheme)}>
+            <IonSelect label={t('scoreTheme.label')} interface="popover" data-testid="score-theme" value={settings.scoreTheme} onIonChange={(e) => set('scoreTheme', e.detail.value as ScoreTheme)}>
               {SCORE_THEMES.map((v) => <IonSelectOption key={v} value={v}>{t(`scoreTheme.${v}`)}</IonSelectOption>)}
             </IonSelect>
           </IonItem>
