@@ -39,7 +39,7 @@ On doit donc soit **réutiliser le moteur de MuseScore lui-même**, soit **conve
   - `setExcerptId(id)`, `generateExcerpts()` : choix d'une partie séparée ;
   - `setSoundFont()`, `saveAudio()`, `synthAudio()` : synthèse audio (pour plus tard).
   - **Pas de fonction de transposition** dans l'API publique.
-- **Taille** : environ 7,4 Mo + 3,9 Mo de WASM. Il tourne dans un **Web Worker**.
+- **Taille** : environ 7,4 Mo + 3,9 Mo de WASM d'après le changelog. **Mesuré en phase 0 : ~18 Mo** au total (wasm + mem + data). Il tourne dans un **Web Worker**.
 - **Risques** :
   - il est basé sur MuseScore 4.0 : il faut **tester les fichiers créés avec MuseScore 4.1 à 4.6 et plus**. Des éléments récents pourraient être ignorés ou mal lus ;
   - le projet n'est plus maintenu activement. Le recompiler sur une version récente de MuseScore est un gros travail (Emscripten + Qt patché).

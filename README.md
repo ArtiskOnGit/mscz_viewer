@@ -2,7 +2,7 @@
 
 **Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur Android (d'abord) puis iOS, **100 % hors ligne**. Interface en anglais, conçue pour être traduite.
 
-> 🚧 **Statut : conception.** Aucun code pour l'instant. Ce dépôt contient les spécifications et la roadmap.
+> 🚧 **Statut : phase 0 (validations techniques).** Architecture validée sur PC ; mesures sur téléphone Android en attente. Pas encore d'application.
 
 ## Ce que fait l'application
 
@@ -45,6 +45,8 @@ Détails et justification : voir la documentation ci-dessous.
 | [docs/SPECIFICATIONS_TECHNIQUES.md](docs/SPECIFICATIONS_TECHNIQUES.md) | Architecture, pile technique, modèle de données, pipelines d'import, de rendu et de défilement, tests |
 | [docs/ETUDE_RENDU_PARTITIONS.md](docs/ETUDE_RENDU_PARTITIONS.md) | État de l'art des bibliothèques de rendu, réutilisation de MuseScore, licences |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Décisions d'architecture (ADR), réponses de cadrage et questions encore ouvertes |
+| [docs/spikes/PHASE0_RESULTATS.md](docs/spikes/PHASE0_RESULTATS.md) | Résultats des validations techniques (webmscore, Verovio, timeline, transposition) |
+| [spikes/README.md](spikes/README.md) | Scripts de la phase 0 et **banc de test à ouvrir sur un téléphone** |
 
 ## Licence
 

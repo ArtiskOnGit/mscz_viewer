@@ -14,20 +14,21 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 
 - ✅ Trancher les questions de cadrage (plateforme, licence, framework, langues, audio, setlists).
 - ⬜ Choisir le nom de l'application (ADR-006).
-- ⬜ **Corpus de test** : réunir des `.mscz` variés couvrant **MuseScore 3.0 → 3.6** et **4.0 → dernière version** (fichiers réels fournis par le porteur du projet), plus quelques MusicXML.
-- ⬜ **S1 — webmscore** : charger le corpus dans une page web, puis dans une WebView Capacitor Android.
+- 🟨 **Corpus de test** : 3 fichiers réels reçus (MuseScore **2.1**, **4.5.2**, **4.6.2**) dans `test-scores/` (non versionné). **Il manque un fichier 3.x**, et si possible des grilles d'accords, des paroles et un D.S. al Coda.
+- ✅ **S1 — webmscore** (PC + Chromium ; [résultats](docs/spikes/PHASE0_RESULTATS.md#s1--webmscore-121-musescore-40-en-wasm)) : charger le corpus dans une page web, puis dans une WebView Capacitor Android.
   - Les fichiers **3.x** sont-ils bien lus par le moteur 4.0 ? Les fichiers **4.1 et plus** se chargent-ils ? Quels éléments sont perdus ?
   - Mesurer le temps d'initialisation, le temps de chargement et la mémoire.
   - Vérifier `saveXml()`, `metadata()` et `savePositions()` (reprises dépliées ? temps en ms ? changements de tempo ?).
-- ⬜ **S2 — Verovio** : afficher le MusicXML exporté par webmscore.
+- ✅ **S2 — Verovio** : afficher le MusicXML exporté par webmscore.
   - Qualité : paroles, accords, reprises, nuances, batterie, tablatures, multi-portées.
   - Mise en page à la taille de l'écran, temps de relayout sur un téléphone Android milieu de gamme.
   - Silences multi-mesures en vue partie.
-- ⬜ **S3 — Timeline** : correspondance des mesures webmscore ↔ Verovio (anacrouses, reprises, D.S. al Coda), extraction de la métrique et du tempo par mesure. Prototype de défilement continu.
-- ⬜ **S4 — Transposition** : option `transpose` de Verovio sur MusicXML (armures, accords, instruments transpositeurs, hauteur réelle et hauteur écrite).
-- ⬜ **S5 — Pédalier** : réception des touches d'un pédalier ou clavier Bluetooth dans la WebView Android.
-- ⬜ **S6 — Métronome** : régularité des clics Web Audio dans la WebView Android (ordonnanceur avec anticipation), latence, comportement écran verrouillé ou application en arrière-plan.
-- ⬜ **Point de décision** : confirmer ADR-001, ADR-002 et ADR-008, ou basculer sur un plan B ([étude](docs/ETUDE_RENDU_PARTITIONS.md#plans-b)).
+- ✅ **S3 — Timeline** (+ prototype de filtrage qui conserve les tempos) : correspondance des mesures webmscore ↔ Verovio (anacrouses, reprises, D.S. al Coda), extraction de la métrique et du tempo par mesure. Prototype de défilement continu.
+- ✅ **S4 — Transposition** : option `transpose` de Verovio sur MusicXML (armures, accords, instruments transpositeurs, hauteur réelle et hauteur écrite).
+- 🟨 **S5 — Pédalier** (OK en navigateur ; reste un test sur téléphone avec le banc `spikes/device-test`) : réception des touches d'un pédalier ou clavier Bluetooth dans la WebView Android.
+- 🟨 **S6 — Métronome** (OK en Chromium, 0 clic en retard ; reste un test sur téléphone) : régularité des clics Web Audio dans la WebView Android (ordonnanceur avec anticipation), latence, comportement écran verrouillé ou application en arrière-plan.
+- ✅ **Point de décision** : ADR-001, ADR-002 et ADR-008 **confirmées**, ADR-012 ajoutée (filtrage des parties).
+- ⬜ **Mesures sur un vrai téléphone Android** (temps d'import et de rendu, pédalier, métronome) avec le banc de test ([mode d'emploi](spikes/README.md)).
 
 **Livrable** : notes de spikes + décisions confirmées. *(environ 2 à 4 semaines)*
 

@@ -20,13 +20,13 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ## Décisions
 
-### ADR-001 — Lecture des `.mscz` : webmscore, à l'import uniquement — *Acceptée sous réserve de spike S1*
+### ADR-001 — Lecture des `.mscz` : webmscore, à l'import uniquement — *Acceptée* (S1 validé le 2026-11-25, voir [résultats de la phase 0](spikes/PHASE0_RESULTATS.md))
 - **Contexte** : aucune bibliothèque de rendu ne lit le format MuseScore, qui n'est pas documenté et change d'une version à l'autre. Il faut prendre en charge les fichiers **MuseScore 3.0 à 4.x et plus**.
 - **Décision** : utiliser **webmscore** (MuseScore 4.0 compilé en WASM) pour convertir les fichiers en MusicXML et extraire les métadonnées et la timeline. MuseScore 4.0 sait ouvrir les fichiers 3.x, ce qui couvre normalement la plage 3.0–3.6.
-- **Point à vérifier** : les fichiers créés avec **MuseScore 4.1 et plus**, postérieurs à webmscore.
+- **Résultat de S1** : les fichiers **2.1, 4.5.2 et 4.6.2** du corpus se chargent. `savePositions(true)` plante et corrompt l'instance WASM. Règle : **un worker neuf par import**, positions des mesures seulement. Il reste à tester un fichier 3.x et à mesurer les temps sur téléphone.
 - **Plans B** : a) recompiler webmscore sur un MuseScore récent ; b) convertisseur `.mscx` → MusicXML maison ; c) demander un export MusicXML (toujours pris en charge).
 
-### ADR-002 — Rendu : Verovio sur MusicXML, mise en page adaptée à l'écran — *Acceptée sous réserve de spike S2*
+### ADR-002 — Rendu : Verovio sur MusicXML, mise en page adaptée à l'écran — *Acceptée* (S2 et S4 validés le 2026-11-25)
 - **Décision** : **Verovio** (LGPL-3.0), toujours avec une **mise en page recalculée pour l'écran** (`breaks: 'auto'`). Les sauts de page et de système d'origine ne sont pas reproduits.
 - **Non retenu** : le mode « mise en page d'origine » (SVG de webmscore). Il reste seulement un plan B technique si la qualité de Verovio est insuffisante.
 
@@ -52,9 +52,10 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 ### ADR-007 — Stockage : fichiers + index JSON — *Acceptée*
 - Index `library.json` et `setlists.json`, fichiers dans l'espace privé de l'application, derrière les interfaces `LibraryRepository` et `SetlistRepository`. Passage à SQLite si le volume ou la recherche le demandent.
 
-### ADR-008 — Timeline du défilement et du métronome — *Acceptée sous réserve de spike S3*
+### ADR-008 — Timeline du défilement et du métronome — *Acceptée* (S3 validé le 2026-11-25)
 - Positions MuseScore (webmscore) à l'import pour les `.mscz`, avec reprises dépliées et changements de tempo. Timemap Verovio pour le MusicXML.
 - La timeline contient aussi la **métrique de chaque mesure** (nombre de temps, unité), dont le métronome a besoin.
+- **Résultat de S3** : l'ordre de jeu est identique entre MuseScore et Verovio (en retirant les suffixes `-rendN` de Verovio). Le filtrage des parties doit **recopier les tempos et repères** de la première partie (ADR-012).
 
 ### ADR-009 — Internationalisation : anglais d'abord, i18n dès le départ — *Acceptée*
 - Langue de référence de l'interface : **anglais**. Le français sera la première traduction ajoutée.
@@ -74,6 +75,14 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - Une entrée de setlist pointe vers une partition. Elle utilise les réglages mémorisés de la partition (instruments, transposition, zoom), avec une **surcharge optionnelle** propre à l'entrée (en v1 : instruments et transposition).
 
 ---
+
+### ADR-012 — Filtrage des parties : recopie des indications « système » — *Acceptée*
+- **Contexte** (S3) : MuseScore n'exporte tempo, métronome et repères que dans la **première partie** du MusicXML. Si on la retire, tempos et timeline sont perdus.
+- **Décision** : le module de filtrage recopie ces indications (`<sound tempo|dacapo|segno|dalsegno|coda|tocoda|fine>`, `<metronome>`, `<rehearsal>`, `<segno>`, `<coda>`) vers la première partie conservée, à la même position rythmique. Le prototype est dans `spikes/shared/filter-parts.mjs`.
+- **Limite connue** : les textes système sans effet sonore (« Swing », titres de section) ne se distinguent pas des textes de portée en MusicXML. Ils ne sont pas recopiés pour l'instant.
+
+### ADR-013 — Moteurs embarqués : tailles réelles — *Information*
+- webmscore ~18 Mo (wasm 9,2 + mem 4,2 + data 4,1 + JS), Verovio ~8,4 Mo (WASM intégré au JS). Total des moteurs : **~27 Mo** dans l'APK.
 
 ## Questions encore ouvertes
 

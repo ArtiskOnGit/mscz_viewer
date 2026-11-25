@@ -240,10 +240,10 @@ Exécuté dans `import.worker.ts`. webmscore n'est chargé que dans ce worker, e
 2. **Empreinte** SHA-256 (WebCrypto `crypto.subtle.digest`) → détection des doublons.
 3. **Détection du format** : extension + signature (`PK` = ZIP). Pour un ZIP, on regarde le contenu : `.mscx` → mscz ; `META-INF/container.xml` qui pointe un `.musicxml` → mxl.
 4. **Si mscz/mscx** :
-   1. `await WebMscore.ready` puis `WebMscore.load('mscz', data, fonts)`.
+   1. **Un Web Worker webmscore neuf pour chaque fichier** : une erreur WASM rend l'instance inutilisable (phase 0). `await WebMscore.ready` puis `WebMscore.load('mscz', data, fonts)`. Les fichiers `webmscore.lib.wasm`, `.mem.wasm` et `.data` sont servis **à côté de la page HTML**, à la racine des assets web.
    2. `metadata()` → titre, compositeur, parties, tempo, mesures, version de MuseScore.
    3. `saveXml()` → **MusicXML complet** (toutes les parties).
-   4. `savePositions(false)` ou `measurePositions()` → **timeline** des mesures dans l'ordre de jeu, reprises dépliées (*à valider en phase 0*). On l'enrichit avec la **métrique** et le **tempo** de chaque mesure, lus dans le MusicXML (`<time>`, `<sound tempo>`, `<metronome>`), pour le métronome.
+   4. `savePositions(false)` → **timeline** des mesures dans l'ordre de jeu, reprises et voltas dépliées (validé en phase 0 : `events[].elid` = rang de la mesure, `events[].position` = ms). ⚠️ **Ne jamais appeler `savePositions(true)`** (positions des segments) : il plante systématiquement. On l'enrichit avec la **métrique** et le **tempo** de chaque mesure, lus dans le MusicXML (`<time>`, `<sound tempo>`, `<metronome>`), pour le métronome.
    5. Miniature : on extrait directement `Thumbnails/thumbnail.png` de l'archive avec fflate (rapide). Sinon `savePng(0)`.
    6. `destroy()` pour libérer la mémoire du worker.
 5. **Si MusicXML/MXL** : on analyse le XML directement (titre, `<part-list>`, tempo). La timeline sera calculée par Verovio (`renderToTimemap({ includeMeasures: true })`) à la première ouverture, puis mise en cache.
@@ -257,7 +257,7 @@ Objectif de performance : l'import d'une partition typique (environ 10 parties, 
 
 Exécuté dans `render.worker.ts` (Verovio WASM). Verovio reste chargé tant qu'une partition est ouverte.
 
-1. **Filtrage des parties** (`core/musicxml`) : DOMParser dans le worker (ou un parseur XML léger si `DOMParser` manque dans le worker). On supprime les `<score-part>` et `<part>` non sélectionnés, ainsi que les `<part-group>` devenus vides. Le résultat est mis en cache en mémoire par combinaison de parties.
+1. **Filtrage des parties** (`core/musicxml`) : DOMParser dans le worker (ou un parseur XML léger si `DOMParser` manque dans le worker). On supprime les `<score-part>` et `<part>` non sélectionnés, ainsi que les `<part-group>` devenus vides. **On recopie les indications système** (tempo, métronome, repères, sauts) de la première partie vers la première partie conservée (ADR-012 ; prototype `spikes/shared/filter-parts.mjs`). Option « noms d'instruments » : on retire `<part-name-display>` et `<part-abbreviation-display>`, ou on met `print-object="no"`, à valider. Le résultat est mis en cache en mémoire par combinaison de parties.
 2. **Options Verovio** calculées à partir de l'écran et du ViewState :
    - `pageWidth` / `pageHeight` : dimensions de la zone d'affichage converties en unités Verovio, en tenant compte de `scale` (le zoom) ;
    - `scale` : zoom ;
@@ -284,7 +284,7 @@ Exécuté dans `render.worker.ts` (Verovio WASM). Verovio reste chargé tant qu'
 
 - **Source principale** : webmscore à l'import. Les positions MuseScore donnent l'ordre de jeu réel, avec reprises, voltas, D.C./D.S./Coda et changements de tempo.
 - **Source de repli** : la timemap de Verovio (`renderToTimemap({ includeMeasures: true })`) pour les fichiers MusicXML. Le dépliage des reprises par Verovio est à vérifier. Sinon, on implémente nous-mêmes le dépliage des reprises MusicXML (`<repeat>`, `<ending>`, `<sound dacapo/dalsegno/coda/fine>`).
-- **Correspondance des mesures** : `measureIndex` = rang de la mesure dans le MusicXML (0-based). L'export de webmscore garde l'ordre des mesures. Attention aux **anacrouses** et aux **mesures numérotées de façon irrégulière** : on se base toujours sur le rang, jamais sur le numéro affiché.
+- **Correspondance des mesures** : `measureIndex` = rang de la mesure dans le MusicXML (0-based). Côté Verovio, c'est le rang du `<measure>` dans le MEI (`getMEI()`). Dans la timemap, les mesures répétées ont un identifiant suffixé `-rend2`, `-rend3`… qu'il faut retirer. L'export de webmscore garde l'ordre des mesures. Attention aux **anacrouses** et aux **mesures numérotées de façon irrégulière** : on se base toujours sur le rang, jamais sur le numéro affiché.
 
 ### 6.2 Horloge partagée (`PlaybackClock`)
 
@@ -368,10 +368,10 @@ Il n'y a **aucune lecture audio de la partition** (ADR-010). Le métronome est l
 
 | Élément | Taille estimée |
 |---|---|
-| webmscore (WASM + JS + polices) | environ 12–15 Mo |
-| Verovio WASM | quelques Mo (à mesurer) |
+| webmscore (WASM + JS + données) | **~18 Mo** (mesuré en phase 0) |
+| Verovio (WASM intégré au JS) | **~8,4 Mo** (2,5 Mo gzip, mesuré) |
 | Application (JS/CSS) | moins de 2 Mo |
-| **Total de l'application installée** | **environ 25–35 Mo** (à confirmer) |
+| **Total de l'application installée** | **environ 30 Mo** |
 
 Mémoire : webmscore ne doit être chargé **qu'à l'import** et libéré ensuite (on termine le worker). Il faut surveiller les gros conducteurs (30 parties et plus) sur les appareils modestes.
 

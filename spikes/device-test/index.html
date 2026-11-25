@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Pupitre – device test bench (phase 0)</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; }
+    #app { display: flex; flex-direction: column; height: 100%; }
+    #toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px; background: #f2f2f2; border-bottom: 1px solid #ccc; font-size: 14px; }
+    #toolbar button, #toolbar select, #toolbar input[type=number] { font-size: 15px; min-height: 36px; padding: 2px 10px; }
+    #toolbar .group { display: flex; gap: 4px; align-items: center; }
+    #parts { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 6px; font-size: 13px; background: #fafafa; border-bottom: 1px solid #ddd; }
+    #parts:empty { display: none; }
+    #stage { position: relative; flex: 1; overflow: hidden; }
+    #score { width: 100%; height: 100%; overflow: hidden; }
+    #score svg { width: 100%; height: auto; display: block; }
+    .tapzone { position: absolute; top: 0; bottom: 0; width: 33%; z-index: 2; }
+    #tapPrev { left: 0; } #tapNext { right: 0; }
+    #status { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; background: rgba(0,0,0,.7); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 13px; pointer-events: none; }
+    #beat { position: absolute; right: 10px; top: 10px; width: 22px; height: 22px; border-radius: 50%; background: #ddd; z-index: 3; }
+    #beat.on { background: #2a7; } #beat.accent { background: #d33; }
+    #stats { position: absolute; left: 0; right: 0; bottom: 0; max-height: 55%; overflow: auto; z-index: 4; background: rgba(255,255,255,.96); border-top: 2px solid #333; font: 12px/1.35 ui-monospace, monospace; padding: 8px; white-space: pre-wrap; display: none; }
+    #stats.open { display: block; }
+    g.measure.current path, g.measure.current use, g.measure.current rect { fill: #c0392b; stroke: #c0392b; }
+    #help { padding: 16px; color: #444; font-size: 15px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <input id="file" type="file" accept=".mscz,.mscx,.mxl,.musicxml,.xml" />
+    <span class="group"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button></span>
+    <span class="group">Transpose
+      <select id="transpose">
+        <option value="">0</option>
+        <option value="+1">+1</option><option value="+2">+2 (B♭)</option><option value="+3">+3</option><option value="+4">+4</option>
+        <option value="+5">+5</option><option value="+7">+7</option><option value="+9">+9 (E♭)</option>
+        <option value="-1">−1</option><option value="-2">−2</option><option value="-3">−3</option><option value="-5">−5</option>
+      </select>
+      <label><input id="concert" type="checkbox" /> concert</label>
+    </span>
+    <span class="group"><button id="play">▶</button>
+      <input id="tempo" type="number" min="50" max="150" step="5" value="100" style="width:64px" />%
+      <label><input id="metro" type="checkbox" /> 🥁</label>
+      <label><input id="metroOnly" type="checkbox" /> metro only</label>
+    </span>
+    <button id="statsBtn">Stats</button>
+  </div>
+  <div id="parts"></div>
+  <div id="stage">
+    <div id="score"><div id="help">
+      <b>Phase 0 test bench.</b> Open a .mscz (or MusicXML) file.<br>
+      Tap the left / right third of the screen to change page. Bluetooth pedals and keyboard keys are logged in <b>Stats</b>.<br>
+      ▶ = auto page-turn at the score tempo (MuseScore timeline). 🥁 = metronome clicks.
+    </div></div>
+    <div id="tapPrev" class="tapzone"></div><div id="tapNext" class="tapzone"></div>
+    <div id="beat"></div>
+    <div id="status">no score</div>
+    <div id="stats"></div>
+  </div>
+</div>
+<script src="./webmscore.js"></script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -34,3 +34,7 @@ ios/DerivedData/
 
 # Claude Code (réglages locaux)
 .claude/settings.local.json
+
+# Spikes : fichiers copiés depuis node_modules et build du banc de test
+spikes/device-test/public/webmscore.*
+spikes/device-test-dist/

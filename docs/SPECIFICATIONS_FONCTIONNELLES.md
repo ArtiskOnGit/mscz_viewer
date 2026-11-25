@@ -27,7 +27,7 @@ Un **lecteur de partitions MuseScore pour musiciens en répétition**. Il ne ser
 
 | Format | Import | Remarque |
 |---|---|---|
-| `.mscz` (MuseScore **3.0 à 4.x et plus**) | ✅ MVP | Format principal. Compatibilité avec MuseScore 4.1 et plus à valider (spike S1) |
+| `.mscz` (MuseScore **2.x, 3.x, 4.x**) | ✅ MVP | Format principal. 2.1, 4.5.2 et 4.6.2 validés en phase 0 ; 3.x à confirmer |
 | `.mscx` | ✅ MVP | XML MuseScore non compressé |
 | `.mxl`, `.musicxml`, `.xml` | ✅ MVP | Conseillé quand un `.mscz` récent pose problème |
 | `.mei` | v2 | Pris en charge nativement par Verovio |
@@ -183,10 +183,11 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | **Affichage** | Thème de l'application | système / clair / sombre | système |
 | | Thème de la partition | clair / sépia / sombre / contraste élevé | clair |
 | | Mode d'affichage par défaut | Pages / Continu | Pages |
-| | Zoom par défaut | 50–300 % / ajuster à la largeur | ajuster |
+| | Zoom par défaut | 50–300 % / automatique | automatique : dépend du nombre de portées affichées (une partie seule s'affiche plus grand qu'un conducteur) |
 | | Police musicale | Leipzig / Bravura / (Leland si dispo) | Leipzig |
 | | Notation des notes | anglaise (C D E) / latine (Do Ré Mi) / allemande (C D E H) | selon la langue |
 | | Numéros de mesure | aucun / début de système / toutes / toutes les 5 | début de système |
+| | Noms d'instruments | complets / abrégés / masqués (masqués par défaut si une seule partie est affichée) | auto |
 | | Afficher titre et en-têtes | oui / non | oui |
 | | Silences multi-mesures regroupés (vue partie) | oui / non | oui |
 | **Navigation** | Zones de tap pour tourner les pages | oui / non + largeur des zones | oui, 33 % |
