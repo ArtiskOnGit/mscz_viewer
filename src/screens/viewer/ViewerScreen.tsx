@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonPage, IonSpinner, IonTitle, IonToolbar,
 } from '@ionic/react';
@@ -14,21 +14,31 @@ import { usePageGestures } from './usePageGestures';
 import { usePlayback } from './usePlayback';
 import { TransposeModal } from './TransposeModal';
 import { useSettings } from '../../state/settingsStore';
+import { useSetlistPlayback } from '../setlists/useSetlistPlayback';
+import { SetlistBar } from '../setlists/SetlistBar';
 import './viewer.css';
 
 const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter']);
 const PREV_KEYS = new Set(['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace']);
 
+// --- setlists: remount the viewer for each piece (next/previous piece only changes the URL) ---
 export function ViewerScreen() {
-  const { t } = useTranslation('viewer');
   const { scoreId = '' } = useParams<{ scoreId: string }>();
+  const [params] = useSearchParams();
+  return <ScoreViewerScreen key={`${scoreId}|${params.get('item') ?? ''}`} scoreId={scoreId} />;
+}
+// --- end setlists ---
+
+function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
+  const { t } = useTranslation('viewer');
   const stageRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number }>();
   const [chrome, setChrome] = useState(true);
   const [partsOpen, setPartsOpen] = useState(false);
   const [transposeOpen, setTransposeOpen] = useState(false);
   const { settings } = useSettings();
-  const v = useScoreViewer(scoreId, size, settings);
+  const sp = useSetlistPlayback(); // setlists
+  const v = useScoreViewer(scoreId, size, settings, sp.override);
 
   // Track the stage size (rotation, split screen…), debounced.
   useEffect(() => {
@@ -82,7 +92,8 @@ export function ViewerScreen() {
         pb.toggle();
       } else if (NEXT_KEYS.has(e.code)) {
         e.preventDefault();
-        v.next();
+        if (sp.active && v.page >= v.pageCount) sp.nextAtEnd(); // setlists: last page → next piece
+        else v.next();
       } else if (PREV_KEYS.has(e.code)) {
         e.preventDefault();
         v.prev();
@@ -90,7 +101,7 @@ export function ViewerScreen() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [v.next, v.prev, partsOpen, transposeOpen, pb.toggle]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [v.next, v.prev, v.page, v.pageCount, sp.active, sp.nextAtEnd, partsOpen, transposeOpen, pb.toggle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pinchScale = usePageGestures(stageRef, {
     // While playing, a tap pauses (setting) instead of turning the page.
@@ -148,6 +159,7 @@ export function ViewerScreen() {
         </div>
       </IonContent>
       <IonFooter>
+        <SetlistBar sp={sp} />
         <IonToolbar>
           <IonButtons slot="start">
             <IonButton onClick={v.prev} disabled={v.page <= 1} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
@@ -203,7 +215,8 @@ export function ViewerScreen() {
         onDismiss={() => setPartsOpen(false)}
         onApply={(selectedParts) => {
           setPartsOpen(false);
-          v.update({ selectedParts });
+          if (sp.active) sp.setParts(selectedParts); // setlists: stored in the item override
+          else v.update({ selectedParts });
         }}
       />
     </IonPage>

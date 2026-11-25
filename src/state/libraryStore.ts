@@ -3,6 +3,7 @@ import type { Score, ScoreId } from '../core/model/types';
 import { libraryRepository, viewStateRepository } from '../core/services';
 import { IMPORTER_VERSION, ImportError, importScore, reimportScore, type ImportInput } from '../core/import/importScore';
 import { webMscoreEngine } from '../core/import/webmscoreEngine';
+import { useSetlists } from './setlistStore';
 
 export interface ImportReport {
   imported: Score[];
@@ -87,6 +88,7 @@ export const useLibrary = create<LibraryState>((set, get) => ({
   async remove(id) {
     await libraryRepository.remove(id);
     await viewStateRepository.remove(id);
+    await useSetlists.getState().removeScore(id);
     await get().load();
   },
 

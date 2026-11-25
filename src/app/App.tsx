@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { ViewerScreen } from '../screens/viewer/ViewerScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { SetlistDetailScreen } from '../screens/setlists/SetlistDetailScreen';
 import { routes } from './routes';
 import { useEffect } from 'react';
 import { useSettings } from '../state/settingsStore';
@@ -24,6 +25,7 @@ export function App() {
             <Route path={routes.library} element={<LibraryScreen />} />
             <Route path={routes.viewerPattern} element={<ViewerScreen />} />
             <Route path={routes.settings} element={<SettingsScreen />} />
+            <Route path={routes.setlistPattern} element={<SetlistDetailScreen />} />
             <Route path="*" element={<Navigate to={routes.library} replace />} />
           </Routes>
         </IonRouterOutlet>

@@ -1,0 +1,13 @@
+.setlist-bar-text {
+  font-size: 14px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+.setlist-index {
+  min-width: 1.6em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

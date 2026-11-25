@@ -6,6 +6,7 @@ import { prepareDisplayXml } from '../../core/musicxml/prepareDisplay';
 import type { AppSettings } from '../../core/settings';
 import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
 import type { Timeline } from '../../core/model/types';
+import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
 import { RenderService, autoScale, firstMeasureId, transposeOption, type ViewportOptions } from '../../core/render/renderService';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
@@ -13,7 +14,13 @@ export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
 export const MIN_ZOOM = 0.4;
 export const MAX_ZOOM = 3;
 
-export function useScoreViewer(scoreId: string, size: { width: number; height: number } | undefined, settings: AppSettings) {
+export function useScoreViewer(
+  scoreId: string,
+  size: { width: number; height: number } | undefined,
+  settings: AppSettings,
+  /** Setlist item override (setlists): applied to the display, never saved into the score's view state. */
+  override?: SetlistOverride,
+) {
   const [status, setStatus] = useState<ViewerStatus>('loading');
   const [score, setScore] = useState<Score>();
   const [view, setView] = useState<ScoreViewState>();
@@ -62,25 +69,29 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
     };
   }, [scoreId]);
 
+  // --- setlists: state actually displayed = score view state + setlist item override ---
+  const shown = useMemo(() => (view ? effectiveViewState(view, override) : undefined), [view, override]);
+  // --- end setlists ---
+
   // 2. XML to display (parts, multi-rests, names): recomputed when the selection changes.
   // Empty selection = default parts (those visible in MuseScore).
-  const partsKey = view && score ? (view.selectedParts.length ? view.selectedParts : defaultPartIds(score.parts)).join(',') : undefined;
+  const partsKey = shown && score ? (shown.selectedParts.length ? shown.selectedParts : defaultPartIds(score.parts)).join(',') : undefined;
   const display = useMemo(() => {
     if (!xml || partsKey === undefined) return undefined;
     return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: settings.multiRests, partNames: settings.partNames });
   }, [xml, partsKey, settings.multiRests, settings.partNames]);
 
   const viewport = useMemo<ViewportOptions | undefined>(() => {
-    if (!display || !view || !size || size.width < 50 || size.height < 50) return undefined;
-    const factor = typeof view.zoom === 'number' ? view.zoom : settings.defaultZoom;
+    if (!display || !shown || !size || size.width < 50 || size.height < 50) return undefined;
+    const factor = typeof shown.zoom === 'number' ? shown.zoom : settings.defaultZoom;
     return {
       width: size.width,
       height: size.height,
       scale: Math.round(autoScale(display.staves, size.width) * factor),
-      transpose: transposeOption(view.transposeSemitones, view.transposeOctave),
-      concertPitch: view.concertPitch,
+      transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave),
+      concertPitch: shown.concertPitch,
     };
-  }, [display, view, size, settings.defaultZoom]);
+  }, [display, shown, size, settings.defaultZoom]);
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.
   const contentKey = viewport && display ? `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${settings.multiRests}|${settings.partNames}` : undefined;

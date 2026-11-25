@@ -14,6 +14,8 @@ import { onOpenWith } from '../../core/import/openWith';
 import type { ImportInput } from '../../core/import/importScore';
 import { useLibrary, type ImportReport } from '../../state/libraryStore';
 import { ScoreItem } from './ScoreItem';
+import { SetlistsTab } from '../setlists/SetlistsTab';
+import { useSetlists } from '../../state/setlistStore';
 import { ScoreInfoModal } from './ScoreInfoModal';
 
 type Tab = 'scores' | 'setlists';
@@ -28,7 +30,7 @@ const SORTERS: Record<SortKey, (a: Score, b: Score) => number> = {
 };
 
 export function LibraryScreen() {
-  const { t } = useTranslation(['library', 'common']);
+  const { t } = useTranslation(['library', 'common', 'setlists']);
   const navigate = useNavigate();
   const { scores, loaded, importing, upgrading, load, importFiles, rename, remove, markOpened } = useLibrary();
   const [tab, setTab] = useState<Tab>('scores');
@@ -36,6 +38,7 @@ export function LibraryScreen() {
   const [sort, setSort] = useState<SortKey>('recent');
   const [info, setInfo] = useState<Score>();
   const [presentAlert] = useIonAlert();
+  const setlists = useSetlists((s) => s.setlists);
   const [presentToast] = useIonToast();
 
   useEffect(() => {
@@ -97,15 +100,21 @@ export function LibraryScreen() {
       ],
     });
 
-  const askDelete = (score: Score) =>
-    void presentAlert({
+  const askDelete = (score: Score) => {
+    // Mention the setlists that contain this score: it will be removed from them too.
+    const inSetlists = setlists.filter((s) => s.items.some((it) => it.scoreId === score.id)).map((s) => s.name);
+    const message = [t('delete.message', { title: score.title }), inSetlists.length ? t('setlists:deletedFrom', { names: inSetlists.join(', ') }) : '']
+      .filter(Boolean)
+      .join(' ');
+    return void presentAlert({
       header: t('delete.title'),
-      message: t('delete.message', { title: score.title }),
+      message,
       buttons: [
         { text: t('common:actions.cancel'), role: 'cancel' },
         { text: t('common:actions.delete'), role: 'destructive', handler: () => void remove(score.id) },
       ],
     });
+  };
 
   return (
     <IonPage>
@@ -156,7 +165,7 @@ export function LibraryScreen() {
             </IonList>
           )
         ) : (
-          <IonText color="medium" className="ion-padding" style={{ display: 'block' }}><p>{t('setlists.empty')}</p></IonText>
+          <SetlistsTab />
         )}
         {tab === 'scores' && (
           <IonFab slot="fixed" vertical="bottom" horizontal="end">
