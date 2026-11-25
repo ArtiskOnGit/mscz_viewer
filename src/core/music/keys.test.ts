@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { firstKeyFifths, keyName, transposeFifths } from './keys';
+import { firstKeyFifths, keyName, noteName, resolveNoteNaming, transposeFifths } from './keys';
 import { parseXml } from '../../test/xmlEnv';
 
 describe('keys', () => {
@@ -23,6 +23,33 @@ describe('keys', () => {
     expect(keyName(-2, 'major')).toBe('B♭');
     expect(keyName(3, 'minor')).toBe('F♯');
     expect(keyName(9, 'major')).toBeUndefined();
+  });
+
+  it.each([
+    ['C', 'Do', 'C'], ['D', 'Ré', 'D'], ['E♭', 'Mi♭', 'E♭'], ['F♯', 'Fa♯', 'F♯'], ['G', 'Sol', 'G'], ['A♭', 'La♭', 'A♭'],
+    ['B', 'Si', 'H'], ['B♭', 'Si♭', 'B'], ['C♭', 'Do♭', 'C♭'],
+  ])('names %s in Latin (%s) and German (%s) notation', (english, latin, german) => {
+    expect(noteName(english, 'english')).toBe(english);
+    expect(noteName(english, 'latin')).toBe(latin);
+    expect(noteName(english, 'german')).toBe(german);
+  });
+
+  it('names keys in every notation', () => {
+    expect(keyName(-2, 'major', 'latin')).toBe('Si♭');
+    expect(keyName(-2, 'major', 'german')).toBe('B');
+    expect(keyName(5, 'major', 'german')).toBe('H');
+    expect(keyName(0, 'minor', 'latin')).toBe('La');
+    expect(keyName(7, 'major', 'latin')).toBe('Do♯');
+    expect(keyName(-8, 'major', 'latin')).toBeUndefined();
+  });
+
+  it('resolves the automatic note naming from the language', () => {
+    expect(resolveNoteNaming('auto', 'fr')).toBe('latin');
+    expect(resolveNoteNaming('auto', 'fr-CA')).toBe('latin');
+    expect(resolveNoteNaming('auto', 'en')).toBe('english');
+    expect(resolveNoteNaming('auto', 'de-DE')).toBe('german');
+    expect(resolveNoteNaming('english', 'fr')).toBe('english');
+    expect(resolveNoteNaming('german', 'en')).toBe('german');
   });
 
   it('reads the first key signature', () => {

@@ -83,15 +83,42 @@ export function transposeInterval(fromFifths: number, toFifths: number, semitone
 const MAJOR = ['C♭', 'G♭', 'D♭', 'A♭', 'E♭', 'B♭', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'C♯'];
 const MINOR = ['A♭', 'E♭', 'B♭', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F♯', 'C♯', 'G♯', 'D♯', 'A♯'];
 
-/** Tonic name in English notation ("B♭"), or undefined for out-of-range values. */
-export function keyName(fifths: number, mode: 'major' | 'minor'): string | undefined {
-  return (mode === 'minor' ? MINOR : MAJOR)[fifths + 7];
+/** Note naming convention (ADR-009): English C D E F G A B, Latin Do Ré Mi Fa Sol La Si, German C D E F G A H (B = B♭). */
+export type NoteNaming = 'english' | 'latin' | 'german';
+/** User setting: "auto" follows the interface language (Latin for French, English otherwise). */
+export type NoteNamingSetting = 'auto' | NoteNaming;
+
+const LATIN: Record<string, string> = { C: 'Do', D: 'Ré', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si' };
+/** Languages whose musicians name notes Do Ré Mi (only French is translated today). */
+const LATIN_LANGUAGES = new Set(['fr', 'it', 'es', 'pt', 'ro']);
+const GERMAN_LANGUAGES = new Set(['de']);
+
+export function resolveNoteNaming(setting: NoteNamingSetting, language: string): NoteNaming {
+  if (setting !== 'auto') return setting;
+  const base = language.toLowerCase().split('-')[0] ?? '';
+  return LATIN_LANGUAGES.has(base) ? 'latin' : GERMAN_LANGUAGES.has(base) ? 'german' : 'english';
+}
+
+/** Converts an English note name ("B♭", "F♯", "C") to the given naming ("Si♭", "Fa♯"; German "B" for B♭, "H" for B). */
+export function noteName(english: string, naming: NoteNaming): string {
+  const letter = english[0] ?? '';
+  const accidental = english.slice(1);
+  if (naming === 'latin') return (LATIN[letter] ?? letter) + accidental;
+  if (naming === 'german' && letter === 'B') return accidental === '♭' ? 'B' : `H${accidental}`;
+  return english;
+}
+
+/** Tonic name ("B♭" in English, "Si♭" in Latin, "B" in German), or undefined for out-of-range values. */
+export function keyName(fifths: number, mode: 'major' | 'minor', naming: NoteNaming = 'english'): string | undefined {
+  const english = (mode === 'minor' ? MINOR : MAJOR)[fifths + 7];
+  return english && noteName(english, naming);
 }
 
 /** Common presets for transposing instruments reading a concert-pitch part. */
+/** `note`: English name of the instrument's key, shown with the user's note naming. */
 export const TRANSPOSE_PRESETS = [
-  { id: 'c', semitones: 0 },
-  { id: 'bb', semitones: 2 }, // B♭ clarinet, trumpet, tenor sax: written a major 2nd higher
-  { id: 'eb', semitones: -3 }, // E♭ alto/baritone sax: written a major 6th higher = minor 3rd lower (octave apart)
-  { id: 'f', semitones: 7 }, // F horn: written a perfect 5th higher
+  { id: 'c', semitones: 0, note: 'C' },
+  { id: 'bb', semitones: 2, note: 'B♭' }, // B♭ clarinet, trumpet, tenor sax: written a major 2nd higher
+  { id: 'eb', semitones: -3, note: 'E♭' }, // E♭ alto/baritone sax: written a major 6th higher = minor 3rd lower (octave apart)
+  { id: 'f', semitones: 7, note: 'F' }, // F horn: written a perfect 5th higher
 ] as const;
