@@ -30,6 +30,9 @@ jobs:
     name: Debug APK
     needs: web
     runs-on: ubuntu-latest
+    env:
+      # Fixed debug signing key, so a new APK installs over the previous one without losing data.
+      DEBUG_KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +43,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Restore fixed debug keystore
+        if: env.DEBUG_KEYSTORE_B64 != ''
+        run: mkdir -p ~/.android && echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
       - run: npm ci
       - run: npm run build
       - run: npx cap sync android
