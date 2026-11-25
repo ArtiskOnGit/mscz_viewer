@@ -68,6 +68,33 @@ export function SettingsScreen() {
           <IonItem><IonToggle checked={settings.tapZones} onIonChange={(e) => set('tapZones', e.detail.checked)}>{t('tapZones.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.swipe} onIonChange={(e) => set('swipe', e.detail.checked)}>{t('swipe.label')}</IonToggle></IonItem>
 
+          <IonListHeader>{t('sections.playback')}</IonListHeader>
+          <IonItem>
+            <IonSelect label={t('countIn.label')} interface="popover" value={settings.countInMeasures} onIonChange={(e) => set('countInMeasures', e.detail.value as 0 | 1 | 2)}>
+              <IonSelectOption value={0}>{t('countIn.none')}</IonSelectOption>
+              <IonSelectOption value={1}>{t('countIn.one')}</IonSelectOption>
+              <IonSelectOption value={2}>{t('countIn.two')}</IonSelectOption>
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonToggle checked={settings.countInSound} onIonChange={(e) => set('countInSound', e.detail.checked)}>
+              <IonLabel>{t('countInSound.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('countInSound.hint')}</IonNote></IonLabel>
+            </IonToggle>
+          </IonItem>
+          <IonItem>
+            <IonRange
+              label={t('metronomeVolume.label', { percent: Math.round(settings.metronomeVolume * 100) })}
+              labelPlacement="stacked"
+              min={0}
+              max={100}
+              step={10}
+              value={Math.round(settings.metronomeVolume * 100)}
+              onIonChange={(e) => set('metronomeVolume', Number(e.detail.value) / 100)}
+            />
+          </IonItem>
+          <IonItem><IonToggle checked={settings.highlightMeasure} onIonChange={(e) => set('highlightMeasure', e.detail.checked)}>{t('highlightMeasure.label')}</IonToggle></IonItem>
+          <IonItem><IonToggle checked={settings.tapPauses} onIonChange={(e) => set('tapPauses', e.detail.checked)}>{t('tapPauses.label')}</IonToggle></IonItem>
+
           <IonListHeader>{t('sections.system')}</IonListHeader>
           <IonItem><IonToggle checked={settings.keepAwake} onIonChange={(e) => set('keepAwake', e.detail.checked)}>{t('keepAwake.label')}</IonToggle></IonItem>
           <IonItem button detail={false} onClick={reset}><IonLabel color="danger">{t('reset')}</IonLabel></IonItem>

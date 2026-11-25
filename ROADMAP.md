@@ -90,7 +90,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - ⬜ **Profil « My instrument »** : présélection automatique de la partie.
 - ⬜ Notation des notes (C D E / Do Ré Mi / C D E H).
 - ⬜ Écran Paramètres complet (voir les [spécifications fonctionnelles](docs/SPECIFICATIONS_FONCTIONNELLES.md#34-écran-paramètres)).
-- ⬜ « Open with / Share to » sur Android.
+- 🟨 « Open with » sur Android (intent VIEW : import puis ouverture de la partition) — à vérifier sur téléphone ; « Share to » (intent SEND) à faire.
 
 **Livrable** : v0.5, en bêta fermée (Google Play test interne ou APK). *(environ 8 à 10 semaines)*
 

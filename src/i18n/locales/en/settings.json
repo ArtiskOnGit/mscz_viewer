@@ -4,10 +4,22 @@
     "display": "Display",
     "navigation": "Page turning",
     "system": "Device",
-    "about": "About"
+    "about": "About",
+    "playback": "Auto-scroll & metronome"
   },
-  "appTheme": { "label": "App theme", "system": "System", "light": "Light", "dark": "Dark" },
-  "scoreTheme": { "label": "Score colors", "light": "Light", "sepia": "Sepia", "dark": "Dark", "highContrast": "High contrast" },
+  "appTheme": {
+    "label": "App theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "scoreTheme": {
+    "label": "Score colors",
+    "light": "Light",
+    "sepia": "Sepia",
+    "dark": "Dark",
+    "highContrast": "High contrast"
+  },
   "partNames": {
     "label": "Instrument names",
     "hint": "Automatic hides the name when a single part is shown",
@@ -15,11 +27,22 @@
     "full": "Always shown",
     "hidden": "Hidden"
   },
-  "multiRests": { "label": "Group bars of rest", "hint": "Show “11” instead of eleven empty bars" },
-  "defaultZoom": { "label": "Default zoom: {{percent}} %" },
-  "tapZones": { "label": "Tap left / right edge to turn pages" },
-  "swipe": { "label": "Swipe to turn pages" },
-  "keepAwake": { "label": "Keep the screen on while reading" },
+  "multiRests": {
+    "label": "Group bars of rest",
+    "hint": "Show “11” instead of eleven empty bars"
+  },
+  "defaultZoom": {
+    "label": "Default zoom: {{percent}} %"
+  },
+  "tapZones": {
+    "label": "Tap left / right edge to turn pages"
+  },
+  "swipe": {
+    "label": "Swipe to turn pages"
+  },
+  "keepAwake": {
+    "label": "Keep the screen on while reading"
+  },
   "reset": "Restore default settings",
   "about": {
     "version": "Version {{version}}",
@@ -29,5 +52,26 @@
     "licenses": "Open source licenses",
     "trademark": "MuseScore is a trademark of its owners. This app is not affiliated with MuseScore."
   },
-  "licenses": { "title": "Open source licenses" }
+  "licenses": {
+    "title": "Open source licenses"
+  },
+  "countIn": {
+    "label": "Count-in",
+    "none": "None",
+    "one": "1 bar",
+    "two": "2 bars"
+  },
+  "countInSound": {
+    "label": "Count-in clicks",
+    "hint": "Audible even when the metronome is off"
+  },
+  "metronomeVolume": {
+    "label": "Metronome volume: {{percent}} %"
+  },
+  "highlightMeasure": {
+    "label": "Highlight the current bar"
+  },
+  "tapPauses": {
+    "label": "Tap the score to pause"
+  }
 }
