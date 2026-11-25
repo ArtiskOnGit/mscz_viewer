@@ -51,6 +51,48 @@ Détails et justification : voir la documentation ci-dessous.
 | [docs/spikes/PHASE0_RESULTATS.md](docs/spikes/PHASE0_RESULTATS.md) | Résultats des validations techniques de la phase 0 |
 | [spikes/README.md](spikes/README.md) | Scripts jetables de la phase 0 et banc de test web |
 
+## Dépendances
+
+Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aussi listées dans l'application (Paramètres → À propos → Licences open source).
+
+### Moteurs de partition
+
+| Projet | Rôle | Licence |
+|---|---|---|
+| [webmscore](https://github.com/LibreScore/webmscore) (fork de [MuseScore](https://github.com/musescore/MuseScore)) | Lecture des `.mscz`/`.mscx`/MusicXML à l'import (MuseScore compilé en WebAssembly) | GPL-3.0 |
+| [Verovio](https://github.com/rism-digital/verovio) | Rendu des partitions en SVG, transposition, mise en page adaptée à l'écran | LGPL-3.0 |
+| [Leipzig](https://github.com/rism-digital/leipzig) | Police musicale SMuFL utilisée par Verovio | SIL OFL 1.1 |
+
+### Application
+
+| Projet | Rôle | Licence |
+|---|---|---|
+| [Capacitor](https://github.com/ionic-team/capacitor) (`@capacitor/core`, `@capacitor/android`, `@capacitor/cli`) | Coquille native Android/iOS | MIT |
+| [Capacitor plugins](https://github.com/ionic-team/capacitor-plugins) (`@capacitor/app`, `@capacitor/preferences`) | Cycle de vie de l'appli, « Ouvrir avec », préférences | MIT |
+| [Capacitor Filesystem](https://github.com/ionic-team/capacitor-filesystem) | Stockage des partitions sur l'appareil | MIT |
+| [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |
+| [Keep Awake](https://github.com/capacitor-community/keep-awake) | Écran toujours allumé | MIT |
+| [Ionic Framework](https://github.com/ionic-team/ionic-framework) (`@ionic/react`, `@ionic/react-router`) | Composants d'interface mobile | MIT |
+| [Ionicons](https://github.com/ionic-team/ionicons) | Icônes | MIT |
+| [React](https://github.com/react/react) (`react`, `react-dom`) | Interface | MIT |
+| [React Router](https://github.com/remix-run/react-router) | Navigation entre écrans | MIT |
+| [i18next](https://github.com/i18next/i18next) / [react-i18next](https://github.com/i18next/react-i18next) | Traductions (anglais, français) | MIT |
+| [Zustand](https://github.com/pmndrs/zustand) | État de l'application | MIT |
+| [Comlink](https://github.com/GoogleChromeLabs/comlink) | Communication avec le worker de rendu | Apache-2.0 |
+| [fflate](https://github.com/101arrowz/fflate) | Lecture des archives `.mscz`/`.mxl` (ZIP) | MIT |
+
+### Outils de développement
+
+| Projet | Rôle | Licence |
+|---|---|---|
+| [Vite](https://github.com/vitejs/vite) / [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react) | Serveur de développement et build | MIT |
+| [TypeScript](https://github.com/microsoft/TypeScript) | Langage | Apache-2.0 |
+| [Vitest](https://github.com/vitest-dev/vitest) | Tests unitaires | MIT |
+| [Playwright](https://github.com/microsoft/playwright) | Tests de bout en bout (Chromium headless) | Apache-2.0 |
+| [ESLint](https://github.com/eslint/eslint), [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint), [eslint-plugin-react-hooks](https://github.com/facebook/react), [eslint-plugin-i18next](https://github.com/edvardchen/eslint-plugin-i18next), [globals](https://github.com/sindresorhus/globals) | Analyse du code (dont la règle « pas de texte en dur ») | MIT / ISC |
+| [@xmldom/xmldom](https://github.com/xmldom/xmldom), [jsdom](https://github.com/jsdom/jsdom) | DOM XML/HTML pour les tests sous Node | MIT |
+| [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) (`@types/*`) | Types TypeScript | MIT |
+
 ## Licence
 
 **GPL-3.0-or-later**, imposée par l'utilisation de webmscore (dérivé de MuseScore, GPL). Voir [ADR-003](docs/DECISIONS.md).
