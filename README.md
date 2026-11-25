@@ -71,6 +71,12 @@ node e2e/smoke.mjs "$PWD"   # test de fumée des 3 écrans dans Chromium headles
 
 La CI (GitHub Actions, `.github/workflows/ci.yml`) lance lint, typecheck, tests et build, puis produit un **APK de debug** téléchargeable dans les artefacts.
 
+Installer le dernier APK de debug sur un téléphone :
+1. `gh run download --name pupitre-debug-apk` (ou télécharger l'artefact `pupitre-debug-apk` depuis l'onglet *Actions* du dépôt) ;
+2. copier `app-debug.apk` sur le téléphone et l'ouvrir (autoriser l'installation d'applications inconnues pour le gestionnaire de fichiers).
+
+Les APK de debug sont signés avec une clé fixe (secret `ANDROID_DEBUG_KEYSTORE_B64`) : une nouvelle version s'installe par-dessus la précédente sans perdre les données. Si le secret est perdu, en générer un nouveau (une seule désinstallation sera nécessaire).
+
 | Dossier | Contenu |
 |---|---|
 | `src/app/` | Coquille de l'application, routes |
