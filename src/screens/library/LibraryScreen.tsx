@@ -28,7 +28,7 @@ const SORTERS: Record<SortKey, (a: Score, b: Score) => number> = {
 export function LibraryScreen() {
   const { t } = useTranslation(['library', 'common']);
   const navigate = useNavigate();
-  const { scores, loaded, importing, load, importFiles, rename, remove, markOpened } = useLibrary();
+  const { scores, loaded, importing, upgrading, load, importFiles, rename, remove, markOpened } = useLibrary();
   const [tab, setTab] = useState<Tab>('scores');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -149,6 +149,7 @@ export function LibraryScreen() {
             </IonFabButton>
           </IonFab>
         )}
+        <IonLoading isOpen={!!upgrading && !importing} message={upgrading ? t('upgrade', { done: upgrading.done + 1, total: upgrading.total }) : ''} />
         <IonLoading
           isOpen={!!importing}
           message={importing ? t('import.progress', { current: importing.current ?? '', done: importing.done + 1, total: importing.total }) : ''}

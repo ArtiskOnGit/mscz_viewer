@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { zipSync, strToU8 } from 'fflate';
-import { ImportError, importScore } from './importScore';
+import { IMPORTER_VERSION, ImportError, importScore, reimportScore } from './importScore';
 import type { ScoreEngine } from './scoreEngine';
 import { LibraryRepository } from '../storage/libraryRepository';
 import { MemoryFileStore } from '../storage/fileStore';
@@ -31,7 +31,8 @@ const fakeEngine = (overrides: Partial<Awaited<ReturnType<ScoreEngine['convert']
   return engine;
 };
 
-const msczBytes = () => zipSync({ 'score.mscx': strToU8('<museScore version="3.02"/>'), 'Thumbnails/thumbnail.png': new Uint8Array([137, 80, 78, 71]) });
+const MSCX = '<museScore version="3.02"><Score><Part><trackName>Trumpet</trackName></Part><Part><show>0</show><trackName>Tuba</trackName></Part></Score></museScore>';
+const msczBytes = () => zipSync({ 'score.mscx': strToU8(MSCX), 'Thumbnails/thumbnail.png': new Uint8Array([137, 80, 78, 71]) });
 
 function setup(engine: ScoreEngine = fakeEngine()) {
   const fs = new MemoryFileStore();
@@ -53,8 +54,9 @@ describe('importScore', () => {
     });
     expect(score.parts).toEqual([
       { index: 0, musicXmlId: 'P1', name: 'Trumpet in B♭', instrumentId: 'bb-trumpet', midiProgram: 56 },
-      { index: 1, musicXmlId: 'P2', name: 'Tuba', instrumentId: undefined, midiProgram: undefined },
+      { index: 1, musicXmlId: 'P2', name: 'Tuba', instrumentId: undefined, midiProgram: undefined, hiddenInSource: true },
     ]);
+    expect(score.importerVersion).toBe(IMPORTER_VERSION);
     expect([...fs.files.keys()].sort()).toEqual([
       'library.json', 'scores/id-1/original.mscz', 'scores/id-1/score.musicxml', 'scores/id-1/thumbnail.png', 'scores/id-1/timeline.json',
     ]);
@@ -85,6 +87,20 @@ describe('importScore', () => {
   it('wraps engine failures', async () => {
     const { deps } = setup({ async convert() { throw new Error('null function or function signature mismatch'); } });
     await expect(importScore({ name: 'x.mscz', bytes: msczBytes() }, deps)).rejects.toMatchObject({ code: 'engineFailed' });
+  });
+});
+
+describe('reimportScore', () => {
+  it('converts the stored original again, keeping id, title and import date', async () => {
+    const engine = fakeEngine();
+    const { repo, deps } = setup(engine);
+    await importScore({ name: 'a.mscz', bytes: msczBytes() }, deps);
+    await repo.update('id-1', { title: 'My title', importerVersion: 1, parts: [] });
+    const updated = await reimportScore((await repo.get('id-1'))!, deps);
+    expect(engine.calls).toBe(2);
+    expect(updated).toMatchObject({ id: 'id-1', title: 'My title', importedAt: '2026-11-25T10:00:00.000Z', importerVersion: IMPORTER_VERSION });
+    expect(updated.parts).toHaveLength(2);
+    expect((await repo.get('id-1'))?.parts[1]?.hiddenInSource).toBe(true);
   });
 });
 

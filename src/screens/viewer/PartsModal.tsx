@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  IonButton, IonButtons, IonCheckbox, IonContent, IonFooter, IonHeader, IonItem, IonList, IonModal, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonCheckbox, IonContent, IonFooter, IonHeader, IonItem, IonList, IonModal, IonText, IonTitle, IonToolbar,
 } from '@ionic/react';
 import type { Part } from '../../core/model/types';
 
 interface Props {
   isOpen: boolean;
   parts: Part[];
-  /** Empty = all. */
+  /** Parts currently displayed. */
   selected: string[];
+  /** Default parts (visible in MuseScore): choosing exactly these is stored as "default". */
+  defaults: string[];
   onApply(selected: string[]): void;
   onDismiss(): void;
 }
 
-export function PartsModal({ isOpen, parts, selected, onApply, onDismiss }: Props) {
+export function PartsModal({ isOpen, parts, selected, defaults, onApply, onDismiss }: Props) {
   const { t } = useTranslation(['viewer', 'common']);
   const all = parts.map((p) => p.musicXmlId);
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -29,7 +31,7 @@ export function PartsModal({ isOpen, parts, selected, onApply, onDismiss }: Prop
   const allChecked = checked.size === all.length;
 
   return (
-    <IonModal isOpen={isOpen} onWillPresent={() => setChecked(new Set(selected.length ? selected : all))} onDidDismiss={onDismiss}>
+    <IonModal isOpen={isOpen} onWillPresent={() => setChecked(new Set(selected))} onDidDismiss={onDismiss}>
       <IonHeader>
         <IonToolbar>
           <IonTitle>{t('parts.title')}</IonTitle>
@@ -47,6 +49,7 @@ export function PartsModal({ isOpen, parts, selected, onApply, onDismiss }: Prop
             <IonItem key={p.musicXmlId}>
               <IonCheckbox checked={checked.has(p.musicXmlId)} onIonChange={(e) => toggle(p.musicXmlId, e.detail.checked)}>
                 {p.name}
+                {p.hiddenInSource && <IonText color="medium"> · {t('parts.hiddenInSource')}</IonText>}
               </IonCheckbox>
             </IonItem>
           ))}
@@ -54,7 +57,10 @@ export function PartsModal({ isOpen, parts, selected, onApply, onDismiss }: Prop
       </IonContent>
       <IonFooter>
         <IonToolbar>
-          <IonButton expand="block" disabled={checked.size === 0} onClick={() => onApply(allChecked ? [] : all.filter((id) => checked.has(id)))}>
+          <IonButton expand="block" disabled={checked.size === 0} onClick={() => {
+              const chosen = all.filter((id) => checked.has(id));
+              onApply(sameSet(chosen, defaults) ? [] : chosen);
+            }}>
             {t('parts.apply')}
           </IonButton>
         </IonToolbar>
@@ -62,3 +68,5 @@ export function PartsModal({ isOpen, parts, selected, onApply, onDismiss }: Prop
     </IonModal>
   );
 }
+
+const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));

@@ -104,7 +104,7 @@ function insertAtTime(measure: Element, node: Element, position: number): void {
   else measure.appendChild(node);
 }
 
-/** Remove part-group start/stop pairs that no longer contain any score-part. */
+/** Remove part-group start/stop pairs that contain fewer than 2 score-parts (a bracket around one part is noise). */
 function removeEmptyPartGroups(doc: Document): void {
   const partList = elementsByTag(doc, 'part-list')[0];
   if (!partList) return;
@@ -117,7 +117,7 @@ function removeEmptyPartGroups(doc: Document): void {
       for (const g of open.values()) g.parts++;
     } else if (el.tagName === 'part-group' && el.getAttribute('type') === 'stop') {
       const g = open.get(number);
-      if (g && g.parts === 0) {
+      if (g && g.parts < 2) {
         partList.removeChild(g.start);
         partList.removeChild(el);
       }

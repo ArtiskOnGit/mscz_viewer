@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Score, ScoreId } from '../core/model/types';
 import { libraryRepository, viewStateRepository } from '../core/services';
-import { ImportError, importScore, type ImportInput } from '../core/import/importScore';
+import { IMPORTER_VERSION, ImportError, importScore, reimportScore, type ImportInput } from '../core/import/importScore';
 import { webMscoreEngine } from '../core/import/webmscoreEngine';
 
 export interface ImportReport {
@@ -14,7 +14,10 @@ interface LibraryState {
   scores: Score[];
   loaded: boolean;
   importing: { done: number; total: number; current?: string } | undefined;
+  /** Re-import of scores converted by an older pipeline. */
+  upgrading: { done: number; total: number } | undefined;
   load(): Promise<void>;
+  upgrade(outdated: Score[]): Promise<void>;
   importFiles(inputs: ImportInput[]): Promise<ImportReport>;
   rename(id: ScoreId, title: string): Promise<void>;
   remove(id: ScoreId): Promise<void>;
@@ -25,9 +28,30 @@ export const useLibrary = create<LibraryState>((set, get) => ({
   scores: [],
   loaded: false,
   importing: undefined,
+  upgrading: undefined,
 
   async load() {
-    set({ scores: await libraryRepository.list(), loaded: true });
+    const scores = await libraryRepository.list();
+    set({ scores, loaded: true });
+    const outdated = scores.filter((s) => s.importerVersion < IMPORTER_VERSION);
+    if (outdated.length && !get().upgrading) void get().upgrade(outdated);
+  },
+
+  async upgrade(outdated) {
+    set({ upgrading: { done: 0, total: outdated.length } });
+    try {
+      for (const [i, score] of outdated.entries()) {
+        set({ upgrading: { done: i, total: outdated.length } });
+        try {
+          await reimportScore(score, { repo: libraryRepository, engine: webMscoreEngine });
+        } catch (e) {
+          // Keep the previous conversion: still displayable.
+          console.error('re-import failed', score.sourceFileName, e);
+        }
+      }
+    } finally {
+      set({ upgrading: undefined, scores: await libraryRepository.list() });
+    }
   },
 
   async importFiles(inputs) {

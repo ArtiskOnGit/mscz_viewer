@@ -58,6 +58,20 @@ export class LibraryRepository {
     await this.mutate((scores) => [...scores, score]);
   }
 
+  /** Replace the generated files and the entry of an existing score (re-import). */
+  async replace(score: Score, files: Omit<NewScoreFiles, 'original'>): Promise<void> {
+    const p = scorePaths(score.id);
+    await this.fs.writeText(p.musicXml, files.musicXml);
+    await this.fs.writeText(p.timeline, JSON.stringify(files.timeline));
+    if (files.thumbnail) await this.fs.writeBytes(p.thumbnail, files.thumbnail);
+    await this.mutate((scores) => scores.map((s) => (s.id === score.id ? score : s)));
+  }
+
+  readOriginal(score: Score): Promise<Uint8Array | undefined> {
+    const ext = score.sourceFileName.includes('.') ? score.sourceFileName.split('.').pop()!.toLowerCase() : score.sourceFormat;
+    return this.fs.readBytes(scorePaths(score.id).original(ext));
+  }
+
   async update(id: ScoreId, patch: Partial<Omit<Score, 'id'>>): Promise<void> {
     await this.mutate((scores) => scores.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }

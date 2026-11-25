@@ -33,6 +33,8 @@ export function verovioOptions(v: ViewportOptions): Record<string, unknown> {
     header: 'none',
     footer: 'none',
     svgViewBox: true,
+    // The "//" system separators only make sense on printed full scores.
+    systemDivider: 'none',
     transpose: v.transpose,
     transposeToSoundingPitch: v.concertPitch,
   };

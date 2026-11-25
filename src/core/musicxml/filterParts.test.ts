@@ -55,7 +55,7 @@ describe('filterParts', () => {
     expect(Array.from(doc.getElementsByTagName('score-part')).map((p) => p.getAttribute('id'))).toEqual(['P2']);
   });
 
-  it('removes part groups that became empty', () => {
+  it('removes part groups that no longer group several parts', () => {
     const doc = parseXml(filterParts(SCORE, ['P2'], xmlEnv).xml);
     expect(doc.getElementsByTagName('part-group')).toHaveLength(0);
   });

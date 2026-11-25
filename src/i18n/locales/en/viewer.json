@@ -15,6 +15,7 @@
     "all": "All (full score)",
     "staves_one": "{{count}} staff",
     "staves_other": "{{count}} staves",
-    "apply": "Show"
+    "apply": "Show",
+    "hiddenInSource": "hidden in MuseScore"
   }
 }

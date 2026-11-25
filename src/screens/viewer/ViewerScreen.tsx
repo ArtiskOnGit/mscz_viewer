@@ -7,6 +7,7 @@ import {
 import { addOutline, chevronBack, chevronForward, peopleOutline, removeOutline, scanOutline } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
+import { defaultPartIds } from '../../core/model/types';
 import { useScoreViewer } from './useScoreViewer';
 import { PartsModal } from './PartsModal';
 import { usePageGestures } from './usePageGestures';
@@ -71,7 +72,7 @@ export function ViewerScreen() {
   });
 
   const parts = v.score?.parts ?? [];
-  const selectedCount = v.view?.selectedParts.length || parts.length;
+  const selectedCount = v.selectedParts.length;
 
   return (
     <IonPage className={chrome ? '' : 'score-chrome-hidden'}>
@@ -124,7 +125,8 @@ export function ViewerScreen() {
       <PartsModal
         isOpen={partsOpen}
         parts={parts}
-        selected={v.view?.selectedParts ?? []}
+        selected={v.selectedParts}
+        defaults={defaultPartIds(parts)}
         onDismiss={() => setPartsOpen(false)}
         onApply={(selectedParts) => {
           setPartsOpen(false);

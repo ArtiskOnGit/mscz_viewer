@@ -1,6 +1,6 @@
 // Loading, rendering and navigation state of the viewer.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Score, ScoreViewState } from '../../core/model/types';
+import { defaultPartIds, type Score, type ScoreViewState } from '../../core/model/types';
 import { libraryRepository, viewStateRepository } from '../../core/services';
 import { prepareDisplayXml } from '../../core/musicxml/prepareDisplay';
 import { RenderService, autoScale, firstMeasureId, transposeOption, type ViewportOptions } from '../../core/render/renderService';
@@ -47,7 +47,8 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   }, [scoreId]);
 
   // 2. XML to display (parts, multi-rests, names): recomputed when the selection changes.
-  const partsKey = view?.selectedParts.join(',');
+  // Empty selection = default parts (those visible in MuseScore).
+  const partsKey = view && score ? (view.selectedParts.length ? view.selectedParts : defaultPartIds(score.parts)).join(',') : undefined;
   const display = useMemo(() => {
     if (!xml || partsKey === undefined) return undefined;
     return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: true, partNames: 'auto' });
@@ -126,5 +127,6 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   const zoom = typeof view?.zoom === 'number' ? view.zoom : 1;
   const setZoom = useCallback((z: number) => update({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 100) / 100)) }), [update]);
 
-  return { status, score, view, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  const selectedParts = useMemo(() => (partsKey ? partsKey.split(',') : []), [partsKey]);
+  return { status, score, view, selectedParts, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }

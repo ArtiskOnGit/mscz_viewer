@@ -24,6 +24,7 @@
     "title": "No scores yet",
     "body": "Import MuseScore (.mscz, .mscx) or MusicXML (.mxl, .musicxml) files to get started."
   },
+  "upgrade": "Updating your scores to the new version ({{done}}/{{total}})…",
   "search": "Search title or composer",
   "noMatch": "No score matches “{{query}}”.",
   "sort": {

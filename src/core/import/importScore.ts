@@ -3,11 +3,15 @@ import type { Part, Score } from '../model/types';
 import type { LibraryRepository } from '../storage/libraryRepository';
 import type { XmlEnv } from '../musicxml/filterParts';
 import { readTimeSignatures, timelineFromWebMscore } from '../timeline/timeline';
-import { detectFormat, extensionOf, extractMsczThumbnail, sha256Hex } from './formats';
-import type { ScoreEngine } from './scoreEngine';
+import { detectFormat, extensionOf, extractMsczThumbnail, sha256Hex, type ImportFormat } from './formats';
+import type { EngineResult, ScoreEngine } from './scoreEngine';
+import { unhideParts } from './unhideParts';
 
-/** Bump when the pipeline output changes, to allow re-importing old scores later. */
-export const IMPORTER_VERSION = 1;
+/**
+ * Bump when the pipeline output changes: older scores are re-imported from their original file.
+ * 2: hidden MuseScore parts/staves are made visible before conversion (their beams were missing).
+ */
+export const IMPORTER_VERSION = 2;
 
 export interface ImportInput {
   name: string;
@@ -42,8 +46,7 @@ const PLACEHOLDERS = new Set(['untitled score', 'subtitle', 'composer / arranger
 const meaningful = (s?: string) => (s && !PLACEHOLDERS.has(s.trim().toLowerCase()) ? s.trim() : undefined);
 
 export async function importScore(input: ImportInput, deps: ImportDeps): Promise<ImportOutcome> {
-  const { repo, engine } = deps;
-  const env = deps.xml ?? globalThis;
+  const { repo } = deps;
   if (input.bytes.length === 0) throw new ImportError('emptyFile', `${input.name} is empty`);
   const format = detectFormat(input.name, input.bytes);
   if (!format) throw new ImportError('unsupportedFormat', `${input.name}: unsupported format`);
@@ -52,9 +55,57 @@ export async function importScore(input: ImportInput, deps: ImportDeps): Promise
   const existing = await repo.findByHash(sourceHash);
   if (existing) return { status: 'duplicate', existing };
 
-  let result;
+  const id = deps.newId?.() ?? crypto.randomUUID();
+  const converted = await convert(input, format, deps);
+  const title = converted.title ?? prettyFileName(input.name);
+  const score: Score = {
+    ...converted.fields,
+    id,
+    title,
+    originalTitle: title,
+    sourceFormat: format,
+    sourceFileName: input.name,
+    sourceHash,
+    importedAt: (deps.now?.() ?? new Date()).toISOString(),
+    tags: [],
+  };
+
+  await repo.add(score, {
+    original: { bytes: input.bytes, ext: extensionOf(input.name) || format },
+    musicXml: converted.musicXml,
+    timeline: converted.timeline,
+    thumbnail: format === 'mscz' ? extractMsczThumbnail(input.bytes) : undefined,
+  });
+  return { status: 'imported', score };
+}
+
+/** Re-run the conversion of an already imported score from its original file (keeps id, title, settings). */
+export async function reimportScore(score: Score, deps: ImportDeps): Promise<Score> {
+  const bytes = await deps.repo.readOriginal(score);
+  if (!bytes) throw new ImportError('emptyFile', `${score.sourceFileName}: original file missing`);
+  const converted = await convert({ name: score.sourceFileName, bytes }, score.sourceFormat, deps);
+  const updated: Score = { ...score, ...converted.fields };
+  await deps.repo.replace(updated, { musicXml: converted.musicXml, timeline: converted.timeline });
+  return updated;
+}
+
+type ConvertedFields = Pick<Score, 'subtitle' | 'composer' | 'importerVersion' | 'museScoreVersion' | 'measures' | 'durationSec' | 'initialTempoBpm' | 'parts' | 'rehearsalMarks'>;
+
+async function convert(input: ImportInput, format: ImportFormat, deps: ImportDeps) {
+  const env = deps.xml ?? globalThis;
+  let bytes = input.bytes;
+  let hidden: number[] = [];
+  if (format === 'mscz' || format === 'mscx') {
+    try {
+      ({ bytes, hiddenPartIndexes: hidden } = unhideParts(format, input.bytes, env));
+    } catch (e) {
+      console.warn('unhideParts failed, converting the file as is', e);
+    }
+  }
+
+  let result: EngineResult;
   try {
-    result = await engine.convert(format, input.bytes);
+    result = await deps.engine.convert(format, bytes);
   } catch (e) {
     throw new ImportError('engineFailed', `${input.name}: the score engine could not read this file`, e);
   }
@@ -72,24 +123,14 @@ export async function importScore(input: ImportInput, deps: ImportDeps): Promise
       name: sp.getElementsByTagName('part-name')[0]?.textContent?.trim() || engineParts?.name || `Part ${index + 1}`,
       instrumentId: engineParts?.instrumentId,
       midiProgram: engineParts?.program,
+      ...(hidden.includes(index) ? { hiddenInSource: true } : {}),
     };
   });
 
   const timeline = timelineFromWebMscore(result.positions, readTimeSignatures(doc), meta.duration ? meta.duration * 1000 : undefined);
-  // "onlyfuhnbrass_-_medley_Russ.mscz" → "onlyfuhnbrass - medley Russ"
-  const baseName = input.name.replace(/\.[^.]+$/, '').replace(/_+/g, ' ').replace(/\s+/g, ' ').trim() || input.name;
-  const title = meaningful(meta.title) ?? baseName;
-  const id = deps.newId?.() ?? crypto.randomUUID();
-  const score: Score = {
-    id,
-    title,
-    originalTitle: title,
+  const fields: ConvertedFields = {
     subtitle: meaningful(meta.subtitle),
     composer: meaningful(meta.composer),
-    sourceFormat: format,
-    sourceFileName: input.name,
-    sourceHash,
-    importedAt: (deps.now?.() ?? new Date()).toISOString(),
     importerVersion: IMPORTER_VERSION,
     museScoreVersion: meta.mscoreVersion,
     measures: countMeasures(doc) ?? meta.measures ?? 0,
@@ -97,16 +138,13 @@ export async function importScore(input: ImportInput, deps: ImportDeps): Promise
     initialTempoBpm: meta.tempo,
     parts,
     rehearsalMarks: readRehearsalMarks(doc),
-    tags: [],
   };
+  return { fields, title: meaningful(meta.title), musicXml: result.musicXml, timeline };
+}
 
-  await repo.add(score, {
-    original: { bytes: input.bytes, ext: extensionOf(input.name) || format },
-    musicXml: result.musicXml,
-    timeline,
-    thumbnail: format === 'mscz' ? extractMsczThumbnail(input.bytes) : undefined,
-  });
-  return { status: 'imported', score };
+/** "onlyfuhnbrass_-_medley_Russ.mscz" → "onlyfuhnbrass - medley Russ" */
+function prettyFileName(name: string): string {
+  return name.replace(/\.[^.]+$/, '').replace(/_+/g, ' ').replace(/\s+/g, ' ').trim() || name;
 }
 
 function firstPartMeasures(doc: Document): Element[] {

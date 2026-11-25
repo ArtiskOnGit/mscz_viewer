@@ -12,6 +12,14 @@ export interface Part {
   name: string;
   instrumentId?: string;
   midiProgram?: number;
+  /** Hidden in the original MuseScore file: not shown by default. */
+  hiddenInSource?: boolean;
+}
+
+/** Parts shown when the user has not chosen: the ones visible in MuseScore (all if none is). */
+export function defaultPartIds(parts: readonly Part[]): string[] {
+  const visible = parts.filter((p) => !p.hiddenInSource).map((p) => p.musicXmlId);
+  return visible.length ? visible : parts.map((p) => p.musicXmlId);
 }
 
 export interface Score {
