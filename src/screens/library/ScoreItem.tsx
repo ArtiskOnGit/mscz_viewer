@@ -10,10 +10,11 @@ interface Props {
   score: Score;
   onOpen(): void;
   onRename(): void;
+  onInfo(): void;
   onDelete(): void;
 }
 
-export function ScoreItem({ score, onOpen, onRename, onDelete }: Props) {
+export function ScoreItem({ score, onOpen, onRename, onInfo, onDelete }: Props) {
   const { t } = useTranslation(['library', 'common']);
   const thumbnail = useThumbnail(score.id);
   const details = [score.composer, t('card.parts', { count: score.parts.length }), formatDuration(score.durationSec)].filter(Boolean).join(' · ');
@@ -30,6 +31,7 @@ export function ScoreItem({ score, onOpen, onRename, onDelete }: Props) {
         </IonLabel>
       </IonItem>
       <IonItemOptions side="end">
+        <IonItemOption color="medium" onClick={onInfo}>{t('info.button')}</IonItemOption>
         <IonItemOption onClick={onRename}>{t('common:actions.rename')}</IonItemOption>
         <IonItemOption color="danger" onClick={onDelete}>{t('common:actions.delete')}</IonItemOption>
       </IonItemOptions>

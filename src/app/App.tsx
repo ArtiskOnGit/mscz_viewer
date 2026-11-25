@@ -5,8 +5,17 @@ import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { ViewerScreen } from '../screens/viewer/ViewerScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { routes } from './routes';
+import { useEffect } from 'react';
+import { useSettings } from '../state/settingsStore';
+import { useAppTheme } from './useAppTheme';
 
 export function App() {
+  const { settings, loaded, load } = useSettings();
+  useEffect(() => {
+    if (!loaded) void load();
+  }, [loaded, load]);
+  useAppTheme(settings.appTheme);
+
   return (
     <IonApp>
       <IonReactRouter>

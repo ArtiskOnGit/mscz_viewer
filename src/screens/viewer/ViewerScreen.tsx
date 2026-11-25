@@ -11,6 +11,7 @@ import { defaultPartIds } from '../../core/model/types';
 import { useScoreViewer } from './useScoreViewer';
 import { PartsModal } from './PartsModal';
 import { usePageGestures } from './usePageGestures';
+import { useSettings } from '../../state/settingsStore';
 import './viewer.css';
 
 const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter']);
@@ -23,7 +24,8 @@ export function ViewerScreen() {
   const [size, setSize] = useState<{ width: number; height: number }>();
   const [chrome, setChrome] = useState(true);
   const [partsOpen, setPartsOpen] = useState(false);
-  const v = useScoreViewer(scoreId, size);
+  const { settings } = useSettings();
+  const v = useScoreViewer(scoreId, size, settings);
 
   // Track the stage size (rotation, split screen…), debounced.
   useEffect(() => {
@@ -44,9 +46,10 @@ export function ViewerScreen() {
 
   // Never let the screen sleep while a score is open.
   useEffect(() => {
+    if (!settings.keepAwake) return;
     void KeepAwake.keepAwake().catch(() => undefined);
     return () => void KeepAwake.allowSleep().catch(() => undefined);
-  }, []);
+  }, [settings.keepAwake]);
 
   // Keyboard and Bluetooth page-turner pedals (they send key presses).
   useEffect(() => {
@@ -69,6 +72,8 @@ export function ViewerScreen() {
     onPrev: v.prev,
     onToggleChrome: () => setChrome((c) => !c),
     onPinchEnd: (ratio) => v.setZoom(v.zoom * ratio),
+    tapZones: settings.tapZones,
+    swipe: settings.swipe,
   });
 
   const parts = v.score?.parts ?? [];
@@ -88,13 +93,13 @@ export function ViewerScreen() {
               </IonButton>
             )}
             <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} /></IonButton>
-            <IonButton onClick={() => v.setZoom(1)} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} /></IonButton>
+            <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} /></IonButton>
             <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} /></IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent scrollY={false}>
-        <div ref={stageRef} className="score-stage" data-testid="score-stage">
+        <div ref={stageRef} className="score-stage" data-testid="score-stage" data-score-theme={settings.scoreTheme}>
           {v.status === 'ready' && v.svg && (
             <div
               className="score-page"

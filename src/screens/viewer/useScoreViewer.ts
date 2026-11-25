@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultPartIds, type Score, type ScoreViewState } from '../../core/model/types';
 import { libraryRepository, viewStateRepository } from '../../core/services';
 import { prepareDisplayXml } from '../../core/musicxml/prepareDisplay';
+import type { AppSettings } from '../../core/settings';
 import { RenderService, autoScale, firstMeasureId, transposeOption, type ViewportOptions } from '../../core/render/renderService';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
@@ -10,7 +11,7 @@ export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
 export const MIN_ZOOM = 0.4;
 export const MAX_ZOOM = 3;
 
-export function useScoreViewer(scoreId: string, size: { width: number; height: number } | undefined) {
+export function useScoreViewer(scoreId: string, size: { width: number; height: number } | undefined, settings: AppSettings) {
   const [status, setStatus] = useState<ViewerStatus>('loading');
   const [score, setScore] = useState<Score>();
   const [view, setView] = useState<ScoreViewState>();
@@ -51,12 +52,12 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   const partsKey = view && score ? (view.selectedParts.length ? view.selectedParts : defaultPartIds(score.parts)).join(',') : undefined;
   const display = useMemo(() => {
     if (!xml || partsKey === undefined) return undefined;
-    return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: true, partNames: 'auto' });
-  }, [xml, partsKey]);
+    return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: settings.multiRests, partNames: settings.partNames });
+  }, [xml, partsKey, settings.multiRests, settings.partNames]);
 
   const viewport = useMemo<ViewportOptions | undefined>(() => {
     if (!display || !view || !size || size.width < 50 || size.height < 50) return undefined;
-    const factor = typeof view.zoom === 'number' ? view.zoom : 1;
+    const factor = typeof view.zoom === 'number' ? view.zoom : settings.defaultZoom;
     return {
       width: size.width,
       height: size.height,
@@ -64,10 +65,10 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
       transpose: transposeOption(view.transposeSemitones, view.transposeOctave),
       concertPitch: view.concertPitch,
     };
-  }, [display, view, size]);
+  }, [display, view, size, settings.defaultZoom]);
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.
-  const contentKey = viewport && display ? `${partsKey}|${viewport.transpose}|${viewport.concertPitch}` : undefined;
+  const contentKey = viewport && display ? `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${settings.multiRests}|${settings.partNames}` : undefined;
   const loadedContent = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!viewport || !display || !contentKey) return;
@@ -124,7 +125,7 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   const next = useCallback(() => setPage((p) => Math.min(p + 1, pageCount || p)), [pageCount]);
   const prev = useCallback(() => setPage((p) => Math.max(p - 1, 1)), []);
   const update = useCallback((patch: Partial<ScoreViewState>) => setView((v) => (v ? { ...v, ...patch } : v)), []);
-  const zoom = typeof view?.zoom === 'number' ? view.zoom : 1;
+  const zoom = typeof view?.zoom === 'number' ? view.zoom : settings.defaultZoom;
   const setZoom = useCallback((z: number) => update({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 100) / 100)) }), [update]);
 
   const selectedParts = useMemo(() => (partsKey ? partsKey.split(',') : []), [partsKey]);

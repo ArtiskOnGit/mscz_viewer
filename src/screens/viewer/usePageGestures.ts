@@ -7,6 +7,9 @@ interface Handlers {
   onToggleChrome(): void;
   /** Called with the final pinch ratio (> 1 = zoom in). */
   onPinchEnd(ratio: number): void;
+  /** Left/right thirds turn pages (otherwise any tap toggles the toolbars). */
+  tapZones: boolean;
+  swipe: boolean;
 }
 
 const TAP_ZONE = 1 / 3;
@@ -65,14 +68,14 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
       }
       const dx = p.x - p.x0;
       const dy = p.y - p.y0;
-      if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (h.current.swipe && Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
         if (dx < 0) h.current.onNext();
         else h.current.onPrev();
       } else if (Math.abs(dx) < TAP_MAX_MOVE_PX && Math.abs(dy) < TAP_MAX_MOVE_PX) {
         const { left, width } = el.getBoundingClientRect();
         const x = (p.x - left) / width;
-        if (x < TAP_ZONE) h.current.onPrev();
-        else if (x > 1 - TAP_ZONE) h.current.onNext();
+        if (h.current.tapZones && x < TAP_ZONE) h.current.onPrev();
+        else if (h.current.tapZones && x > 1 - TAP_ZONE) h.current.onNext();
         else h.current.onToggleChrome();
       }
     };

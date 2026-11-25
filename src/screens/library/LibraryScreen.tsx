@@ -13,6 +13,7 @@ import { onRestoredPick, pickScoreFiles } from '../../core/import/filePicker';
 import type { ImportInput } from '../../core/import/importScore';
 import { useLibrary, type ImportReport } from '../../state/libraryStore';
 import { ScoreItem } from './ScoreItem';
+import { ScoreInfoModal } from './ScoreInfoModal';
 
 type Tab = 'scores' | 'setlists';
 type SortKey = 'recent' | 'title' | 'composer' | 'imported';
@@ -32,6 +33,7 @@ export function LibraryScreen() {
   const [tab, setTab] = useState<Tab>('scores');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
+  const [info, setInfo] = useState<Score>();
   const [presentAlert] = useIonAlert();
   const [presentToast] = useIonToast();
 
@@ -135,7 +137,7 @@ export function LibraryScreen() {
           ) : (
             <IonList>
               {visible.map((s) => (
-                <ScoreItem key={s.id} score={s} onOpen={() => open(s)} onRename={() => askRename(s)} onDelete={() => askDelete(s)} />
+                <ScoreItem key={s.id} score={s} onOpen={() => open(s)} onRename={() => askRename(s)} onInfo={() => setInfo(s)} onDelete={() => askDelete(s)} />
               ))}
             </IonList>
           )
@@ -149,6 +151,7 @@ export function LibraryScreen() {
             </IonFabButton>
           </IonFab>
         )}
+        <ScoreInfoModal score={info} onDismiss={() => setInfo(undefined)} />
         <IonLoading isOpen={!!upgrading && !importing} message={upgrading ? t('upgrade', { done: upgrading.done + 1, total: upgrading.total }) : ''} />
         <IonLoading
           isOpen={!!importing}

@@ -1,6 +1,9 @@
 {
   "title": "Library",
-  "tabs": { "scores": "Scores", "setlists": "Setlists" },
+  "tabs": {
+    "scores": "Scores",
+    "setlists": "Setlists"
+  },
   "import": {
     "button": "Import",
     "progress": "Importing {{current}} ({{done}}/{{total}})…",
@@ -38,8 +41,37 @@
     "parts_one": "{{count}} instrument",
     "parts_other": "{{count}} instruments"
   },
-  "rename": { "title": "Rename score", "placeholder": "Title (empty = original title)" },
-  "delete": { "title": "Delete score?", "message": "“{{title}}” will be removed from this device." },
-  "setlists": { "empty": "No setlists yet" },
-  "settings": "Settings"
+  "rename": {
+    "title": "Rename score",
+    "placeholder": "Title (empty = original title)"
+  },
+  "delete": {
+    "title": "Delete score?",
+    "message": "“{{title}}” will be removed from this device."
+  },
+  "setlists": {
+    "empty": "No setlists yet"
+  },
+  "settings": "Settings",
+  "info": {
+    "button": "Info",
+    "title": "Score information",
+    "composer": "Composer",
+    "subtitle": "Subtitle",
+    "file": "File",
+    "format": "Format",
+    "museScoreVersion": "Created with",
+    "museScore": "MuseScore {{version}}",
+    "measures": "Bars",
+    "duration": "Duration",
+    "tempo": "Initial tempo",
+    "tempoValue": "♩ = {{bpm}}",
+    "instruments": "Instruments",
+    "rehearsalMarks": "Rehearsal marks",
+    "imported": "Imported",
+    "lastOpened": "Last opened",
+    "hiddenInSource": "hidden in MuseScore",
+    "resetView": "Reset display settings",
+    "resetDone": "Display settings reset"
+  }
 }

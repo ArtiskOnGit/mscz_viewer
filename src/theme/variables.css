@@ -1,6 +1,20 @@
-/* App theme. Score themes (light / sepia / dark) are applied on the score container only. */
+/* App theme. Score themes are applied on the score stage only (data-score-theme). */
 :root {
   --ion-color-primary: #3b5bdb;
+}
+.score-stage {
   --pupitre-score-bg: #ffffff;
   --pupitre-score-ink: #000000;
+}
+.score-stage[data-score-theme='sepia'] {
+  --pupitre-score-bg: #f4ecd8;
+  --pupitre-score-ink: #3b2f1e;
+}
+.score-stage[data-score-theme='dark'] {
+  --pupitre-score-bg: #121212;
+  --pupitre-score-ink: #e6e6e6;
+}
+.score-stage[data-score-theme='highContrast'] {
+  --pupitre-score-bg: #000000;
+  --pupitre-score-ink: #ffff66;
 }

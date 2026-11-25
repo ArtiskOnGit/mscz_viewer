@@ -12,7 +12,7 @@ import '@ionic/react/css/typography.css';
 import '@ionic/react/css/padding.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
-import '@ionic/react/css/palettes/dark.system.css';
+import '@ionic/react/css/palettes/dark.class.css';
 import './theme/variables.css';
 
 setupIonicReact({ mode: 'md' });

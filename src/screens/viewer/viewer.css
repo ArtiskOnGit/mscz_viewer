@@ -15,6 +15,11 @@
   display: block;
   width: 100%;
   height: auto;
+  fill: currentColor;
+}
+/* Verovio draws with currentColor and sets color="black" on its inner <svg>: CSS wins over the attribute. */
+.score-page svg,
+.score-page svg svg {
   color: var(--pupitre-score-ink);
 }
 .score-message {

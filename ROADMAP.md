@@ -52,7 +52,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - ✅ Import webmscore (un worker par fichier) : MusicXML, métadonnées, miniature, timeline (avec métrique).
 - ✅ Import des MusicXML/MXL (via webmscore aussi, pour une timeline homogène).
 - ✅ Liste des partitions avec miniature, titre et compositeur. Recherche et tri.
-- 🟨 Supprimer, renommer ✅ ; écran d'informations à faire.
+- ✅ Supprimer, renommer, informations (avec remise à zéro des réglages d'affichage).
 - ✅ Détection des doublons. Messages d'erreur d'import compréhensibles.
 
 **Visualisation**
@@ -67,7 +67,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - ✅ Mémorisation par partition : instruments, zoom, page.
 
 **Paramètres (version minimale)**
-- ⬜ Langue, thème, mode d'affichage par défaut, zoom par défaut, écran allumé, « About » + licences open source + lien vers les sources (GPL).
+- ✅ Thème de l'appli, couleurs de partition (clair/sépia/sombre/contraste), noms d'instruments, silences regroupés, zoom par défaut, gestes, écran allumé, « About » + licences + lien vers les sources. (Langue : anglais seul pour l'instant ; mode Continu : phase 2.)
 
 **Livrable** : APK v0.1 (GitHub Releases), utilisable en répétition. *(environ 6 à 10 semaines)*
 

@@ -1,8 +1,33 @@
 {
   "title": "Settings",
-  "sections": { "display": "Display", "about": "About" },
+  "sections": {
+    "display": "Display",
+    "navigation": "Page turning",
+    "system": "Device",
+    "about": "About"
+  },
+  "appTheme": { "label": "App theme", "system": "System", "light": "Light", "dark": "Dark" },
+  "scoreTheme": { "label": "Score colors", "light": "Light", "sepia": "Sepia", "dark": "Dark", "highContrast": "High contrast" },
+  "partNames": {
+    "label": "Instrument names",
+    "hint": "Automatic hides the name when a single part is shown",
+    "auto": "Automatic",
+    "full": "Always shown",
+    "hidden": "Hidden"
+  },
+  "multiRests": { "label": "Group bars of rest", "hint": "Show “11” instead of eleven empty bars" },
+  "defaultZoom": { "label": "Default zoom: {{percent}} %" },
+  "tapZones": { "label": "Tap left / right edge to turn pages" },
+  "swipe": { "label": "Swipe to turn pages" },
+  "keepAwake": { "label": "Keep the screen on while reading" },
+  "reset": "Restore default settings",
   "about": {
+    "version": "Version {{version}}",
     "license": "Free software under the GNU GPL v3 or later.",
-    "credits": "Uses webmscore (MuseScore engine) and Verovio."
-  }
+    "source": "Source code",
+    "credits": "Uses webmscore (MuseScore engine) and Verovio.",
+    "licenses": "Open source licenses",
+    "trademark": "MuseScore is a trademark of its owners. This app is not affiliated with MuseScore."
+  },
+  "licenses": { "title": "Open source licenses" }
 }
