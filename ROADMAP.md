@@ -78,14 +78,14 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 **Objectif** : les fonctions qui font la différence au pupitre et en concert.
 
 - ✅ **Défilement automatique** au tempo : horloge partagée (Web Audio), timeline (reprises dépliées), facteur de tempo 50–150 %, décompte, départ depuis la page affichée ou la position de pause, surlignage de la mesure courante, tournage de page anticipé, toucher = pause. *(Départ depuis une mesure touchée : à faire.)*
-- 🟨 **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ✅ ; mode « métronome seul » et écran de réglages (volume, décompte) à faire.
+- ✅ **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ; mode « métronome seul » (appui long sur le bouton métronome : bat au tempo depuis la 1re mesure de la page affichée, sans défilement ni surlignage) ; volume et décompte dans les paramètres.
 - ⬜ **Mode Continu** (rouleau vertical) avec ligne de lecture.
 - ✅ **Transposition** : demi-tons, octave, préréglages Sib/Mib/Fa, tonalité résultante affichée, hauteur réelle (concert). *(Préférence ♯/♭ : à faire.)*
 - ✅ **Setlists** : création, renommage, duplication, ajout de partitions (plusieurs fois possible), réordonnancement par glisser-déposer, notes, instruments et transposition par morceau (badge dans la liste), mode « Play » avec morceau suivant/précédent, double appui pédale en fin de morceau, pré-chargement du morceau suivant en arrière-plan (ouverture ≈ 1,7 s → 0,45 s en e2e).
-- ⬜ **Pédalier Bluetooth** : actions configurables (page, lecture, métronome, morceau suivant), écran de capture de touche.
-- ⬜ **Demi-page**.
-- ⬜ **Aller à la mesure / marque de répétition**.
-- ⬜ **Mode verrouillé** contre les touchers accidentels.
+- 🟨 **Pédalier Bluetooth** : touches configurables pour page suivante / précédente / lecture-pause, écran de capture de touche (ajouter / remplacer), retour aux valeurs par défaut ✅. *(Actions métronome et morceau suivant dédiées : à faire.)*
+- ✅ **Demi-page** (option) : haut de la page suivante au-dessus de la fin de la page courante, coupure entre deux systèmes ; le défilement automatique tourne des pages entières.
+- ✅ **Aller à la mesure / marque de répétition** (numéro imprimé ou rang), ▶ repart de cette mesure.
+- ✅ **Mode verrouillé** 🔒 : seuls le tournage de page (zones, balayage) et le pédalier restent actifs ; déverrouillage par appui long (0,8 s) ; valable pour la session.
 - ⬜ **Thèmes de partition** : sépia, sombre, contraste élevé.
 - ✅ **Profil « My instrument »** : noms libres + choix rapides, correspondance sans casse ni accents (nom de partie, identifiant MuseScore), présélection et transposition par défaut à la première ouverture.
 - ⬜ Notation des notes (C D E / Do Ré Mi / C D E H).

@@ -10,6 +10,8 @@ interface Handlers {
   /** Left/right thirds turn pages (otherwise any tap toggles the toolbars). */
   tapZones: boolean;
   swipe: boolean;
+  /** Pinch zoom (off in lock mode: a two-finger touch is then ignored). */
+  pinch: boolean;
 }
 
 const TAP_ZONE = 1 / 3;
@@ -49,7 +51,7 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
       if (!p) return;
       p.x = e.clientX;
       p.y = e.clientY;
-      if (pinching && pointers.size === 2 && pinchStart > 0) {
+      if (pinching && h.current.pinch && pointers.size === 2 && pinchStart > 0) {
         ratio = Math.min(3, Math.max(0.33, distance() / pinchStart));
         setPinchScale(ratio);
       }
@@ -62,7 +64,7 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
         if (pointers.size === 0) {
           pinching = false;
           setPinchScale(1);
-          if (Math.abs(ratio - 1) > 0.05) h.current.onPinchEnd(ratio);
+          if (h.current.pinch && Math.abs(ratio - 1) > 0.05) h.current.onPinchEnd(ratio);
         }
         return;
       }

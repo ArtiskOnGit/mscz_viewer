@@ -27,7 +27,9 @@
     "metronomeOn": "Metronome on",
     "metronomeOff": "Metronome off",
     "countIn": "Count-in…",
-    "noTimeline": "Auto-scroll is not available for this score."
+    "noTimeline": "Auto-scroll is not available for this score.",
+    "metronomeOnlyStop": "Stop the metronome",
+    "metronomeHint": "Tap: metronome with auto-scroll. Long press: metronome only, without scrolling."
   },
   "transpose": {
     "button": "Transpose",
@@ -51,5 +53,21 @@
     "apply": "Apply",
     "badge": "♯♭{{value}}"
   },
-  "myPart": "Showing your part: {{names}}"
+  "myPart": "Showing your part: {{names}}",
+  "pageHalf": "{{page}}½ / {{count}}",
+  "goTo": {
+    "button": "Go to bar",
+    "title": "Go to",
+    "bar": "Bar number",
+    "barPlaceholder": "1 – {{count}}",
+    "go": "Go",
+    "invalid": "This bar does not exist.",
+    "marks": "Rehearsal marks",
+    "noMarks": "No rehearsal marks in this score."
+  },
+  "lock": {
+    "lock": "Lock (only page turns)",
+    "unlock": "Locked: hold to unlock",
+    "holdToUnlock": "Hold the lock to unlock"
+  }
 }

@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonPage, IonSpinner, IonTitle, IonToolbar,
+  IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonPage, IonSpinner, IonTitle, IonToolbar, useIonToast,
 } from '@ionic/react';
-import { addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline } from 'ionicons/icons';
+import {
+  addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline,
+  lockClosed, lockOpenOutline, navigateCircleOutline,
+} from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
 import { defaultPartIds } from '../../core/model/types';
@@ -19,10 +22,16 @@ import { SetlistBar } from '../setlists/SetlistBar';
 import { usePreloadNext } from '../setlists/preloadNext';
 import { transposeBadgeValue } from '../../core/setlists/effectiveView';
 import { useMyPartToast } from './useMyPartToast';
+import { pedalAction } from '../../core/navigation/pedalKeys';
+import { halfPageSplit, measureNumbers, nextPosition, pageOfMeasure, previousPosition } from '../../core/navigation/navigation';
+import { GoToModal } from './GoToModal';
+import { useLongPress } from './useLongPress';
 import './viewer.css';
 
-const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter']);
-const PREV_KEYS = new Set(['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace']);
+const UNLOCK_PRESS_MS = 800;
+const METRONOME_ONLY_PRESS_MS = 600;
+// Lock mode lasts for the app session (kept from one piece of a setlist to the next), never saved.
+let sessionLocked = false;
 
 // --- setlists: remount the viewer for each piece (next/previous piece only changes the URL) ---
 export function ViewerScreen() {
@@ -39,6 +48,16 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const [chrome, setChrome] = useState(true);
   const [partsOpen, setPartsOpen] = useState(false);
   const [transposeOpen, setTransposeOpen] = useState(false);
+  const [gotoOpen, setGotoOpen] = useState(false);
+  const [locked, setLockedState] = useState(sessionLocked);
+  const setLocked = (l: boolean) => {
+    sessionLocked = l;
+    setLockedState(l);
+  };
+  // Half-page turn: page for which the composite view (top of page + 1 over bottom of page) is shown.
+  const [halfOf, setHalfOf] = useState<number>();
+  const [composite, setComposite] = useState<{ base: string; svg: string }>();
+  const [toast] = useIonToast();
   const { settings } = useSettings();
   const sp = useSetlistPlayback(); // setlists
   const v = useScoreViewer(scoreId, size, settings, sp.override);
@@ -90,35 +109,106 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const setTempo = (f: number) => v.update({ tempoFactor: Math.round(Math.min(1.5, Math.max(0.5, f)) * 100) / 100 });
   // --- end auto-scroll & metronome ---
 
-  // Keyboard and Bluetooth page-turner pedals (they send key presses).
+  // --- page turns (full or half page) ---
+  const half = settings.halfPageTurn && halfOf === v.page && v.page < v.pageCount;
+  const turn = (to: { page: number; half: boolean }) => {
+    setHalfOf(to.half ? to.page : undefined);
+    v.goTo(to.page);
+  };
+  const turnNext = () => turn(nextPosition({ page: v.page, half }, v.pageCount, settings.halfPageTurn));
+  const turnPrev = () => turn(previousPosition({ page: v.page, half }, settings.halfPageTurn));
+  const { svg: pageSvgShown, page: pageShown, pageSvg } = v;
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (partsOpen || transposeOpen || e.target instanceof HTMLInputElement) return;
-      if (e.code === 'KeyP' || e.code === 'MediaPlayPause') {
-        e.preventDefault();
-        pb.toggle();
-      } else if (NEXT_KEYS.has(e.code)) {
-        e.preventDefault();
-        if (sp.active && v.page >= v.pageCount) sp.nextAtEnd(); // setlists: last page → next piece
-        else v.next();
-      } else if (PREV_KEYS.has(e.code)) {
-        e.preventDefault();
-        v.prev();
-      }
+    if (!half || !pageSvgShown) return;
+    let cancelled = false;
+    void pageSvg(pageShown + 1).then((svg) => !cancelled && setComposite({ base: pageSvgShown, svg }));
+    return () => {
+      cancelled = true;
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [v.next, v.prev, v.page, v.pageCount, sp.active, sp.nextAtEnd, partsOpen, transposeOpen, pb.toggle]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [half, pageSvgShown, pageShown, pageSvg]);
+  const topSvg = half && composite && composite.base === v.svg ? composite.svg : undefined;
+  // Split the composite view between two systems (never through a staff).
+  const halfRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = halfRef.current;
+    if (!el || !topSvg) return;
+    const origin = el.getBoundingClientRect().top;
+    const bands = (layer: string) =>
+      [...el.querySelectorAll(`.${layer} g.system`)].map((g) => {
+        const r = g.getBoundingClientRect();
+        return { top: r.top - origin, bottom: r.bottom - origin };
+      });
+    const height = el.clientHeight;
+    const { topEnd, bottomStart } = halfPageSplit(bands('half-bottom'), bands('half-top'), height);
+    el.style.setProperty('--half-top-clip', `${Math.max(0, height - topEnd - 4)}px`);
+    el.style.setProperty('--half-bottom-clip', `${bottomStart - 2}px`);
+    el.style.setProperty('--half-split', `${(topEnd + bottomStart) / 2}px`);
+  }, [topSvg, v.svg]);
+  const togglePlay = () => {
+    setHalfOf(undefined); // auto-scroll turns full pages
+    pb.toggle();
+  };
+  // --- end page turns ---
+
+  // Keyboard and Bluetooth page-turner pedals (they send key presses; keys configurable in the settings).
+  const onKey = useRef<(e: KeyboardEvent) => void>(undefined);
+  useLayoutEffect(() => {
+    onKey.current = (e) => {
+      if (partsOpen || transposeOpen || gotoOpen || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const action = pedalAction(e.code, settings.pedalKeys);
+      if (!action) return;
+      e.preventDefault();
+      if (action === 'playPause') togglePlay();
+      else if (action === 'prev') turnPrev();
+      else if (sp.active && v.page >= v.pageCount) sp.nextAtEnd(); // setlists: last page → next piece
+      else turnNext();
+    };
+  });
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => onKey.current?.(e);
+    window.addEventListener('keydown', listener);
+    return () => window.removeEventListener('keydown', listener);
+  }, []);
 
   const pinchScale = usePageGestures(stageRef, {
-    // While playing, a tap pauses (setting) instead of turning the page.
-    onNext: () => (pb.playing && settings.tapPauses ? pb.pause() : v.next()),
-    onPrev: () => (pb.playing && settings.tapPauses ? pb.pause() : v.prev()),
-    onToggleChrome: () => (pb.playing && settings.tapPauses ? pb.pause() : setChrome((c) => !c)),
+    // While playing, a tap pauses (setting) instead of turning the page; in lock mode, taps only turn pages.
+    onNext: () => (pb.playing && settings.tapPauses && !locked ? pb.pause() : turnNext()),
+    onPrev: () => (pb.playing && settings.tapPauses && !locked ? pb.pause() : turnPrev()),
+    onToggleChrome: () => {
+      if (locked) return;
+      if (pb.playing && settings.tapPauses) pb.pause();
+      else setChrome((c) => !c);
+    },
     onPinchEnd: (ratio) => v.setZoom(v.zoom * ratio),
     tapZones: settings.tapZones,
     swipe: settings.swipe,
+    pinch: !locked,
   });
+
+  // --- go to bar / rehearsal mark ---
+  const numbers = useMemo(() => (gotoOpen && v.xml ? measureNumbers(v.xml) : []), [gotoOpen, v.xml]);
+  const goToMeasure = (measureIndex: number) => {
+    setGotoOpen(false);
+    const target = pageOfMeasure(measureIndex, v.xmlToRendered, v.renderedPages);
+    if (!target) return;
+    setHalfOf(undefined);
+    v.goTo(target);
+    pb.startFrom(measureIndex); // next ▶ starts from this bar
+  };
+  // --- end go to ---
+
+  // --- lock mode & metronome only (long presses) ---
+  const lockPress = useLongPress(
+    () => locked && setLocked(false),
+    () => (locked ? void toast({ message: t('lock.holdToUnlock'), duration: 1500, position: 'middle' }) : setLocked(true)),
+    UNLOCK_PRESS_MS,
+  );
+  const metronomePress = useLongPress(
+    () => void pb.toggleMetronomeOnly(),
+    () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome })),
+    METRONOME_ONLY_PRESS_MS,
+  );
+  // --- end lock mode & metronome only ---
 
   const parts = v.score?.parts ?? [];
   // Transposition actually shown (setlists: the piece's override wins over the score's settings).
@@ -129,39 +219,67 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   };
   const transposeBadge = transposeBadgeValue(transpose);
   const selectedCount = v.selectedParts.length;
+  const pageLabel = (
+    <span className="page-indicator" data-testid="page-indicator">
+      {v.pageCount > 0 ? (half ? t('pageHalf', { page: v.page, next: v.page + 1, count: v.pageCount }) : t('page', { page: v.page, count: v.pageCount })) : ''}
+    </span>
+  );
 
   return (
-    <IonPage className={chrome ? '' : 'score-chrome-hidden'}>
+    <IonPage className={locked ? 'score-locked' : chrome ? '' : 'score-chrome-hidden'}>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref={routes.library} /></IonButtons>
+          {!locked && <IonButtons slot="start"><IonBackButton defaultHref={routes.library} /></IonButtons>}
           <IonTitle>{v.score?.title ?? t('title')}</IonTitle>
           <IonButtons slot="end">
-            {parts.length > 1 && (
+            <IonButton
+              {...lockPress}
+              aria-label={locked ? t('lock.unlock') : t('lock.lock')}
+              aria-pressed={locked}
+              data-testid="lock-button"
+              data-locked={String(locked)}
+            >
+              <IonIcon slot="icon-only" icon={locked ? lockClosed : lockOpenOutline} />
+            </IonButton>
+            {!locked && parts.length > 1 && (
               <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.button')} data-testid="parts-button">
                 <IonIcon slot="start" icon={peopleOutline} />
                 {selectedCount}/{parts.length}
               </IonButton>
             )}
+            {!locked && <>
             <IonButton onClick={() => setTransposeOpen(true)} aria-label={t('transpose.button')} data-testid="transpose-button">
               <span className="transpose-label">{t('transpose.badge', { value: transposeBadge })}</span>
             </IonButton>
             <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} /></IonButton>
             <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} /></IonButton>
             <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} /></IonButton>
+            </>}
           </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent scrollY={false}>
         <div ref={stageRef} className="score-stage" data-testid="score-stage" data-score-theme={settings.scoreTheme}>
-          {v.status === 'ready' && v.svg && (
+          {v.status === 'ready' && v.svg && topSvg && (
+            <div
+              ref={halfRef}
+              className="score-page score-half"
+              data-testid="half-page"
+              style={pinchScale !== 1 ? { transform: `scale(${pinchScale})` } : undefined}
+            >
+              <div className="half-layer half-bottom" dangerouslySetInnerHTML={{ __html: v.svg }} />
+              <div className="half-layer half-top" dangerouslySetInnerHTML={{ __html: topSvg }} />
+              <div className="half-separator" />
+            </div>
+          )}
+          {v.status === 'ready' && v.svg && !topSvg && (
             <div
               className="score-page"
               style={pinchScale !== 1 ? { transform: `scale(${pinchScale})` } : undefined}
               dangerouslySetInnerHTML={{ __html: v.svg }}
             />
           )}
-          <div className={`beat-dot ${pb.beat ?? ''}`} hidden={!pb.playing} />
+          <div className={`beat-dot ${pb.beat ?? ''}`} hidden={!pb.playing && !pb.metronomeOnly} />
           {pb.countingIn && <div className="count-in">{t('playback.countIn')}</div>}
           {v.status === 'loading' && (
             <div className="score-message"><IonSpinner /> {t('loading')}</div>
@@ -171,13 +289,18 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         </div>
       </IonContent>
       <IonFooter>
-        <SetlistBar sp={sp} />
+        {!locked && <SetlistBar sp={sp} />}
+        {locked ? (
+          <IonToolbar>
+            <div className="playback-bar">{pageLabel}</div>
+          </IonToolbar>
+        ) : (
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={v.prev} disabled={v.page <= 1} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
+            <IonButton onClick={turnPrev} disabled={v.page <= 1 && !half} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
           </IonButtons>
           <div className="playback-bar">
-            <IonButton fill="clear" onClick={pb.toggle} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
+            <IonButton fill="clear" onClick={togglePlay} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
               <IonIcon slot="icon-only" icon={pb.playing ? pause : play} />
             </IonButton>
             <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor - 0.05)} aria-label={t('playback.slower')}>
@@ -187,24 +310,38 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
             <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor + 0.05)} aria-label={t('playback.faster')}>
               <IonIcon slot="icon-only" icon={addCircleOutline} />
             </IonButton>
+            {/* Click: metronome with the auto-scroll on/off. Long press: metronome alone (no scrolling), again to stop. */}
             <IonButton
-              fill={metronome ? 'solid' : 'clear'}
+              {...metronomePress}
+              fill={metronome || pb.metronomeOnly ? 'solid' : 'clear'}
+              color={pb.metronomeOnly ? 'warning' : undefined}
               size="small"
-              onClick={() => v.update({ metronomeEnabled: !metronome })}
-              aria-label={metronome ? t('playback.metronomeOn') : t('playback.metronomeOff')}
+              disabled={!pb.available}
+              aria-label={pb.metronomeOnly ? t('playback.metronomeOnlyStop') : metronome ? t('playback.metronomeOn') : t('playback.metronomeOff')}
               aria-pressed={metronome}
+              title={t('playback.metronomeHint')}
+              data-testid="metronome-button"
+              data-metronome-only={String(pb.metronomeOnly)}
             >
               <IonIcon slot="icon-only" icon={timerOutline} />
             </IonButton>
-            <span className="page-indicator" data-testid="page-indicator">
-              {v.pageCount > 0 ? t('page', { page: v.page, count: v.pageCount }) : ''}
-            </span>
+            {pageLabel}
           </div>
           <IonButtons slot="end">
-            <IonButton onClick={v.next} disabled={v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
+            <IonButton onClick={() => setGotoOpen(true)} aria-label={t('goTo.button')} data-testid="goto-button"><IonIcon slot="icon-only" icon={navigateCircleOutline} /></IonButton>
+            <IonButton onClick={turnNext} disabled={v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
           </IonButtons>
         </IonToolbar>
+        )}
       </IonFooter>
+      <GoToModal
+        isOpen={gotoOpen}
+        marks={v.score?.rehearsalMarks ?? []}
+        numbers={numbers}
+        measureCount={v.score?.measures ?? 0}
+        onGo={goToMeasure}
+        onDismiss={() => setGotoOpen(false)}
+      />
       <TransposeModal
         isOpen={transposeOpen}
         keySig={v.key}

@@ -67,6 +67,7 @@ npm run typecheck
 npm run build          # build web dans dist/
 npm run android        # build + synchronisation Capacitor + ouverture dans Android Studio
 node e2e/smoke.mjs "$PWD"   # test de fumée des 3 écrans dans Chromium headless
+node e2e/navigation.mjs "$PWD" /tmp   # aller à la mesure, verrouillage, pédalier, demi-page, métronome seul
 ```
 
 La CI (GitHub Actions, `.github/workflows/ci.yml`) lance lint, typecheck, tests et build, puis produit un **APK de debug** téléchargeable dans les artefacts.

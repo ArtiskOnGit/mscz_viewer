@@ -6,7 +6,8 @@
     "system": "Device",
     "about": "About",
     "playback": "Auto-scroll & metronome",
-    "profile": "My instrument"
+    "profile": "My instrument",
+    "pedal": "Pedal / keyboard"
   },
   "appTheme": {
     "label": "App theme",
@@ -102,5 +103,22 @@
   "defaultTranspose": {
     "label": "Default transposition",
     "hint": "Applied on the first opening of a score"
+  },
+  "halfPageTurn": {
+    "label": "Half-page turns",
+    "hint": "Next page first shows the top of the next page above the end of the current one"
+  },
+  "pedal": {
+    "next": "Next page",
+    "prev": "Previous page",
+    "playPause": "Play / pause",
+    "none": "No key",
+    "setKey": "Set key",
+    "reset": "Restore default keys",
+    "captureTitle": "Set key: {{action}}",
+    "capturePrompt": "Press your pedal…",
+    "captured": "Key: {{key}}",
+    "add": "Add",
+    "replace": "Replace"
   }
 }

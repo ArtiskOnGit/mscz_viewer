@@ -2,6 +2,7 @@
 import { Preferences } from '@capacitor/preferences';
 import type { PartNamesMode } from './musicxml/prepareDisplay';
 import type { MyInstrumentProfile } from './profile/myInstrument';
+import { DEFAULT_PEDAL_KEYS, normalizePedalKeys, type PedalKeys } from './navigation/pedalKeys';
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type ScoreTheme = 'light' | 'sepia' | 'dark' | 'highContrast';
@@ -27,6 +28,10 @@ export interface AppSettings {
   myInstrument: MyInstrumentProfile;
   /** Transposition (semitones) applied on the first opening of a score. */
   defaultTranspose: number;
+  /** Keyboard / Bluetooth pedal keys (KeyboardEvent.code) for each action. */
+  pedalKeys: PedalKeys;
+  /** Page mode: "next" first replaces the top half of the screen with the top of the next page. */
+  halfPageTurn: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -46,6 +51,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   tapPauses: true,
   myInstrument: { names: [], instrumentIds: [] },
   defaultTranspose: 0,
+  pedalKeys: DEFAULT_PEDAL_KEYS,
+  halfPageTurn: false,
 };
 
 const KEY = 'settings';
@@ -54,7 +61,8 @@ export async function loadSettings(): Promise<AppSettings> {
   const { value } = await Preferences.get({ key: KEY });
   if (!value) return DEFAULT_SETTINGS;
   try {
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(value) as Partial<AppSettings>), schemaVersion: 1 };
+    const stored = JSON.parse(value) as Partial<AppSettings>;
+    return { ...DEFAULT_SETTINGS, ...stored, pedalKeys: normalizePedalKeys(stored.pedalKeys), schemaVersion: 1 };
   } catch {
     return DEFAULT_SETTINGS;
   }

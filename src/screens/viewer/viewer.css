@@ -93,3 +93,26 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* Half-page turn: top of the next page over the bottom of the current one. */
+.score-half {
+  position: relative;
+}
+.half-layer {
+  position: absolute;
+  inset: 0;
+}
+.half-top {
+  clip-path: inset(0 0 var(--half-top-clip, 50%) 0);
+}
+.half-bottom {
+  clip-path: inset(var(--half-bottom-clip, 50%) 0 0 0);
+}
+.half-separator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--half-split, 50%) - 1px);
+  border-top: 2px dashed color-mix(in srgb, var(--pupitre-score-ink) 45%, transparent);
+  pointer-events: none;
+}

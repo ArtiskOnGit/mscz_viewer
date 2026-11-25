@@ -184,5 +184,7 @@ export function useScoreViewer(
   // MusicXML measure rank → rendered (Verovio) measure index, accounting for merged multi-measure rests.
   const xmlToRendered = useMemo(() => (score && display ? xmlToRenderedMeasure(score.measures, display.multiRestGroups) : []), [score, display]);
   const key = display?.key;
-  return { status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  // Half-page turns: SVG of another page (cached by the renderer).
+  const pageSvg = useCallback((n: number) => renderer.current!.page(n), []);
+  return { xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }

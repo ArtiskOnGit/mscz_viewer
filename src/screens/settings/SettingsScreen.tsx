@@ -11,6 +11,7 @@ import type { AppTheme, ScoreTheme } from '../../core/settings';
 import type { PartNamesMode } from '../../core/musicxml/prepareDisplay';
 import { COMMON_INSTRUMENTS, parseNames, type MyInstrumentProfile } from '../../core/profile/myInstrument';
 import { TRANSPOSE_PRESETS } from '../../core/music/keys';
+import { PedalKeysSection } from './PedalKeysSection';
 
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
@@ -71,6 +72,13 @@ export function SettingsScreen() {
           <IonListHeader>{t('sections.navigation')}</IonListHeader>
           <IonItem><IonToggle checked={settings.tapZones} onIonChange={(e) => set('tapZones', e.detail.checked)}>{t('tapZones.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.swipe} onIonChange={(e) => set('swipe', e.detail.checked)}>{t('swipe.label')}</IonToggle></IonItem>
+          <IonItem>
+            <IonToggle checked={settings.halfPageTurn} onIonChange={(e) => set('halfPageTurn', e.detail.checked)} data-testid="half-page-toggle">
+              <IonLabel>{t('halfPageTurn.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('halfPageTurn.hint')}</IonNote></IonLabel>
+            </IonToggle>
+          </IonItem>
+
+          <PedalKeysSection keys={settings.pedalKeys} onChange={(keys) => set('pedalKeys', keys)} />
 
           <IonListHeader>{t('sections.playback')}</IonListHeader>
           <IonItem>
