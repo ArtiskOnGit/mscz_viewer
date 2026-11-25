@@ -4,13 +4,15 @@ import { useParams } from 'react-router-dom';
 import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonPage, IonSpinner, IonTitle, IonToolbar,
 } from '@ionic/react';
-import { addOutline, chevronBack, chevronForward, peopleOutline, removeOutline, scanOutline } from 'ionicons/icons';
+import { addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
 import { defaultPartIds } from '../../core/model/types';
 import { useScoreViewer } from './useScoreViewer';
 import { PartsModal } from './PartsModal';
 import { usePageGestures } from './usePageGestures';
+import { usePlayback } from './usePlayback';
+import { TransposeModal } from './TransposeModal';
 import { useSettings } from '../../state/settingsStore';
 import './viewer.css';
 
@@ -24,6 +26,7 @@ export function ViewerScreen() {
   const [size, setSize] = useState<{ width: number; height: number }>();
   const [chrome, setChrome] = useState(true);
   const [partsOpen, setPartsOpen] = useState(false);
+  const [transposeOpen, setTransposeOpen] = useState(false);
   const { settings } = useSettings();
   const v = useScoreViewer(scoreId, size, settings);
 
@@ -51,11 +54,33 @@ export function ViewerScreen() {
     return () => void KeepAwake.allowSleep().catch(() => undefined);
   }, [settings.keepAwake]);
 
+  // --- auto-scroll & metronome ---
+  const tempoFactor = v.view?.tempoFactor ?? 1;
+  const metronome = v.view?.metronomeEnabled ?? false;
+  const pb = usePlayback({
+    timeline: v.timeline,
+    xmlToRendered: v.xmlToRendered,
+    renderedPages: v.renderedPages,
+    measureIds: v.measureIds,
+    page: v.page,
+    goTo: v.goTo,
+    stageRef,
+    svg: v.svg,
+    tempoFactor,
+    metronome,
+    settings,
+  });
+  const setTempo = (f: number) => v.update({ tempoFactor: Math.round(Math.min(1.5, Math.max(0.5, f)) * 100) / 100 });
+  // --- end auto-scroll & metronome ---
+
   // Keyboard and Bluetooth page-turner pedals (they send key presses).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (partsOpen || e.target instanceof HTMLInputElement) return;
-      if (NEXT_KEYS.has(e.code)) {
+      if (partsOpen || transposeOpen || e.target instanceof HTMLInputElement) return;
+      if (e.code === 'KeyP' || e.code === 'MediaPlayPause') {
+        e.preventDefault();
+        pb.toggle();
+      } else if (NEXT_KEYS.has(e.code)) {
         e.preventDefault();
         v.next();
       } else if (PREV_KEYS.has(e.code)) {
@@ -65,18 +90,21 @@ export function ViewerScreen() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [v.next, v.prev, partsOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [v.next, v.prev, partsOpen, transposeOpen, pb.toggle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pinchScale = usePageGestures(stageRef, {
-    onNext: v.next,
-    onPrev: v.prev,
-    onToggleChrome: () => setChrome((c) => !c),
+    // While playing, a tap pauses (setting) instead of turning the page.
+    onNext: () => (pb.playing && settings.tapPauses ? pb.pause() : v.next()),
+    onPrev: () => (pb.playing && settings.tapPauses ? pb.pause() : v.prev()),
+    onToggleChrome: () => (pb.playing && settings.tapPauses ? pb.pause() : setChrome((c) => !c)),
     onPinchEnd: (ratio) => v.setZoom(v.zoom * ratio),
     tapZones: settings.tapZones,
     swipe: settings.swipe,
   });
 
   const parts = v.score?.parts ?? [];
+  const totalTranspose = (v.view?.transposeSemitones ?? 0) + 12 * (v.view?.transposeOctave ?? 0);
+  const transposeBadge = totalTranspose ? ` ${totalTranspose > 0 ? '+' : ''}${totalTranspose}` : v.view?.concertPitch ? ' C' : '';
   const selectedCount = v.selectedParts.length;
 
   return (
@@ -92,6 +120,9 @@ export function ViewerScreen() {
                 {selectedCount}/{parts.length}
               </IonButton>
             )}
+            <IonButton onClick={() => setTransposeOpen(true)} aria-label={t('transpose.button')} data-testid="transpose-button">
+              <span className="transpose-label">{t('transpose.badge', { value: transposeBadge })}</span>
+            </IonButton>
             <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} /></IonButton>
             <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} /></IonButton>
             <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} /></IonButton>
@@ -107,6 +138,8 @@ export function ViewerScreen() {
               dangerouslySetInnerHTML={{ __html: v.svg }}
             />
           )}
+          <div className={`beat-dot ${pb.beat ?? ''}`} hidden={!pb.playing} />
+          {pb.countingIn && <div className="count-in">{t('playback.countIn')}</div>}
           {v.status === 'loading' && (
             <div className="score-message"><IonSpinner /> {t('loading')}</div>
           )}
@@ -119,14 +152,49 @@ export function ViewerScreen() {
           <IonButtons slot="start">
             <IonButton onClick={v.prev} disabled={v.page <= 1} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
           </IonButtons>
-          <div className="page-indicator" data-testid="page-indicator">
-            {v.pageCount > 0 ? t('page', { page: v.page, count: v.pageCount }) : ''}
+          <div className="playback-bar">
+            <IonButton fill="clear" onClick={pb.toggle} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
+              <IonIcon slot="icon-only" icon={pb.playing ? pause : play} />
+            </IonButton>
+            <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor - 0.05)} aria-label={t('playback.slower')}>
+              <IonIcon slot="icon-only" icon={removeCircleOutline} />
+            </IonButton>
+            <span className="tempo-value" data-testid="tempo">{t('playback.tempo', { percent: Math.round(tempoFactor * 100) })}</span>
+            <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor + 0.05)} aria-label={t('playback.faster')}>
+              <IonIcon slot="icon-only" icon={addCircleOutline} />
+            </IonButton>
+            <IonButton
+              fill={metronome ? 'solid' : 'clear'}
+              size="small"
+              onClick={() => v.update({ metronomeEnabled: !metronome })}
+              aria-label={metronome ? t('playback.metronomeOn') : t('playback.metronomeOff')}
+              aria-pressed={metronome}
+            >
+              <IonIcon slot="icon-only" icon={timerOutline} />
+            </IonButton>
+            <span className="page-indicator" data-testid="page-indicator">
+              {v.pageCount > 0 ? t('page', { page: v.page, count: v.pageCount }) : ''}
+            </span>
           </div>
           <IonButtons slot="end">
             <IonButton onClick={v.next} disabled={v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
           </IonButtons>
         </IonToolbar>
       </IonFooter>
+      <TransposeModal
+        isOpen={transposeOpen}
+        keySig={v.key}
+        value={{
+          transposeSemitones: v.view?.transposeSemitones ?? 0,
+          transposeOctave: v.view?.transposeOctave ?? 0,
+          concertPitch: v.view?.concertPitch ?? false,
+        }}
+        onDismiss={() => setTransposeOpen(false)}
+        onApply={(value) => {
+          setTransposeOpen(false);
+          v.update(value);
+        }}
+      />
       <PartsModal
         isOpen={partsOpen}
         parts={parts}

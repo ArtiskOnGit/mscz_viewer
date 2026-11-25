@@ -16,6 +16,12 @@ export interface AppSettings {
   keepAwake: boolean;
   /** Initial zoom of a score never opened before, relative to the automatic zoom. */
   defaultZoom: number;
+  /** Auto-scroll and metronome. */
+  countInMeasures: 0 | 1 | 2;
+  countInSound: boolean;
+  metronomeVolume: number;
+  highlightMeasure: boolean;
+  tapPauses: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -28,6 +34,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   swipe: true,
   keepAwake: true,
   defaultZoom: 1,
+  countInMeasures: 1,
+  countInSound: true,
+  metronomeVolume: 0.7,
+  highlightMeasure: true,
+  tapPauses: true,
 };
 
 const KEY = 'settings';

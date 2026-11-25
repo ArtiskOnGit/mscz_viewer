@@ -2,6 +2,7 @@
 // instrument names. See SPECIFICATIONS_TECHNIQUES §5.
 import { filterParts, type XmlEnv } from './filterParts';
 import { groupMultiRests, type MultiRestGroup } from './multiRests';
+import { firstKeyFifths } from '../music/keys';
 
 export type PartNamesMode = 'auto' | 'full' | 'hidden';
 
@@ -18,6 +19,8 @@ export interface DisplayXml {
   /** Number of staves displayed (piano = 2), used for the automatic zoom. */
   staves: number;
   multiRestGroups: MultiRestGroup[];
+  /** First key signature of the first displayed part (written pitch). */
+  key: ReturnType<typeof firstKeyFifths>;
 }
 
 export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv = globalThis): DisplayXml {
@@ -44,7 +47,7 @@ export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv
     }
     out = new env.XMLSerializer().serializeToString(doc);
   }
-  return { xml: out, staves: countStaves(doc), multiRestGroups };
+  return { xml: out, staves: countStaves(doc), multiRestGroups, key: firstKeyFifths(doc) };
 }
 
 export function partIds(xml: string, env: XmlEnv = globalThis): string[] {

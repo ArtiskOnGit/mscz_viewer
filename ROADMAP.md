@@ -77,10 +77,10 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 
 **Objectif** : les fonctions qui font la différence au pupitre et en concert.
 
-- ⬜ **Défilement automatique** au tempo : horloge partagée, timeline, facteur de tempo, décompte, départ depuis une mesure, surlignage de la mesure courante, reprises.
-- ⬜ **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ou utilisé seul, réglages (volume, accent, visuel).
+- ✅ **Défilement automatique** au tempo : horloge partagée (Web Audio), timeline (reprises dépliées), facteur de tempo 50–150 %, décompte, départ depuis la page affichée ou la position de pause, surlignage de la mesure courante, tournage de page anticipé, toucher = pause. *(Départ depuis une mesure touchée : à faire.)*
+- 🟨 **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ✅ ; mode « métronome seul » et écran de réglages (volume, décompte) à faire.
 - ⬜ **Mode Continu** (rouleau vertical) avec ligne de lecture.
-- ⬜ **Transposition** : demi-tons, tonalité cible, octave, hauteur réelle et hauteur écrite, préférence ♯/♭.
+- ✅ **Transposition** : demi-tons, octave, préréglages Sib/Mib/Fa, tonalité résultante affichée, hauteur réelle (concert). *(Préférence ♯/♭ : à faire.)*
 - ⬜ **Setlists** : création, ajout de partitions, réordonnancement par glisser-déposer, notes, surcharge des instruments et de la transposition par entrée, mode « Play » avec morceau suivant/précédent (pédalier inclus), pré-chargement du morceau suivant.
 - ⬜ **Pédalier Bluetooth** : actions configurables (page, lecture, métronome, morceau suivant), écran de capture de touche.
 - ⬜ **Demi-page**.

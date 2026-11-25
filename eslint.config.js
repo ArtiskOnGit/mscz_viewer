@@ -5,7 +5,7 @@ import i18next from 'eslint-plugin-i18next';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['dist', 'android', 'ios', 'public', 'spikes', 'node_modules', 'coverage'] },
+  { ignores: ['dist', 'android', 'ios', 'public', 'spikes', 'node_modules', 'coverage', '.claude'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

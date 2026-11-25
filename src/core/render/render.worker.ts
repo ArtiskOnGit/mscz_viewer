@@ -38,6 +38,12 @@ const api = {
     return (await tk()).renderToSVG(page);
   },
 
+  /** Page (1-based, 0 if not found) of each element, in one round trip. */
+  async pagesOf(elementIds: string[]): Promise<number[]> {
+    const t = await tk();
+    return elementIds.map((id) => t.getPageWithElement(id));
+  },
+
   async pageOf(elementId: string): Promise<number> {
     return (await tk()).getPageWithElement(elementId);
   },

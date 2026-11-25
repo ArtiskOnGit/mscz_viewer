@@ -36,8 +36,60 @@
 .score-chrome-hidden ion-footer {
   display: none;
 }
-.page-indicator {
+
+.playback-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.tempo-value {
   font-variant-numeric: tabular-nums;
-  min-width: 5em;
+  min-width: 3.2em;
   text-align: center;
+  font-size: 0.9em;
+}
+.page-indicator {
+  margin-inline-start: 8px;
+  font-size: 0.9em;
+  min-width: 3.5em;
+}
+/* Current measure while playing (Verovio draws with currentColor). */
+.score-page g.measure.current {
+  color: #e8590c;
+}
+.beat-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pupitre-score-ink) 20%, transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+.beat-dot.beat {
+  background: #2f9e44;
+}
+.beat-dot.accent {
+  background: #e03131;
+}
+.count-in {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.transpose-label {
+  font-size: 0.95em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

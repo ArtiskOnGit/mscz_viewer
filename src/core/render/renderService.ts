@@ -85,6 +85,10 @@ export class RenderService {
     }
   }
 
+  pagesOf(elementIds: string[]): Promise<number[]> {
+    return this.remote().pagesOf(elementIds);
+  }
+
   pageOf(elementId: string): Promise<number> {
     return this.remote().pageOf(elementId);
   }

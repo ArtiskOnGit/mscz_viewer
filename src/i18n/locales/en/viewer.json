@@ -17,5 +17,38 @@
     "staves_other": "{{count}} staves",
     "apply": "Show",
     "hiddenInSource": "hidden in MuseScore"
+  },
+  "playback": {
+    "play": "Play (auto-scroll at the score tempo)",
+    "pause": "Pause",
+    "slower": "Slower",
+    "faster": "Faster",
+    "tempo": "{{percent}} %",
+    "metronomeOn": "Metronome on",
+    "metronomeOff": "Metronome off",
+    "countIn": "Count-in…",
+    "noTimeline": "Auto-scroll is not available for this score."
+  },
+  "transpose": {
+    "button": "Transpose",
+    "title": "Transposition",
+    "key": "Key",
+    "keyValue": "{{from}} {{mode}} → {{to}} {{mode}}",
+    "major": "major",
+    "minor": "minor",
+    "semitones": "Semitones",
+    "octave": "Octave",
+    "presets": "Presets",
+    "preset": {
+      "c": "C (none)",
+      "bb": "B♭ instrument",
+      "eb": "E♭ instrument",
+      "f": "F instrument"
+    },
+    "concertPitch": "Concert pitch",
+    "concertPitchHint": "Show transposing instruments at sounding pitch",
+    "reset": "Reset",
+    "apply": "Apply",
+    "badge": "♯♭{{value}}"
   }
 }

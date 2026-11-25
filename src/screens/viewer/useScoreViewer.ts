@@ -4,6 +4,8 @@ import { defaultPartIds, type Score, type ScoreViewState } from '../../core/mode
 import { libraryRepository, viewStateRepository } from '../../core/services';
 import { prepareDisplayXml } from '../../core/musicxml/prepareDisplay';
 import type { AppSettings } from '../../core/settings';
+import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
+import type { Timeline } from '../../core/model/types';
 import { RenderService, autoScale, firstMeasureId, transposeOption, type ViewportOptions } from '../../core/render/renderService';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
@@ -18,8 +20,15 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   const [xml, setXml] = useState<string>();
   const [page, setPage] = useState(1);
   const [pageCount, setPageCount] = useState(0);
+  // Incremented after every load/relayout: the page must be re-rendered even if its number did not change.
+  const [layoutVersion, setLayoutVersion] = useState(0);
   const [svg, setSvg] = useState<string>();
   const [staves, setStaves] = useState(1);
+  // --- playback support (timeline, measure → page) ---
+  const [timeline, setTimeline] = useState<Timeline>();
+  const [measureIds, setMeasureIds] = useState<string[]>([]);
+  const [renderedPages, setRenderedPages] = useState<number[]>([]);
+  // --- end playback support ---
   const renderer = useRef<RenderService>(undefined);
   const anchor = useRef<string | undefined>(undefined);
   const restoredPage = useRef<number | undefined>(undefined);
@@ -31,8 +40,14 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [s, v, x] = await Promise.all([libraryRepository.get(scoreId), viewStateRepository.get(scoreId), libraryRepository.readMusicXml(scoreId)]);
+      const [s, v, x, tl] = await Promise.all([
+        libraryRepository.get(scoreId),
+        viewStateRepository.get(scoreId),
+        libraryRepository.readMusicXml(scoreId),
+        libraryRepository.readTimeline(scoreId),
+      ]);
       if (cancelled) return;
+      setTimeline(tl);
       if (!s || !x) return setStatus('notFound');
       restoredPage.current = v.lastPage;
       setScore(s);
@@ -81,6 +96,9 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
       if (cancelled) return;
       setStaves(display.staves);
       setPageCount(layout.pageCount);
+      setMeasureIds(layout.measureIds);
+      setRenderedPages(await r.pagesOf(layout.measureIds));
+      if (cancelled) return;
       // Keep the musical position: same first measure after a relayout, saved page on first load.
       let target = 1;
       if (!reload && anchor.current) target = (await r.pageOf(anchor.current)) || 1;
@@ -88,6 +106,7 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
       else if (anchor.current) target = 1;
       restoredPage.current = undefined;
       setPage(Math.min(Math.max(1, target), layout.pageCount));
+      setLayoutVersion((n) => n + 1);
       setStatus('ready');
     })().catch((e) => {
       console.error(e);
@@ -112,7 +131,7 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
     return () => {
       cancelled = true;
     };
-  }, [status, page, pageCount]);
+  }, [status, page, pageCount, layoutVersion]);
 
   // 5. Persist settings (debounced).
   useEffect(() => {
@@ -129,5 +148,8 @@ export function useScoreViewer(scoreId: string, size: { width: number; height: n
   const setZoom = useCallback((z: number) => update({ zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 100) / 100)) }), [update]);
 
   const selectedParts = useMemo(() => (partsKey ? partsKey.split(',') : []), [partsKey]);
-  return { status, score, view, selectedParts, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  // MusicXML measure rank → rendered (Verovio) measure index, accounting for merged multi-measure rests.
+  const xmlToRendered = useMemo(() => (score && display ? xmlToRenderedMeasure(score.measures, display.multiRestGroups) : []), [score, display]);
+  const key = display?.key;
+  return { status, score, view, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }
