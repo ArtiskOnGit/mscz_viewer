@@ -5,7 +5,8 @@
     "navigation": "Page turning",
     "system": "Device",
     "about": "About",
-    "playback": "Auto-scroll & metronome"
+    "playback": "Auto-scroll & metronome",
+    "profile": "My instrument"
   },
   "appTheme": {
     "label": "App theme",
@@ -73,5 +74,33 @@
   },
   "tapPauses": {
     "label": "Tap the score to pause"
+  },
+  "myInstrument": {
+    "names": "Instrument names",
+    "placeholder": "e.g. Trumpet, Trompette, Tpt",
+    "hint": "Separate names with commas. On the first opening of a score, the matching parts are shown.",
+    "quickPicks": "Common instruments",
+    "instruments": {
+      "trumpet": "Trumpet",
+      "cornet": "Cornet",
+      "clarinet": "Clarinet",
+      "flute": "Flute",
+      "altoSax": "Alto sax",
+      "tenorSax": "Tenor sax",
+      "baritoneSax": "Baritone sax",
+      "horn": "Horn",
+      "trombone": "Trombone",
+      "euphonium": "Euphonium",
+      "tuba": "Tuba / sousaphone",
+      "violin": "Violin",
+      "cello": "Cello",
+      "piano": "Piano",
+      "guitar": "Guitar",
+      "drums": "Drums"
+    }
+  },
+  "defaultTranspose": {
+    "label": "Default transposition",
+    "hint": "Applied on the first opening of a score"
   }
 }

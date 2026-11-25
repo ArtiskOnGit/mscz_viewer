@@ -1,13 +1,15 @@
 // Loading, rendering and navigation state of the viewer.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { defaultPartIds, type Score, type ScoreViewState } from '../../core/model/types';
-import { libraryRepository, viewStateRepository } from '../../core/services';
-import { prepareDisplayXml } from '../../core/musicxml/prepareDisplay';
+import type { Score, ScoreViewState } from '../../core/model/types';
+import { viewStateRepository } from '../../core/services';
 import type { AppSettings } from '../../core/settings';
+import { useSettings } from '../../state/settingsStore';
 import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
 import type { Timeline } from '../../core/model/types';
 import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
-import { RenderService, autoScale, firstMeasureId, transposeOption, type ViewportOptions } from '../../core/render/renderService';
+import { RenderService, firstMeasureId, type ViewportOptions } from '../../core/render/renderService';
+import { contentKeyOf, loadPiece, partsKeyOf, prepareDisplay, sameViewport, viewportOf, type PieceData } from './pieceData';
+import { adoptPreloaded, displayKeyOf } from '../setlists/preloadNext';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
 
@@ -36,30 +38,47 @@ export function useScoreViewer(
   const [measureIds, setMeasureIds] = useState<string[]>([]);
   const [renderedPages, setRenderedPages] = useState<number[]>([]);
   // --- end playback support ---
+  // "My instrument": parts preselected on the first opening of this score.
+  const [matchedParts, setMatchedParts] = useState<string[]>([]);
   const renderer = useRef<RenderService>(undefined);
   const anchor = useRef<string | undefined>(undefined);
   const restoredPage = useRef<number | undefined>(undefined);
+  // --- setlists: piece prepared in the background by the previous piece (preloadNext.ts) ---
+  const [pre] = useState(() => adoptPreloaded(scoreId));
+  // --- end setlists ---
+  const settingsLoaded = useSettings((st) => st.loaded);
 
-  renderer.current ??= new RenderService();
-  useEffect(() => () => renderer.current?.dispose(), []);
-
-  // 1. Load score, settings and MusicXML.
+  renderer.current ??= pre?.renderer ?? new RenderService();
+  // Dispose the worker on unmount (deferred: StrictMode's simulated unmount/remount must keep it).
+  const mounted = useRef(false);
   useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      setTimeout(() => !mounted.current && renderer.current?.dispose(), 0);
+    };
+  }, []);
+
+  // 1. Load score, settings and MusicXML (once the global settings are known: they hold the "My instrument" profile).
+  useEffect(() => {
+    if (!settingsLoaded) return;
     let cancelled = false;
+    const apply = (d: PieceData) => {
+      setTimeline(d.timeline);
+      if (!d.score || !d.xml) return setStatus('notFound');
+      restoredPage.current = d.view.lastPage;
+      setScore(d.score);
+      setView(d.view);
+      setXml(d.xml);
+      setMatchedParts(d.matchedParts);
+    };
+    if (pre) {
+      apply(pre.data);
+      return;
+    }
     void (async () => {
-      const [s, v, x, tl] = await Promise.all([
-        libraryRepository.get(scoreId),
-        viewStateRepository.get(scoreId),
-        libraryRepository.readMusicXml(scoreId),
-        libraryRepository.readTimeline(scoreId),
-      ]);
-      if (cancelled) return;
-      setTimeline(tl);
-      if (!s || !x) return setStatus('notFound');
-      restoredPage.current = v.lastPage;
-      setScore(s);
-      setView(v);
-      setXml(x);
+      const d = await loadPiece(scoreId, useSettings.getState().settings);
+      if (!cancelled) apply(d);
     })().catch((e) => {
       console.error(e);
       if (!cancelled) setStatus('error');
@@ -67,43 +86,45 @@ export function useScoreViewer(
     return () => {
       cancelled = true;
     };
-  }, [scoreId]);
+  }, [scoreId, settingsLoaded, pre]);
 
   // --- setlists: state actually displayed = score view state + setlist item override ---
   const shown = useMemo(() => (view ? effectiveViewState(view, override) : undefined), [view, override]);
   // --- end setlists ---
 
   // 2. XML to display (parts, multi-rests, names): recomputed when the selection changes.
-  // Empty selection = default parts (those visible in MuseScore).
-  const partsKey = shown && score ? (shown.selectedParts.length ? shown.selectedParts : defaultPartIds(score.parts)).join(',') : undefined;
+  const partsKey = shown && score ? partsKeyOf(shown, score) : undefined;
   const display = useMemo(() => {
     if (!xml || partsKey === undefined) return undefined;
-    return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: settings.multiRests, partNames: settings.partNames });
-  }, [xml, partsKey, settings.multiRests, settings.partNames]);
+    const ds = { multiRests: settings.multiRests, partNames: settings.partNames };
+    if (pre?.display && pre.display.xml === xml && pre.display.key === displayKeyOf(partsKey, ds)) return pre.display.value; // setlists: preloaded
+    return prepareDisplay(xml, partsKey, ds);
+  }, [xml, partsKey, settings.multiRests, settings.partNames, pre]);
 
-  const viewport = useMemo<ViewportOptions | undefined>(() => {
-    if (!display || !shown || !size || size.width < 50 || size.height < 50) return undefined;
-    const factor = typeof shown.zoom === 'number' ? shown.zoom : settings.defaultZoom;
-    return {
-      width: size.width,
-      height: size.height,
-      scale: Math.round(autoScale(display.staves, size.width) * factor),
-      transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave),
-      concertPitch: shown.concertPitch,
-    };
-  }, [display, shown, size, settings.defaultZoom]);
+  const viewport = useMemo<ViewportOptions | undefined>(
+    () => (display && shown ? viewportOf(display, shown, size, settings.defaultZoom) : undefined),
+    [display, shown, size, settings.defaultZoom],
+  );
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.
-  const contentKey = viewport && display ? `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${settings.multiRests}|${settings.partNames}` : undefined;
-  const loadedContent = useRef<string | undefined>(undefined);
+  const contentKey = viewport && display && partsKey !== undefined ? contentKeyOf(partsKey, viewport, settings) : undefined;
+  const loadedContent = useRef<string | undefined>(pre?.renderer ? pre.contentKey : undefined);
+  const loadedViewport = useRef<ViewportOptions | undefined>(pre?.renderer ? pre.viewport : undefined);
+  const laidOut = useRef(false);
   useEffect(() => {
     if (!viewport || !display || !contentKey) return;
     const r = renderer.current!;
+    const reload = loadedContent.current !== contentKey;
+    const same = !reload && sameViewport(loadedViewport.current, viewport);
+    // Same content and geometry (e.g. only the tempo changed): nothing to lay out again.
+    if (same && laidOut.current) return;
+    laidOut.current = false;
     let cancelled = false;
     void (async () => {
-      const reload = loadedContent.current !== contentKey;
-      const layout = reload ? await r.load(display.xml, viewport) : await r.relayout(viewport);
+      // `same` without a layout yet: the renderer was preloaded with this very piece (setlists).
+      const layout = reload ? await r.load(display.xml, viewport) : same ? r.layout : await r.relayout(viewport);
       loadedContent.current = contentKey;
+      loadedViewport.current = viewport;
       if (cancelled) return;
       setStaves(display.staves);
       setPageCount(layout.pageCount);
@@ -119,6 +140,7 @@ export function useScoreViewer(
       setPage(Math.min(Math.max(1, target), layout.pageCount));
       setLayoutVersion((n) => n + 1);
       setStatus('ready');
+      laidOut.current = true;
     })().catch((e) => {
       console.error(e);
       if (!cancelled) setStatus('error');
@@ -162,5 +184,5 @@ export function useScoreViewer(
   // MusicXML measure rank → rendered (Verovio) measure index, accounting for merged multi-measure rests.
   const xmlToRendered = useMemo(() => (score && display ? xmlToRenderedMeasure(score.measures, display.multiRestGroups) : []), [score, display]);
   const key = display?.key;
-  return { status, score, view, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  return { status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }

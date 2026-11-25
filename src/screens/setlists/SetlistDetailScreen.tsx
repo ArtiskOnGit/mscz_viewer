@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IonBackButton, IonButton, IonButtons, IonCheckbox, IonContent, IonFab, IonFabButton, IonFooter, IonHeader, IonIcon, IonItem,
+  IonBackButton, IonBadge, IonButton, IonButtons, IonCheckbox, IonContent, IonFab, IonFabButton, IonFooter, IonHeader, IonIcon, IonItem,
   IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonModal, IonNote, IonPage, IonReorder, IonReorderGroup, IonText,
   IonTitle, IonToolbar, useIonAlert,
 } from '@ionic/react';
 import { add, play } from 'ionicons/icons';
 import { routes } from '../../app/routes';
-import { defaultPartIds, type SetlistItem } from '../../core/model/types';
+import { defaultPartIds, type ScoreViewState, type SetlistItem } from '../../core/model/types';
+import { viewStateRepository } from '../../core/services';
+import { effectiveViewState, hasTransposeOverride, transposeBadgeValue, transposeOverride } from '../../core/setlists/effectiveView';
+import { TransposeModal } from '../viewer/TransposeModal';
 import { useLibrary } from '../../state/libraryStore';
 import { useSetlists } from '../../state/setlistStore';
 import { PartsModal } from '../viewer/PartsModal';
@@ -16,7 +19,7 @@ import { formatDuration } from '../../ui/format';
 import './setlists.css';
 
 export function SetlistDetailScreen() {
-  const { t } = useTranslation(['setlists', 'common']);
+  const { t } = useTranslation(['setlists', 'common', 'viewer']);
   const navigate = useNavigate();
   const { setlistId = '' } = useParams<{ setlistId: string }>();
   const { setlists, loaded, load, addScores, removeItem, moveItem, setNote, setOverride } = useSetlists();
@@ -24,6 +27,9 @@ export function SetlistDetailScreen() {
   const [presentAlert] = useIonAlert();
   const [adding, setAdding] = useState(false);
   const [partsItem, setPartsItem] = useState<SetlistItem>();
+  // Transposition of a piece: edited over the score's own settings (`base`).
+  const [transposeItem, setTransposeItem] = useState<{ item: SetlistItem; base: ScoreViewState }>();
+  const transposeShown = transposeItem ? effectiveViewState(transposeItem.base, transposeItem.item.override) : undefined;
 
   useEffect(() => {
     if (!loaded) void load();
@@ -39,6 +45,9 @@ export function SetlistDetailScreen() {
   const playFrom = (item: SetlistItem | undefined) => {
     if (setlist && item && scoreById.has(item.scoreId)) navigate(routes.viewerInSetlist(item.scoreId, setlist.id, item.id));
   };
+
+  const openTranspose = (item: SetlistItem) =>
+    void viewStateRepository.get(item.scoreId).then((base) => setTransposeItem({ item, base }));
 
   const askNote = (item: SetlistItem) =>
     void presentAlert({
@@ -95,6 +104,9 @@ export function SetlistDetailScreen() {
                   custom && score ? t('partsCustom', { count: custom, total: score.parts.length }) : undefined,
                   formatDuration(score?.durationSec),
                 ].filter(Boolean).join(' · ');
+                const shownTranspose = hasTransposeOverride(item.override)
+                  ? t('viewer:transpose.badge', { value: transposeBadgeValue({ transposeSemitones: 0, transposeOctave: 0, concertPitch: false, ...item.override }) || ' 0' })
+                  : undefined;
                 return (
                   <IonItemSliding key={item.id}>
                     <IonItem button={!!score} detail={false} onClick={() => playFrom(item)}>
@@ -104,11 +116,15 @@ export function SetlistDetailScreen() {
                         {info && <p>{info}</p>}
                         {item.note && <p><em>{item.note}</em></p>}
                       </IonLabel>
+                      {item.override && (
+                        <IonBadge slot="end" color="medium" data-testid="override-badge">{shownTranspose ?? t('overrideBadge')}</IonBadge>
+                      )}
                       <IonReorder slot="end" aria-label={t('reorder')} />
                     </IonItem>
                     <IonItemOptions side="end">
                       <IonItemOption color="medium" onClick={() => askNote(item)}>{t('note.button')}</IonItemOption>
                       {score && score.parts.length > 1 && <IonItemOption onClick={() => setPartsItem(item)}>{t('parts')}</IonItemOption>}
+                      {score && <IonItemOption color="secondary" onClick={() => openTranspose(item)} data-testid="item-transpose">{t('transpose')}</IonItemOption>}
                       <IonItemOption color="danger" onClick={() => void removeItem(setlistId, item.id)}>{t('remove')}</IonItemOption>
                     </IonItemOptions>
                   </IonItemSliding>
@@ -139,6 +155,20 @@ export function SetlistDetailScreen() {
           onApply={(selectedParts) => {
             if (partsItem) void setOverride(setlistId, partsItem.id, { selectedParts: selectedParts.length ? selectedParts : undefined });
             setPartsItem(undefined);
+          }}
+        />
+        <TransposeModal
+          isOpen={!!transposeShown}
+          keySig={undefined}
+          value={{
+            transposeSemitones: transposeShown?.transposeSemitones ?? 0,
+            transposeOctave: transposeShown?.transposeOctave ?? 0,
+            concertPitch: transposeShown?.concertPitch ?? false,
+          }}
+          onDismiss={() => setTransposeItem(undefined)}
+          onApply={(value) => {
+            if (transposeItem) void setOverride(setlistId, transposeItem.item.id, transposeOverride(value, transposeItem.base));
+            setTransposeItem(undefined);
           }}
         />
       </IonContent>

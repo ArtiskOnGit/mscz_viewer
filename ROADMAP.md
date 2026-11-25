@@ -81,13 +81,13 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - 🟨 **Métronome optionnel** : clic Web Audio avec accent, indicateur visuel, synchronisé avec le défilement ✅ ; mode « métronome seul » et écran de réglages (volume, décompte) à faire.
 - ⬜ **Mode Continu** (rouleau vertical) avec ligne de lecture.
 - ✅ **Transposition** : demi-tons, octave, préréglages Sib/Mib/Fa, tonalité résultante affichée, hauteur réelle (concert). *(Préférence ♯/♭ : à faire.)*
-- ✅ **Setlists** : création, renommage, duplication, ajout de partitions (plusieurs fois possible), réordonnancement par glisser-déposer, notes, instruments par morceau, mode « Play » avec morceau suivant/précédent, double appui pédale en fin de morceau. *(Pré-chargement du morceau suivant et transposition par morceau : à faire.)*
+- ✅ **Setlists** : création, renommage, duplication, ajout de partitions (plusieurs fois possible), réordonnancement par glisser-déposer, notes, instruments et transposition par morceau (badge dans la liste), mode « Play » avec morceau suivant/précédent, double appui pédale en fin de morceau, pré-chargement du morceau suivant en arrière-plan (ouverture ≈ 1,7 s → 0,45 s en e2e).
 - ⬜ **Pédalier Bluetooth** : actions configurables (page, lecture, métronome, morceau suivant), écran de capture de touche.
 - ⬜ **Demi-page**.
 - ⬜ **Aller à la mesure / marque de répétition**.
 - ⬜ **Mode verrouillé** contre les touchers accidentels.
 - ⬜ **Thèmes de partition** : sépia, sombre, contraste élevé.
-- ⬜ **Profil « My instrument »** : présélection automatique de la partie.
+- ✅ **Profil « My instrument »** : noms libres + choix rapides, correspondance sans casse ni accents (nom de partie, identifiant MuseScore), présélection et transposition par défaut à la première ouverture.
 - ⬜ Notation des notes (C D E / Do Ré Mi / C D E H).
 - ⬜ Écran Paramètres complet (voir les [spécifications fonctionnelles](docs/SPECIFICATIONS_FONCTIONNELLES.md#34-écran-paramètres)).
 - 🟨 « Open with » sur Android (intent VIEW : import puis ouverture de la partition) — à vérifier sur téléphone ; « Share to » (intent SEND) à faire.

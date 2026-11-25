@@ -8,6 +8,7 @@ import { routes } from '../../app/routes';
 import type { SetlistItem } from '../../core/model/types';
 import { useLibrary } from '../../state/libraryStore';
 import { useSetlists } from '../../state/setlistStore';
+import { transposeOverride, type TransposeSettings } from '../../core/setlists/effectiveView';
 
 const CONFIRM_WINDOW_MS = 3000;
 
@@ -21,12 +22,16 @@ export interface SetlistPlayback {
   hasPrev: boolean;
   hasNext: boolean;
   override?: SetlistItem['override'];
+  /** Next playable piece (preloaded in the background). */
+  nextItem?: SetlistItem;
   goPrev(): void;
   goNext(): void;
   /** "Next page" pressed on the last page: first press warns, second press (within 3 s) goes to the next piece. */
   nextAtEnd(): void;
   /** Instrument choice in setlist mode is stored in the item override. */
   setParts(selectedParts: string[]): void;
+  /** Transposition in setlist mode is stored in the item override (cleared when equal to the score's own `base`). */
+  setTranspose(value: TransposeSettings, base: TransposeSettings): void;
 }
 
 export function useSetlistPlayback(): SetlistPlayback {
@@ -83,11 +88,15 @@ export function useSetlistPlayback(): SetlistPlayback {
     hasPrev: !!prev,
     hasNext: !!next,
     override: current?.override,
+    nextItem: next,
     goPrev: () => open(prev),
     goNext: () => open(next),
     nextAtEnd,
     setParts: (selectedParts) => {
       if (setlist && current) void setOverride(setlist.id, current.id, { selectedParts: selectedParts.length ? selectedParts : undefined });
+    },
+    setTranspose: (value, base) => {
+      if (setlist && current) void setOverride(setlist.id, current.id, transposeOverride(value, base));
     },
   };
 }

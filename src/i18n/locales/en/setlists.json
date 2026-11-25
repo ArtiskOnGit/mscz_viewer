@@ -9,7 +9,10 @@
   "rename": "Rename setlist",
   "duplicate": "Duplicate",
   "copyName": "{{name}} (copy)",
-  "delete": { "title": "Delete setlist?", "message": "“{{name}}” will be deleted. The scores stay in the library." },
+  "delete": {
+    "title": "Delete setlist?",
+    "message": "“{{name}}” will be deleted. The scores stay in the library."
+  },
   "notFound": "This setlist could not be found.",
   "play": "Play",
   "addScores": "Add scores",
@@ -18,7 +21,11 @@
   "noScores": "Import scores in the library first.",
   "emptyItems": "No pieces yet. Add scores from your library.",
   "missingScore": "Missing score",
-  "note": { "button": "Note", "title": "Note for this piece", "placeholder": "e.g. start on the conductor's cue" },
+  "note": {
+    "button": "Note",
+    "title": "Note for this piece",
+    "placeholder": "e.g. start on the conductor's cue"
+  },
   "parts": "Instruments",
   "partsCustom": "{{count}}/{{total}} instruments",
   "remove": "Remove",
@@ -29,5 +36,7 @@
   "previousPiece": "Previous piece",
   "nextPiece": "Next piece",
   "pressAgain": "Press again for the next piece",
-  "deletedFrom": "Also removed from: {{names}}"
+  "deletedFrom": "Also removed from: {{names}}",
+  "transpose": "Transpose",
+  "overrideBadge": "Custom"
 }

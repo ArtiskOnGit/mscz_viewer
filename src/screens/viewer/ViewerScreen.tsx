@@ -16,6 +16,9 @@ import { TransposeModal } from './TransposeModal';
 import { useSettings } from '../../state/settingsStore';
 import { useSetlistPlayback } from '../setlists/useSetlistPlayback';
 import { SetlistBar } from '../setlists/SetlistBar';
+import { usePreloadNext } from '../setlists/preloadNext';
+import { transposeBadgeValue } from '../../core/setlists/effectiveView';
+import { useMyPartToast } from './useMyPartToast';
 import './viewer.css';
 
 const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter']);
@@ -39,6 +42,10 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const { settings } = useSettings();
   const sp = useSetlistPlayback(); // setlists
   const v = useScoreViewer(scoreId, size, settings, sp.override);
+  // --- my instrument & setlist preload ---
+  useMyPartToast(v.matchedParts, v.score?.parts ?? [], v.status === 'ready', !!sp.override?.selectedParts?.length);
+  usePreloadNext(scoreId, sp.nextItem, v.status === 'ready', size, settings);
+  // --- end my instrument & setlist preload ---
 
   // Track the stage size (rotation, split screen…), debounced.
   useEffect(() => {
@@ -114,8 +121,13 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   });
 
   const parts = v.score?.parts ?? [];
-  const totalTranspose = (v.view?.transposeSemitones ?? 0) + 12 * (v.view?.transposeOctave ?? 0);
-  const transposeBadge = totalTranspose ? ` ${totalTranspose > 0 ? '+' : ''}${totalTranspose}` : v.view?.concertPitch ? ' C' : '';
+  // Transposition actually shown (setlists: the piece's override wins over the score's settings).
+  const transpose = {
+    transposeSemitones: v.shown?.transposeSemitones ?? 0,
+    transposeOctave: v.shown?.transposeOctave ?? 0,
+    concertPitch: v.shown?.concertPitch ?? false,
+  };
+  const transposeBadge = transposeBadgeValue(transpose);
   const selectedCount = v.selectedParts.length;
 
   return (
@@ -126,7 +138,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           <IonTitle>{v.score?.title ?? t('title')}</IonTitle>
           <IonButtons slot="end">
             {parts.length > 1 && (
-              <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.button')}>
+              <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.button')} data-testid="parts-button">
                 <IonIcon slot="start" icon={peopleOutline} />
                 {selectedCount}/{parts.length}
               </IonButton>
@@ -196,15 +208,12 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
       <TransposeModal
         isOpen={transposeOpen}
         keySig={v.key}
-        value={{
-          transposeSemitones: v.view?.transposeSemitones ?? 0,
-          transposeOctave: v.view?.transposeOctave ?? 0,
-          concertPitch: v.view?.concertPitch ?? false,
-        }}
+        value={transpose}
         onDismiss={() => setTransposeOpen(false)}
         onApply={(value) => {
           setTransposeOpen(false);
-          v.update(value);
+          if (sp.active && v.view) sp.setTranspose(value, v.view); // setlists: stored in the item override
+          else v.update(value);
         }}
       />
       <PartsModal

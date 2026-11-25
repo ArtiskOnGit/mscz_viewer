@@ -31,6 +31,11 @@ export class ViewStateRepository {
     return { ...defaultViewState(id), ...all[id] };
   }
 
+  /** True once a view state was saved for this score (it was opened before). */
+  async has(id: ScoreId): Promise<boolean> {
+    return id in (await this.all());
+  }
+
   save(state: ScoreViewState): Promise<void> {
     return this.mutate((all) => ({ ...all, [state.scoreId]: state }));
   }

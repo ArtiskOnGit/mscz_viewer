@@ -1,6 +1,7 @@
 // Global preferences (SPECIFICATIONS_FONCTIONNELLES §3.4). Per-score settings override them (ScoreViewState).
 import { Preferences } from '@capacitor/preferences';
 import type { PartNamesMode } from './musicxml/prepareDisplay';
+import type { MyInstrumentProfile } from './profile/myInstrument';
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type ScoreTheme = 'light' | 'sepia' | 'dark' | 'highContrast';
@@ -22,6 +23,10 @@ export interface AppSettings {
   metronomeVolume: number;
   highlightMeasure: boolean;
   tapPauses: boolean;
+  /** "My instrument" profile: parts preselected on the first opening of a score. */
+  myInstrument: MyInstrumentProfile;
+  /** Transposition (semitones) applied on the first opening of a score. */
+  defaultTranspose: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -39,6 +44,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   metronomeVolume: 0.7,
   highlightMeasure: true,
   tapPauses: true,
+  myInstrument: { names: [], instrumentIds: [] },
+  defaultTranspose: 0,
 };
 
 const KEY = 'settings';

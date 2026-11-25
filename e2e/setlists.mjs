@@ -85,6 +85,80 @@ check((await bar()).includes('2/2') && (await bar()).includes('Last piece'), `se
 await page.locator('.ion-page:not(.ion-page-hidden) [data-testid=previous-piece]').last().click();
 await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-header ion-title')].some((e) => e.textContent?.includes('Toccata')), null, { timeout: 30000 });
 check(true, 'previous piece');
+await page.waitForSelector('.ion-page:not(.ion-page-hidden) .score-page svg', { timeout: 60000 });
+
+// --- Per-piece transposition: applied in play mode, stored in the setlist item, not in the score. ---
+const visible = '.ion-page:not(.ion-page-hidden)';
+const badge = () => page.locator(`${visible} [data-testid=transpose-button]`).last().innerText();
+const applyTranspose = async (preset) => {
+  await page.waitForSelector('ion-modal.show-modal');
+  await page.locator('ion-modal.show-modal ion-chip', { hasText: preset }).click();
+  await page.locator('ion-modal.show-modal ion-footer ion-button', { hasText: 'Apply' }).click();
+  await page.waitForFunction(() => !document.querySelector('ion-modal.show-modal'));
+};
+await page.locator(`${visible} [data-testid=transpose-button]`).last().click();
+await applyTranspose('B♭ instrument');
+await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) [data-testid=transpose-button]')].at(-1)?.textContent?.includes('+2'), null, { timeout: 10000 }).catch(() => undefined);
+check((await badge()).includes('+2'), `setlist piece transposed: ${await badge()}`);
+
+// Back to the setlist: the item shows its override badge; edit the 2nd piece's transposition there.
+await page.locator(`${visible} ion-back-button`).last().click();
+await waitTitle('Concert');
+await page.waitForSelector(`${visible} [data-testid=override-badge]`, { timeout: 10000 }).catch(() => undefined);
+const badges = await page.locator(`${visible} ion-reorder-group ion-item-sliding`).evaluateAll((els) => els.map((el) => el.querySelector('[data-testid=override-badge]')?.textContent ?? ''));
+check(badges[0]?.includes('+2') && badges[1] === '', `override badges: ${JSON.stringify(badges)}`);
+const setlistItem = (i) => page.locator(`${visible} ion-reorder-group ion-item-sliding`).nth(i);
+await setlistItem(1).evaluate((el) => el.open('end'));
+await page.waitForTimeout(400);
+await setlistItem(1).locator('[data-testid=item-transpose]').click();
+await applyTranspose('E♭ instrument');
+await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-reorder-group ion-item-sliding')][1]?.querySelector('[data-testid=override-badge]')?.textContent?.includes('-3'), null, { timeout: 10000 }).catch(() => undefined);
+const badges2 = await page.locator(`${visible} ion-reorder-group ion-item-sliding`).evaluateAll((els) => els.map((el) => el.querySelector('[data-testid=override-badge]')?.textContent ?? ''));
+check(badges2[1]?.includes('-3'), `2nd piece transposition edited in the setlist: ${JSON.stringify(badges2)}`);
+await page.screenshot({ path: `${shots}/setlist-overrides.png` });
+await setlistItem(1).evaluate((el) => el.close());
+await page.waitForTimeout(300);
+await setlistItem(1).locator('ion-item').click();
+await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-header ion-title')].some((e) => e.textContent?.includes('unity')), null, { timeout: 30000 });
+await page.waitForSelector(`${visible} .score-page svg`, { timeout: 60000 });
+check((await badge()).includes('-3'), `override applied when playing the 2nd piece: ${await badge()}`);
+
+// The score itself is not transposed outside the setlist.
+await page.goto('http://127.0.0.1:5192/library');
+await page.waitForSelector('ion-item-sliding', { timeout: 30000 });
+await page.locator('ion-item-sliding ion-item', { hasText: 'Toccata' }).first().click();
+await page.waitForSelector(`${visible} .score-page svg`, { timeout: 60000 });
+check(!(await badge()).includes('+2'), `score view state untouched: ${await badge()}`);
+
+// --- Preloading of the next piece: open "unity" (2nd piece) right away (no preload yet) vs after the preload. ---
+const timeNext = async (waitMs) => {
+  await page.locator(`${visible} [data-testid=previous-piece]`).last().click();
+  await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-header ion-title')].some((e) => e.textContent?.includes('Toccata')), null, { timeout: 30000 });
+  await page.waitForSelector(`${visible} .score-page svg`, { timeout: 60000 });
+  await page.waitForTimeout(waitMs);
+  const t0 = Date.now();
+  await page.locator(`${visible} [data-testid=next-piece]`).last().click();
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden)')].some((p) => p.querySelector('ion-title')?.textContent?.includes('unity') && p.querySelector('.score-page svg')),
+    null,
+    { timeout: 60000 },
+  );
+  return Date.now() - t0;
+};
+// Back into the setlist, on the 2nd piece.
+await page.goBack();
+await page.goBack();
+await page.waitForFunction(() => [...document.querySelectorAll('.ion-page:not(.ion-page-hidden) ion-header ion-title')].some((e) => e.textContent?.includes('unity')), null, { timeout: 30000 });
+await page.waitForSelector(`${visible} .score-page svg`, { timeout: 60000 });
+const cold = [];
+const warm = [];
+for (let i = 0; i < 3; i++) {
+  cold.push(await timeNext(0));
+  warm.push(await timeNext(5000));
+}
+const median = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+console.log(`next piece opening: without preload ${cold.join('/')} ms (median ${median(cold)}), preloaded ${warm.join('/')} ms (median ${median(warm)})`);
+check(median(warm) < median(cold), 'preloaded next piece opens faster');
 check(errors.length === 0, `no JS errors ${JSON.stringify(errors)}`);
 await browser.close();
 await server.close();

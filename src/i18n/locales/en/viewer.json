@@ -50,5 +50,6 @@
     "reset": "Reset",
     "apply": "Apply",
     "badge": "♯♭{{value}}"
-  }
+  },
+  "myPart": "Showing your part: {{names}}"
 }

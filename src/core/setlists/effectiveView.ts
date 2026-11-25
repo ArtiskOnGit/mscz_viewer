@@ -9,3 +9,27 @@ export function effectiveViewState(view: ScoreViewState, override?: SetlistOverr
   for (const [k, v] of Object.entries(override)) if (v !== undefined) result[k] = v;
   return result as unknown as ScoreViewState;
 }
+
+export type TransposeSettings = Pick<ScoreViewState, 'transposeSemitones' | 'transposeOctave' | 'concertPitch'>;
+
+/**
+ * Override patch for a transposition chosen for a setlist piece. Same as the score's own settings = no override
+ * (undefined values clear the keys, see SetlistRepository.setOverride).
+ */
+export function transposeOverride(value: TransposeSettings, base: TransposeSettings): SetlistOverride {
+  const same = value.transposeSemitones === base.transposeSemitones && value.transposeOctave === base.transposeOctave && value.concertPitch === base.concertPitch;
+  return same
+    ? { transposeSemitones: undefined, transposeOctave: undefined, concertPitch: undefined }
+    : { transposeSemitones: value.transposeSemitones, transposeOctave: value.transposeOctave, concertPitch: value.concertPitch };
+}
+
+/** The override changes the transposition of the piece. */
+export function hasTransposeOverride(o: SetlistOverride | undefined): boolean {
+  return !!o && (o.transposeSemitones !== undefined || o.transposeOctave !== undefined || o.concertPitch !== undefined);
+}
+
+/** Toolbar/list badge value: " +2", " -15", " C" (concert pitch), "" (none). */
+export function transposeBadgeValue(t: TransposeSettings): string {
+  const total = t.transposeSemitones + 12 * t.transposeOctave;
+  return total ? ` ${total > 0 ? '+' : ''}${total}` : t.concertPitch ? ' C' : '';
+}

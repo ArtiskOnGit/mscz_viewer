@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonNote,
+  IonBackButton, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonNote,
   IonPage, IonRange, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar,
 } from '@ionic/react';
 import { routes } from '../../app/routes';
@@ -9,6 +9,8 @@ import { SOURCE_URL, THIRD_PARTY } from '../../app/thirdPartyLicenses';
 import { useSettings } from '../../state/settingsStore';
 import type { AppTheme, ScoreTheme } from '../../core/settings';
 import type { PartNamesMode } from '../../core/musicxml/prepareDisplay';
+import { COMMON_INSTRUMENTS, parseNames, type MyInstrumentProfile } from '../../core/profile/myInstrument';
+import { TRANSPOSE_PRESETS } from '../../core/music/keys';
 
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
@@ -29,6 +31,8 @@ export function SettingsScreen() {
       </IonHeader>
       <IonContent>
         <IonList>
+          <MyInstrumentSection />
+
           <IonListHeader>{t('sections.display')}</IonListHeader>
           <IonItem>
             <IonSelect label={t('appTheme.label')} interface="popover" value={settings.appTheme} onIonChange={(e) => set('appTheme', e.detail.value as AppTheme)}>
@@ -126,5 +130,69 @@ export function SettingsScreen() {
         </IonModal>
       </IonContent>
     </IonPage>
+  );
+}
+
+type QuickPick = (typeof COMMON_INSTRUMENTS)[number];
+const lower = (names: readonly string[]) => new Set(names.map((n) => n.toLowerCase()));
+/** A quick pick is selected while its first name is in the profile. */
+const isPicked = (p: QuickPick, names: readonly string[]) => lower(names).has(p.names[0].toLowerCase());
+/** Instrument ids follow the quick picks still present in the names. */
+const idsFor = (names: readonly string[]) => COMMON_INSTRUMENTS.filter((p) => isPicked(p, names)).flatMap((p) => p.instrumentIds);
+
+/** "My instrument" profile: names (free text + quick picks) and default transposition (§3.4). */
+function MyInstrumentSection() {
+  const { t } = useTranslation(['settings', 'viewer']);
+  const { settings, set } = useSettings();
+  const profile = settings.myInstrument;
+  const [text, setText] = useState(profile.names.join(', '));
+  // Names changed elsewhere (quick pick, reset): show them in the text field.
+  const [shownNames, setShownNames] = useState(profile.names);
+  if (shownNames !== profile.names) {
+    setShownNames(profile.names);
+    setText(profile.names.join(', '));
+  }
+
+  const save = (names: string[]) => set('myInstrument', { names, instrumentIds: idsFor(names) } satisfies MyInstrumentProfile);
+  const toggle = (p: QuickPick) => {
+    const own = lower(p.names);
+    save(isPicked(p, profile.names) ? profile.names.filter((n) => !own.has(n.toLowerCase())) : parseNames([...profile.names, ...p.names].join(',')));
+  };
+
+  return (
+    <>
+      <IonListHeader>{t('sections.profile')}</IonListHeader>
+      <IonItem>
+        <IonInput
+          label={t('myInstrument.names')}
+          labelPlacement="stacked"
+          placeholder={t('myInstrument.placeholder')}
+          helperText={t('myInstrument.hint')}
+          value={text}
+          data-testid="my-instrument-names"
+          onIonInput={(e) => setText(String(e.detail.value ?? ''))}
+          onIonChange={(e) => save(parseNames(String(e.detail.value ?? '')))}
+        />
+      </IonItem>
+      <IonItem lines="none"><IonLabel><IonNote>{t('myInstrument.quickPicks')}</IonNote></IonLabel></IonItem>
+      <div className="ion-padding-horizontal" data-testid="my-instrument-picks">
+        {COMMON_INSTRUMENTS.map((p) => (
+          <IonChip key={p.id} outline={!isPicked(p, profile.names)} onClick={() => toggle(p)} data-testid={`pick-${p.id}`}>
+            {t(`myInstrument.instruments.${p.id}`)}
+          </IonChip>
+        ))}
+      </div>
+      <IonItem>
+        <IonSelect
+          label={t('defaultTranspose.label')}
+          interface="popover"
+          value={settings.defaultTranspose}
+          data-testid="default-transpose"
+          onIonChange={(e) => set('defaultTranspose', Number(e.detail.value))}
+        >
+          {TRANSPOSE_PRESETS.map((p) => <IonSelectOption key={p.id} value={p.semitones}>{t(`viewer:transpose.preset.${p.id}`)}</IonSelectOption>)}
+        </IonSelect>
+      </IonItem>
+    </>
   );
 }
