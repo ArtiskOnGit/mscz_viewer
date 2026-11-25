@@ -14,7 +14,7 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 
 - ✅ Trancher les questions de cadrage (plateforme, licence, framework, langues, audio, setlists).
 - ⬜ Choisir le nom de l'application (ADR-006).
-- 🟨 **Corpus de test** : 3 fichiers réels reçus (MuseScore **2.1**, **4.5.2**, **4.6.2**) dans `test-scores/` (non versionné). **Il manque un fichier 3.x**, et si possible des grilles d'accords, des paroles et un D.S. al Coda.
+- ✅ **Corpus de test** : 4 fichiers réels (MuseScore **2.1, 3.6.2, 4.5.2, 4.6.2**) dans `test-scores/` (non versionné). À compléter au fil de l'eau : grilles d'accords, paroles, D.S. al Coda.
 - ✅ **S1 — webmscore** (PC + Chromium ; [résultats](docs/spikes/PHASE0_RESULTATS.md#s1--webmscore-121-musescore-40-en-wasm)) : charger le corpus dans une page web, puis dans une WebView Capacitor Android.
   - Les fichiers **3.x** sont-ils bien lus par le moteur 4.0 ? Les fichiers **4.1 et plus** se chargent-ils ? Quels éléments sont perdus ?
   - Mesurer le temps d'initialisation, le temps de chargement et la mémoire.
@@ -25,10 +25,12 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
   - Silences multi-mesures en vue partie.
 - ✅ **S3 — Timeline** (+ prototype de filtrage qui conserve les tempos) : correspondance des mesures webmscore ↔ Verovio (anacrouses, reprises, D.S. al Coda), extraction de la métrique et du tempo par mesure. Prototype de défilement continu.
 - ✅ **S4 — Transposition** : option `transpose` de Verovio sur MusicXML (armures, accords, instruments transpositeurs, hauteur réelle et hauteur écrite).
-- 🟨 **S5 — Pédalier** (OK en navigateur ; reste un test sur téléphone avec le banc `spikes/device-test`) : réception des touches d'un pédalier ou clavier Bluetooth dans la WebView Android.
-- 🟨 **S6 — Métronome** (OK en Chromium, 0 clic en retard ; reste un test sur téléphone) : régularité des clics Web Audio dans la WebView Android (ordonnanceur avec anticipation), latence, comportement écran verrouillé ou application en arrière-plan.
+- ⏭️ **S5 — Pédalier** (OK en navigateur ; **reporté en phase 1**, test sur téléphone dans l'application) : réception des touches d'un pédalier ou clavier Bluetooth dans la WebView Android.
+- ⏭️ **S6 — Métronome** (OK en Chromium, 0 clic en retard ; **reporté en phase 1**) : régularité des clics Web Audio dans la WebView Android (ordonnanceur avec anticipation), latence, comportement écran verrouillé ou application en arrière-plan.
 - ✅ **Point de décision** : ADR-001, ADR-002 et ADR-008 **confirmées**, ADR-012 ajoutée (filtrage des parties).
-- ⬜ **Mesures sur un vrai téléphone Android** (temps d'import et de rendu, pédalier, métronome) avec le banc de test ([mode d'emploi](spikes/README.md)).
+- ⏭️ **Mesures sur un vrai téléphone Android** : le banc de test web n'a pas pu charger de fichier sur le téléphone (l'onglet est tué pendant le sélecteur). On les fera **dans la première version APK** (phase 1).
+
+✅ **Phase 0 close le 2026-11-25** — [résultats](docs/spikes/PHASE0_RESULTATS.md).
 
 **Livrable** : notes de spikes + décisions confirmées. *(environ 2 à 4 semaines)*
 
@@ -59,6 +61,9 @@ Légende : ⬜ à faire · 🟨 en cours · ✅ fait
 - ⬜ Choix des instruments (sélection multiple, filtrage MusicXML).
 - ⬜ Zoom (pincement + boutons, relayout).
 - ⬜ Écran toujours allumé.
+- ⬜ Silences multi-mesures regroupés dans la vue filtrée.
+- ⬜ Survie au sélecteur de fichiers (`appRestoredResult`, chargement différé des moteurs).
+- ⬜ **Mesures sur téléphone** (reportées de la phase 0) : temps d'import et de rendu, mémoire, pédalier Bluetooth, régularité du métronome.
 - ⬜ Mémorisation par partition : instruments, zoom, page.
 
 **Paramètres (version minimale)**

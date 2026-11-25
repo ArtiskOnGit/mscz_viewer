@@ -9,8 +9,9 @@ Code des spikes : [`spikes/`](../../spikes/README.md). Les partitions de test so
 | `Meme_Compilation_-_Alto_Sax._Solo_V7.0_.mscz` | **2.1.0** (format 2.06) | 1 partie, 322 mesures, **9 reprises + 2 voltas**, 32 changements de tempo, 24 changements d'armure, textes longs |
 | `onlyfuhnbrass_-_medley_Russ.mscz` | **4.5.2** (format 4.50) | 5 parties (2 sax ténor, 2 sousaphones, batterie), 143 mesures, 10 changements de métrique |
 | `unity_transpos_.mscz` | **4.6.2** (format 4.60) | 4 parties (trompette Sib, sax ténor, sousaphone, batterie), 132 mesures, swing |
+| `Toccata_v2.mscz` | **3.6.2** (format 3.02) | 7 parties (fanfare), 122 mesures, **63 reprises**, 56 changements de tempo, 58 repères (A, B…), parties séparées définies dans le fichier |
 
-👉 Les fichiers vont de MuseScore **2.1 à 4.6**, une plage plus large que prévu (3.0 à 4.x). Il manque encore un fichier **3.x** au corpus.
+👉 Le corpus couvre MuseScore **2.1, 3.6, 4.5 et 4.6** : les 4 fichiers se chargent.
 
 ## Synthèse
 
@@ -20,8 +21,8 @@ Code des spikes : [`spikes/`](../../spikes/README.md). Les partitions de test so
 | **S2 — Verovio** | ✅ **Validé** | Rendu propre, mise en page adaptée à l'écran, rapide. |
 | **S3 — Timeline** | ✅ **Validé** | Ordre de jeu de MuseScore (reprises dépliées) = ordre de Verovio. Écart de temps nul sur les fichiers 4.x. Le filtrage des parties doit **conserver les tempos** (prototype fait). |
 | **S4 — Transposition** | ✅ **Validé** | `transpose` (`+3`, `m3`, `Eb`) et `transposeToSoundingPitch` fonctionnent. |
-| **S5 — Pédalier** | 🟨 **À tester sur téléphone** | Touches clavier OK dans le navigateur. Il reste à essayer un vrai pédalier Bluetooth sur Android (banc de test prêt). |
-| **S6 — Métronome** | 🟨 **À tester sur téléphone** | Ordonnanceur Web Audio OK dans Chromium (0 clic en retard). Il reste à vérifier la régularité et la latence sur Android. |
+| **S5 — Pédalier** | ⏭️ **Reporté en phase 1** | Touches clavier OK dans le navigateur. Le test sur téléphone n'a pas pu se faire (voir « Test sur téléphone » ci-dessous). Il sera fait dans l'application Capacitor. |
+| **S6 — Métronome** | ⏭️ **Reporté en phase 1** | Ordonnanceur Web Audio OK dans Chromium (0 clic en retard). Régularité et latence à vérifier sur Android, dans l'application. |
 
 **Décision proposée** : confirmer l'architecture **webmscore (import) + Verovio (rendu)** (ADR-001, ADR-002, ADR-008).
 
@@ -120,6 +121,25 @@ Test automatique dans **Chromium headless (émulation Pixel 7)**, sur les 3 fich
 
 **À faire par le porteur du projet** (voir [spikes/README.md](../../spikes/README.md)) : ouvrir le banc de test sur un téléphone Android, avec un pédalier Bluetooth si possible, puis relever les Stats.
 
+## Ajouts du 2026-11-25 (fichier MuseScore 3.6)
+
+- **Toccata (3.6.2)** : chargement en 0,8 s (Node) / 1,7 s (Chromium), MusicXML et positions OK. 158 événements dans l'ordre de jeu, **ordre identique** dans Verovio.
+  - Écart constant de 1,7 s dès la 1ʳᵉ mesure : le fichier contient 7 indications de tempo successives au début (140 → 20). MuseScore et Verovio ne les appliquent pas de la même façon. Ce n'est pas cumulatif. **La timeline MuseScore reste la référence.**
+  - Filtrage de la partie de sax alto : **13 indications recopiées**, dont les **repères A à F**, qui s'affichent bien sur la partie seule.
+- **Silences multi-mesures** : MuseScore ne les exporte pas en MusicXML (0 `<multiple-rest>`), donc la vue d'une partie montre 11 mesures vides à la suite. Test concluant : en ajoutant `<measure-style><multiple-rest>11</multiple-rest></measure-style>`, Verovio dessine un silence « 11 ».
+  - ⚠️ Verovio **fusionne** alors les mesures regroupées en un seul élément `measure` (158 → 148 événements). La table « rang MusicXML → mesure Verovio » doit faire pointer les mesures regroupées vers la mesure du silence multi-mesures.
+  - → **Fonction à développer** : regrouper automatiquement les mesures de silence consécutives de la vue filtrée. On coupe le groupe à chaque repère, changement d'armure, de métrique ou de tempo, barre de reprise, volta et double barre.
+
+## Test sur téléphone (tentative du porteur du projet)
+
+- Sur PC, le banc de test marche. Sur le téléphone Android, **le fichier ne se charge pas** : quand on appuie sur « Choisir un fichier », Android ouvre le sélecteur de fichiers, **l'onglet de Chrome est fermé en arrière-plan**, puis rechargé au retour. Le fichier choisi est perdu.
+- Cause probable : la page avait **préchargé les deux moteurs** (~200 Mo). Android libère les onglets gourmands quand une autre application passe au premier plan.
+- Correctif du banc de test : les moteurs ne sont chargés **qu'après** le choix du fichier.
+- ⚠️ **Le même risque existe dans l'application** : Android peut tuer l'activité Capacitor pendant que le sélecteur est ouvert. Mesures prévues :
+  1. ne charger webmscore **qu'au moment de l'import**, et libérer Verovio quand on revient à la bibliothèque ;
+  2. gérer l'événement Capacitor **`appRestoredResult`** (plugin `@capacitor/app`), qui rend le résultat du sélecteur après une recréation de l'activité ;
+  3. sauvegarder l'état de navigation (écran, partition ouverte) pour le restaurer après un redémarrage.
+
 ## Conséquences sur les spécifications
 
 1. Import : **un Web Worker webmscore neuf par fichier**, détruit après usage ou après toute erreur. Ne jamais appeler `savePositions(true)`.
@@ -128,3 +148,5 @@ Test automatique dans **Chromium headless (émulation Pixel 7)**, sur les 3 fich
 4. Formats : **MuseScore 2.x** est lu aussi (bonus).
 5. Tailles réelles : webmscore ~18 Mo, Verovio ~8,4 Mo, soit **~27 Mo de moteurs** dans l'APK.
 6. Identifiants des mesures Verovio : retirer le suffixe `-rendN` pour retrouver la mesure d'origine.
+7. **Silences multi-mesures générés par l'application** pour la vue filtrée, en tenant compte de la fusion des mesures par Verovio.
+8. **Résistance à la mort de l'activité Android** pendant le choix de fichier (`appRestoredResult`, chargement différé des moteurs).

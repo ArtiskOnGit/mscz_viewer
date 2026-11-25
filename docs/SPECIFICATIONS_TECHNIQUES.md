@@ -40,6 +40,7 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | Écran allumé | `@capacitor-community/keep-awake` | |
 | Orientation | `@capacitor/screen-orientation` | |
 | Ouvrir avec / partage entrant | `@capacitor/app` (`appUrlOpen`) + configuration native (intent-filters Android, `CFBundleDocumentTypes` iOS) ou plugin « send-intent » | |
+| Survie au sélecteur de fichiers | `@capacitor/app` (`appRestoredResult`) | Android peut tuer l'activité pendant que le sélecteur est ouvert (constaté en phase 0) : on récupère le résultat et on restaure l'écran |
 | i18n | **i18next** + **react-i18next** + `eslint-plugin-i18next` | **EN (langue de référence)**, puis FR et d'autres (voir §11) |
 | Tests unitaires | **Vitest** | |
 | Tests E2E | **Playwright** sur la version web | |
@@ -258,6 +259,7 @@ Objectif de performance : l'import d'une partition typique (environ 10 parties, 
 Exécuté dans `render.worker.ts` (Verovio WASM). Verovio reste chargé tant qu'une partition est ouverte.
 
 1. **Filtrage des parties** (`core/musicxml`) : DOMParser dans le worker (ou un parseur XML léger si `DOMParser` manque dans le worker). On supprime les `<score-part>` et `<part>` non sélectionnés, ainsi que les `<part-group>` devenus vides. **On recopie les indications système** (tempo, métronome, repères, sauts) de la première partie vers la première partie conservée (ADR-012 ; prototype `spikes/shared/filter-parts.mjs`). Option « noms d'instruments » : on retire `<part-name-display>` et `<part-abbreviation-display>`, ou on met `print-object="no"`, à valider. Le résultat est mis en cache en mémoire par combinaison de parties.
+1 bis. **Silences multi-mesures** (vue filtrée) : on regroupe les mesures de silence consécutives en ajoutant `<measure-style><multiple-rest>N</multiple-rest></measure-style>`. MuseScore n'en exporte pas, mais Verovio les dessine (validé en phase 0). On coupe le groupe aux repères, changements d'armure, de métrique ou de tempo, reprises, voltas et doubles barres. Verovio **fusionne** les N mesures en une seule : la table des mesures (§6.1) doit le refléter.
 2. **Options Verovio** calculées à partir de l'écran et du ViewState :
    - `pageWidth` / `pageHeight` : dimensions de la zone d'affichage converties en unités Verovio, en tenant compte de `scale` (le zoom) ;
    - `scale` : zoom ;
@@ -373,7 +375,7 @@ Il n'y a **aucune lecture audio de la partition** (ADR-010). Le métronome est l
 | Application (JS/CSS) | moins de 2 Mo |
 | **Total de l'application installée** | **environ 30 Mo** |
 
-Mémoire : webmscore ne doit être chargé **qu'à l'import** et libéré ensuite (on termine le worker). Il faut surveiller les gros conducteurs (30 parties et plus) sur les appareils modestes.
+Mémoire : webmscore ne doit être chargé **qu'à l'import** et libéré ensuite (on termine le worker). Verovio n'est chargé que dans l'écran Visualisation. Il faut surveiller les gros conducteurs (30 parties et plus) sur les appareils modestes. Raison supplémentaire (constat de la phase 0) : sous Android, une application gourmande est tuée quand le sélecteur de fichiers passe au premier plan.
 
 ## 13. Qualité et tests
 

@@ -1,7 +1,6 @@
 // Phase 0 test bench, to open on an Android phone (Chrome ≈ Capacitor WebView).
 // Measures: webmscore import (S1), Verovio rendering (S2), MuseScore timeline + page turns (S3),
 // transposition (S4), Bluetooth pedal keys (S5), Web Audio metronome regularity (S6).
-/* global WebMscore */
 import createVerovioModule from 'verovio/wasm';
 import { VerovioToolkit } from 'verovio/esm';
 import { filterParts } from '../shared/filter-parts.mjs';
@@ -50,14 +49,29 @@ const state = {
   playing: false, tempoFactor: 1, currentEvent: -1,
 };
 
-// ---------------------------------------------------------------- Verovio
-let vrv;
-const vrvReady = (async () => {
-  const t = now();
-  vrv = new VerovioToolkit(await createVerovioModule());
-  timing('verovio init', now() - t);
-  stats.render.verovioVersion = vrv.getVersion();
-})().catch((e) => fail('verovio init', e));
+// ---------------------------------------------------------------- lazy engine loading
+// Engines are loaded only AFTER a file is picked: on Android, the browser tab (or the app) can be
+// killed while the system file picker is in the foreground if it holds too much memory.
+let vrv, vrvPromise, wmsPromise;
+function ensureVerovio() {
+  vrvPromise ??= (async () => {
+    const t = now();
+    vrv = new VerovioToolkit(await createVerovioModule());
+    timing('verovio init', now() - t);
+    stats.render.verovioVersion = vrv.getVersion();
+  })();
+  return vrvPromise;
+}
+function ensureWebMscore() {
+  wmsPromise ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = './webmscore.js';
+    s.onload = () => resolve(globalThis.WebMscore);
+    s.onerror = () => reject(new Error('webmscore.js failed to load'));
+    document.head.append(s);
+  });
+  return wmsPromise;
+}
 
 // ---------------------------------------------------------------- import (S1)
 $('file').addEventListener('change', async (ev) => {
@@ -73,6 +87,7 @@ $('file').addEventListener('change', async (ev) => {
     stats.score = { file: file.name, sizeKB: Math.round(data.length / 1024) };
 
     let t = now();
+    const WebMscore = await ensureWebMscore();
     await WebMscore.ready;
     timing('webmscore ready', now() - t);
     t = now();
@@ -93,7 +108,7 @@ $('file').addEventListener('change', async (ev) => {
     };
     state.timeline = positions.events.map((e) => ({ idx: e.elid, ms: e.position }));
     loadMusicXml(xml);
-    await vrvReady;
+    await ensureVerovio();
     layout(true);
   } catch (e) {
     fail('import', e);
