@@ -131,5 +131,18 @@
     "captured": "Key: {{key}}",
     "add": "Add",
     "replace": "Replace"
+  },
+  "language": {
+    "label": "Language",
+    "system": "Device language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "noteNaming": {
+    "label": "Note names",
+    "auto": "Automatic (by language)",
+    "english": "C D E F G A B",
+    "latin": "Do Ré Mi Fa Sol La Si",
+    "german": "C D E F G A H (B = B♭)"
   }
 }

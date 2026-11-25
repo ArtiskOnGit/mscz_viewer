@@ -1,0 +1,83 @@
+{
+  "title": "Partition",
+  "notFound": "Cette partition est introuvable.",
+  "loading": "Préparation de la partition…",
+  "renderError": "La partition n’a pas pu être affichée.",
+  "page": "{{page}} / {{count}}",
+  "previousPage": "Page précédente",
+  "nextPage": "Page suivante",
+  "zoomIn": "Zoom avant",
+  "zoomOut": "Zoom arrière",
+  "zoomReset": "Zoom automatique",
+  "parts": {
+    "button": "Instruments",
+    "title": "Instruments à afficher",
+    "all": "Tous (conducteur)",
+    "staves_one": "{{count}} portée",
+    "staves_other": "{{count}} portées",
+    "apply": "Afficher",
+    "hiddenInSource": "masqué dans MuseScore"
+  },
+  "playback": {
+    "play": "Lecture (défilement au tempo de la partition)",
+    "pause": "Pause",
+    "slower": "Plus lent",
+    "faster": "Plus vite",
+    "tempo": "{{percent}}\u00a0%",
+    "metronomeOn": "Métronome activé",
+    "metronomeOff": "Métronome coupé",
+    "countIn": "Décompte…",
+    "noTimeline": "Le défilement automatique n’est pas disponible pour cette partition.",
+    "metronomeOnlyStop": "Arrêter le métronome",
+    "metronomeHint": "Toucher\u00a0: métronome avec défilement. Appui long\u00a0: métronome seul, sans défilement."
+  },
+  "transpose": {
+    "button": "Transposer",
+    "title": "Transposition",
+    "key": "Tonalité",
+    "keyValue": "{{from}} {{mode}} → {{to}} {{mode}}",
+    "major": "majeur",
+    "minor": "mineur",
+    "semitones": "Demi-tons",
+    "octave": "Octave",
+    "presets": "Préréglages",
+    "preset": {
+      "c": "{{note}} (aucune)",
+      "bb": "Instrument en {{note}}",
+      "eb": "Instrument en {{note}}",
+      "f": "Instrument en {{note}}"
+    },
+    "concertPitch": "Son réel (ut)",
+    "concertPitchHint": "Afficher les instruments transpositeurs en sons réels",
+    "reset": "Réinitialiser",
+    "apply": "Appliquer",
+    "badge": "♯♭{{value}}",
+    "accidentals": {
+      "label": "Écriture de la tonalité",
+      "auto": "Auto",
+      "sharps": "Dièses",
+      "flats": "Bémols"
+    }
+  },
+  "myPart": "Votre partie\u00a0: {{names}}",
+  "pageHalf": "{{page}}½ / {{count}}",
+  "goTo": {
+    "button": "Aller à la mesure",
+    "title": "Aller à",
+    "bar": "Numéro de mesure",
+    "barPlaceholder": "1 – {{count}}",
+    "go": "Aller",
+    "invalid": "Cette mesure n’existe pas.",
+    "marks": "Repères",
+    "noMarks": "Aucun repère dans cette partition."
+  },
+  "layout": {
+    "toContinuous": "Défilement continu",
+    "toPages": "Pages"
+  },
+  "lock": {
+    "lock": "Verrouiller (tournes de page seulement)",
+    "unlock": "Verrouillé\u00a0: maintenir pour déverrouiller",
+    "holdToUnlock": "Maintenez le cadenas pour déverrouiller"
+  }
+}

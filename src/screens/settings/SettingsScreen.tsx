@@ -11,13 +11,17 @@ import type { AppTheme, ScoreTheme } from '../../core/settings';
 import type { PartNamesMode } from '../../core/musicxml/prepareDisplay';
 import type { LayoutMode } from '../../core/model/types';
 import { COMMON_INSTRUMENTS, parseNames, type MyInstrumentProfile } from '../../core/profile/myInstrument';
-import { TRANSPOSE_PRESETS } from '../../core/music/keys';
+import { noteName, TRANSPOSE_PRESETS, type NoteNamingSetting } from '../../core/music/keys';
+import { supportedLanguages, type LanguageSetting } from '../../i18n';
+import { useNoteNaming } from '../../state/useNoteNaming';
 import { PedalKeysSection } from './PedalKeysSection';
 
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
 const PART_NAMES: PartNamesMode[] = ['auto', 'full', 'hidden'];
 const LAYOUT_MODES: LayoutMode[] = ['pages', 'continuous'];
+const LANGUAGES: LanguageSetting[] = ['system', ...supportedLanguages];
+const NOTE_NAMINGS: NoteNamingSetting[] = ['auto', 'english', 'latin', 'german'];
 
 export function SettingsScreen() {
   const { t } = useTranslation(['settings', 'common']);
@@ -50,6 +54,16 @@ export function SettingsScreen() {
           <IonItem>
             <IonSelect label={t('partNames.label')} interface="popover" value={settings.partNames} onIonChange={(e) => set('partNames', e.detail.value as PartNamesMode)}>
               {PART_NAMES.map((v) => <IonSelectOption key={v} value={v}>{t(`partNames.${v}`)}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonSelect label={t('language.label')} interface="popover" value={settings.language} data-testid="language" onIonChange={(e) => set('language', e.detail.value as LanguageSetting)}>
+              {LANGUAGES.map((v) => <IonSelectOption key={v} value={v}>{t(`language.${v}`)}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonSelect label={t('noteNaming.label')} interface="popover" value={settings.noteNaming} data-testid="note-naming" onIonChange={(e) => set('noteNaming', e.detail.value as NoteNamingSetting)}>
+              {NOTE_NAMINGS.map((v) => <IonSelectOption key={v} value={v}>{t(`noteNaming.${v}`)}</IonSelectOption>)}
             </IonSelect>
           </IonItem>
           <IonItem>
@@ -179,6 +193,7 @@ const idsFor = (names: readonly string[]) => COMMON_INSTRUMENTS.filter((p) => is
 function MyInstrumentSection() {
   const { t } = useTranslation(['settings', 'viewer']);
   const { settings, set } = useSettings();
+  const naming = useNoteNaming();
   const profile = settings.myInstrument;
   const [text, setText] = useState(profile.names.join(', '));
   // Names changed elsewhere (quick pick, reset): show them in the text field.
@@ -225,7 +240,7 @@ function MyInstrumentSection() {
           data-testid="default-transpose"
           onIonChange={(e) => set('defaultTranspose', Number(e.detail.value))}
         >
-          {TRANSPOSE_PRESETS.map((p) => <IonSelectOption key={p.id} value={p.semitones}>{t(`viewer:transpose.preset.${p.id}`)}</IonSelectOption>)}
+          {TRANSPOSE_PRESETS.map((p) => <IonSelectOption key={p.id} value={p.semitones}>{t(`viewer:transpose.preset.${p.id}`, { note: noteName(p.note, naming) })}</IonSelectOption>)}
         </IonSelect>
       </IonItem>
     </>

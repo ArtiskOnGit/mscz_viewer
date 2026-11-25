@@ -1,0 +1,148 @@
+{
+  "title": "Paramètres",
+  "sections": {
+    "display": "Affichage",
+    "navigation": "Tourne-page",
+    "system": "Appareil",
+    "about": "À propos",
+    "playback": "Défilement et métronome",
+    "profile": "Mon instrument",
+    "pedal": "Pédalier / clavier"
+  },
+  "appTheme": {
+    "label": "Thème de l’appli",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "scoreTheme": {
+    "label": "Couleurs de la partition",
+    "light": "Clair",
+    "sepia": "Sépia",
+    "dark": "Sombre",
+    "highContrast": "Contraste élevé"
+  },
+  "partNames": {
+    "label": "Noms d’instruments",
+    "hint": "Automatique masque le nom quand une seule partie est affichée",
+    "auto": "Automatique",
+    "full": "Toujours affichés",
+    "hidden": "Masqués"
+  },
+  "multiRests": {
+    "label": "Regrouper les mesures de silence",
+    "hint": "Affiche «\u00a011\u00a0» au lieu de onze mesures vides"
+  },
+  "defaultZoom": {
+    "label": "Zoom par défaut\u00a0: {{percent}}\u00a0%"
+  },
+  "tapZones": {
+    "label": "Toucher les bords gauche / droit pour tourner les pages"
+  },
+  "swipe": {
+    "label": "Balayer pour tourner les pages"
+  },
+  "keepAwake": {
+    "label": "Garder l’écran allumé pendant la lecture"
+  },
+  "reset": "Rétablir les paramètres par défaut",
+  "about": {
+    "version": "Version {{version}}",
+    "license": "Logiciel libre sous licence GNU GPL v3 ou ultérieure.",
+    "source": "Code source",
+    "credits": "Utilise webmscore (moteur de MuseScore) et Verovio.",
+    "licenses": "Licences open source",
+    "trademark": "MuseScore est une marque de ses détenteurs. Cette application n’est pas affiliée à MuseScore."
+  },
+  "licenses": {
+    "title": "Licences open source"
+  },
+  "countIn": {
+    "label": "Décompte",
+    "none": "Aucun",
+    "one": "1 mesure",
+    "two": "2 mesures"
+  },
+  "countInSound": {
+    "label": "Clics du décompte",
+    "hint": "Audibles même quand le métronome est coupé"
+  },
+  "metronomeVolume": {
+    "label": "Volume du métronome\u00a0: {{percent}}\u00a0%"
+  },
+  "highlightMeasure": {
+    "label": "Surligner la mesure en cours"
+  },
+  "tapPauses": {
+    "label": "Toucher la partition pour mettre en pause"
+  },
+  "myInstrument": {
+    "names": "Noms de l’instrument",
+    "placeholder": "ex.\u00a0: Trompette, Trumpet, Tpt",
+    "hint": "Séparez les noms par des virgules. À la première ouverture d’une partition, les parties correspondantes sont affichées.",
+    "quickPicks": "Instruments courants",
+    "instruments": {
+      "trumpet": "Trompette",
+      "cornet": "Cornet",
+      "clarinet": "Clarinette",
+      "flute": "Flûte",
+      "altoSax": "Sax alto",
+      "tenorSax": "Sax ténor",
+      "baritoneSax": "Sax baryton",
+      "horn": "Cor",
+      "trombone": "Trombone",
+      "euphonium": "Euphonium",
+      "tuba": "Tuba / soubassophone",
+      "violin": "Violon",
+      "cello": "Violoncelle",
+      "piano": "Piano",
+      "guitar": "Guitare",
+      "drums": "Batterie"
+    }
+  },
+  "defaultTranspose": {
+    "label": "Transposition par défaut",
+    "hint": "Appliquée à la première ouverture d’une partition"
+  },
+  "defaultLayoutMode": {
+    "label": "Affichage par défaut",
+    "pages": "Pages",
+    "continuous": "Défilement continu"
+  },
+  "readingLine": {
+    "label": "Ligne de lecture (mode continu)\u00a0: {{percent}}\u00a0% du haut"
+  },
+  "halfPageTurn": {
+    "label": "Demi-tournes de page",
+    "hint": "«\u00a0Suivant\u00a0» montre d’abord le haut de la page suivante au-dessus de la fin de la page en cours"
+  },
+  "pedal": {
+    "next": "Page suivante",
+    "prev": "Page précédente",
+    "playPause": "Lecture / pause",
+    "metronome": "Métronome marche / arrêt",
+    "nextPiece": "Morceau suivant (setlist)",
+    "previousPiece": "Morceau précédent (setlist)",
+    "none": "Aucune touche",
+    "setKey": "Choisir la touche",
+    "reset": "Rétablir les touches par défaut",
+    "captureTitle": "Touche\u00a0: {{action}}",
+    "capturePrompt": "Appuyez sur votre pédale…",
+    "captured": "Touche\u00a0: {{key}}",
+    "add": "Ajouter",
+    "replace": "Remplacer"
+  },
+  "language": {
+    "label": "Langue",
+    "system": "Langue de l’appareil",
+    "en": "English",
+    "fr": "Français"
+  },
+  "noteNaming": {
+    "label": "Noms des notes",
+    "auto": "Auto (selon la langue)",
+    "english": "C D E F G A B",
+    "latin": "Do Ré Mi Fa Sol La Si",
+    "german": "C D E F G A H (B = Si♭)"
+  }
+}

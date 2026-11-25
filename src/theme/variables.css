@@ -18,3 +18,10 @@
   --pupitre-score-bg: #000000;
   --pupitre-score-ink: #ffff66;
 }
+
+/* Long labels (translations are often longer than English) wrap instead of being cut with an ellipsis. */
+ion-toggle::part(label),
+ion-select::part(label),
+ion-range::part(label) {
+  white-space: normal;
+}

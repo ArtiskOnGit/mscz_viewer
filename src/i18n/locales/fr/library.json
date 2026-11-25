@@ -1,0 +1,77 @@
+{
+  "title": "Bibliothèque",
+  "tabs": {
+    "scores": "Partitions",
+    "setlists": "Setlists"
+  },
+  "import": {
+    "button": "Importer",
+    "progress": "Import de {{current}} ({{done}}/{{total}})…",
+    "result": {
+      "imported_one": "{{count}} partition importée",
+      "imported_other": "{{count}} partitions importées",
+      "duplicates_one": "{{count}} déjà dans la bibliothèque",
+      "duplicates_other": "{{count}} déjà dans la bibliothèque",
+      "failed_one": "{{count}} n’a pas pu être importée",
+      "failed_other": "{{count}} n’ont pas pu être importées"
+    },
+    "errors": {
+      "unsupportedFormat": "{{name}}\u00a0: type de fichier non pris en charge. Utilisez .mscz, .mscx, .mxl ou .musicxml.",
+      "emptyFile": "{{name}} est vide.",
+      "engineFailed": "{{name}} n’a pas pu être lu. S’il vient d’une version récente de MuseScore, exportez-le en MusicXML (.mxl) et importez ce fichier.",
+      "invalidMusicXml": "{{name}} ne contient aucune partie.",
+      "unknown": "{{name}} n’a pas pu être importé."
+    }
+  },
+  "empty": {
+    "title": "Aucune partition",
+    "body": "Importez des fichiers MuseScore (.mscz, .mscx) ou MusicXML (.mxl, .musicxml) pour commencer."
+  },
+  "upgrade": "Mise à jour de vos partitions pour la nouvelle version ({{done}}/{{total}})…",
+  "search": "Rechercher",
+  "noMatch": "Aucune partition ne correspond à «\u00a0{{query}}\u00a0».",
+  "sort": {
+    "label": "Trier par",
+    "recent": "Récentes",
+    "title": "Titre",
+    "composer": "Compositeur",
+    "imported": "Date d’import"
+  },
+  "card": {
+    "parts_one": "{{count}} instrument",
+    "parts_other": "{{count}} instruments"
+  },
+  "rename": {
+    "title": "Renommer la partition",
+    "placeholder": "Titre (vide = titre d’origine)"
+  },
+  "delete": {
+    "title": "Supprimer la partition\u00a0?",
+    "message": "«\u00a0{{title}}\u00a0» sera supprimée de cet appareil."
+  },
+  "setlists": {
+    "empty": "Aucune setlist"
+  },
+  "settings": "Paramètres",
+  "info": {
+    "button": "Infos",
+    "title": "Informations sur la partition",
+    "composer": "Compositeur",
+    "subtitle": "Sous-titre",
+    "file": "Fichier",
+    "format": "Format",
+    "museScoreVersion": "Créée avec",
+    "museScore": "MuseScore {{version}}",
+    "measures": "Mesures",
+    "duration": "Durée",
+    "tempo": "Tempo initial",
+    "tempoValue": "♩ = {{bpm}}",
+    "instruments": "Instruments",
+    "rehearsalMarks": "Repères",
+    "imported": "Importée le",
+    "lastOpened": "Dernière ouverture",
+    "hiddenInSource": "masqué dans MuseScore",
+    "resetView": "Réinitialiser l’affichage",
+    "resetDone": "Réglages d’affichage réinitialisés"
+  }
+}

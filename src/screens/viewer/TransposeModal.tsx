@@ -5,7 +5,8 @@ import {
   IonSegment, IonSegmentButton, IonTitle, IonToggle, IonToolbar,
 } from '@ionic/react';
 import { addCircleOutline, removeCircleOutline } from 'ionicons/icons';
-import { baseKey, enharmonicKeys, keyName, targetFifths, TRANSPOSE_PRESETS, type AccidentalPreference, type KeySig } from '../../core/music/keys';
+import { baseKey, enharmonicKeys, keyName, noteName, targetFifths, TRANSPOSE_PRESETS, type AccidentalPreference, type KeySig } from '../../core/music/keys';
+import { useNoteNaming } from '../../state/useNoteNaming';
 
 export interface TransposeValue {
   transposeSemitones: number;
@@ -30,16 +31,17 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Props) {
   const { t } = useTranslation(['viewer', 'common']);
   const [draft, setDraft] = useState<TransposeValue>(value);
+  const naming = useNoteNaming();
 
   const key = keySig && baseKey(keySig, draft.concertPitch);
   const total = draft.transposeSemitones + 12 * draft.transposeOctave;
-  const from = key && keyName(key.fifths, key.mode);
-  const to = key && keyName(targetFifths(key.fifths, total, draft.accidentalPreference), key.mode);
+  const from = key && keyName(key.fifths, key.mode, naming);
+  const to = key && keyName(targetFifths(key.fifths, total, draft.accidentalPreference), key.mode, naming);
   // Enharmonic alternative (D♭/C♯…): let the user choose the spelling.
   const choices = key ? enharmonicKeys(key.fifths, total) : [];
   const showPreference = !key || choices.length > 1;
   const choiceLabel = (p: AccidentalPreference) => {
-    const name = key && p !== 'auto' ? keyName(targetFifths(key.fifths, total, p), key.mode) : undefined;
+    const name = key && p !== 'auto' ? keyName(targetFifths(key.fifths, total, p), key.mode, naming) : undefined;
     return name ?? t(`transpose.accidentals.${p}`);
   };
 
@@ -84,7 +86,7 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
           <div className="ion-padding-horizontal">
             {TRANSPOSE_PRESETS.map((p) => (
               <IonChip key={p.id} outline={draft.transposeSemitones !== p.semitones} onClick={() => setDraft({ ...draft, transposeSemitones: p.semitones })}>
-                {t(`transpose.preset.${p.id}`)}
+                {t(`transpose.preset.${p.id}`, { note: noteName(p.note, naming) })}
               </IonChip>
             ))}
           </div>

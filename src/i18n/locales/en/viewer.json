@@ -42,10 +42,10 @@
     "octave": "Octave",
     "presets": "Presets",
     "preset": {
-      "c": "C (none)",
-      "bb": "B♭ instrument",
-      "eb": "E♭ instrument",
-      "f": "F instrument"
+      "c": "{{note}} (none)",
+      "bb": "{{note}} instrument",
+      "eb": "{{note}} instrument",
+      "f": "{{note}} instrument"
     },
     "concertPitch": "Concert pitch",
     "concertPitchHint": "Show transposing instruments at sounding pitch",

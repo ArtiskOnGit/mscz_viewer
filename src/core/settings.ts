@@ -4,6 +4,8 @@ import type { PartNamesMode } from './musicxml/prepareDisplay';
 import type { MyInstrumentProfile } from './profile/myInstrument';
 import { DEFAULT_PEDAL_KEYS, normalizePedalKeys, type PedalKeys } from './navigation/pedalKeys';
 import type { LayoutMode } from './model/types';
+import type { NoteNamingSetting } from './music/keys';
+import type { LanguageSetting } from '../i18n';
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type ScoreTheme = 'light' | 'sepia' | 'dark' | 'highContrast';
@@ -37,6 +39,10 @@ export interface AppSettings {
   defaultLayoutMode: LayoutMode;
   /** Continuous mode auto-scroll: height of the reading line, as a fraction of the screen from the top. */
   readingLine: number;
+  /** Interface language ("system": the device language if translated, else English). */
+  language: LanguageSetting;
+  /** Note and key names ("auto": Do Ré Mi in French, C D E otherwise). */
+  noteNaming: NoteNamingSetting;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -60,6 +66,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   halfPageTurn: false,
   defaultLayoutMode: 'pages',
   readingLine: 0.33,
+  language: 'system',
+  noteNaming: 'auto',
 };
 
 const KEY = 'settings';
