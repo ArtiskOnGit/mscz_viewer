@@ -17,13 +17,12 @@ Version testée : APK de debug de la phase 2, avant l'ajout du mode Continu.
 | Setlists | ✅ | Fonctionnent, enchaînement rapide (aucun ralentissement perçu ; pré-chargement du morceau suivant). |
 | Pédalier Bluetooth | ⚠️ non testé | **Le porteur n'a pas de pédalier Bluetooth.** Seuls les événements clavier ont été testés (navigateur et e2e). La réception des touches d'un vrai pédalier dans la WebView Android reste à vérifier. |
 | « Ouvrir avec… » | ⬜ non testé | Intent `VIEW` déclaré et géré, jamais essayé sur le téléphone. |
-| Mode Continu | ⬜ non testé | Ajouté après ce test. Points à surveiller : fluidité du défilement automatique, défilement natif au doigt, pincement (geste `pan-y`), ancrage de la position. |
+| Mode Continu | ✅ (2026-11-26) | Testé sur le téléphone : « marche plutôt bien » selon le porteur. Retours plus fins bienvenus (fluidité du défilement automatique, pincement, reprises). |
 | Mémoire du worker de pré-chargement | ⬜ non testé | En setlist, un second worker Verovio prépare le morceau suivant : mémoire à mesurer sur un appareil modeste et avec de gros conducteurs. |
 
 ## À tester au prochain essai
 
-1. Mode Continu : défilement au doigt, « suivant » au tap / clavier, défilement automatique (ligne de lecture), reprises, zoom (position conservée), verrouillage.
-2. « Ouvrir avec… » depuis un gestionnaire de fichiers et depuis une pièce jointe de messagerie.
-3. Préférence ♯/♭ de la transposition (ex. +1 demi-ton depuis Do : Ré♭ ou Do♯).
+1. « Ouvrir avec… » depuis un gestionnaire de fichiers et depuis une pièce jointe de messagerie.
+2. Préférence ♯/♭ de la transposition (ex. +1 demi-ton depuis Do : Ré♭ ou Do♯).
 4. Pédalier Bluetooth (si un pédalier ou un clavier Bluetooth est disponible) : page suivante/précédente, lecture/pause, métronome, morceau suivant/précédent.
 5. Mesures : temps d'import et d'ouverture, mémoire (Android Studio → Profiler, ou `adb shell dumpsys meminfo`) avec et sans pré-chargement.

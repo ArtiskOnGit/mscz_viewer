@@ -105,13 +105,14 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ✅ bug des **ligatures absentes sur les parties masquées** trouvé sur le téléphone, puis corrigé (réimport automatique) ;
 - ✅ appuis longs (métronome seul, déverrouillage), son du métronome seul, demi-page, setlists (rapides, sans ralentissement) ;
 - ⚠️ **pas de pédalier Bluetooth** chez le porteur : pédalier non testé sur l'appareil (seuls les événements clavier ont été testés) ;
-- ⬜ pas encore essayés sur l'appareil : « Ouvrir avec… », mode Continu, mémoire du worker de pré-chargement.
+- ✅ mode Continu testé le 2026-11-26 (« marche plutôt bien ») ;
+- ⬜ pas encore essayés sur l'appareil : « Ouvrir avec… », mémoire du worker de pré-chargement.
 
 ---
 
-## Phase 3 — v1.0 : finition, publication Android, préparation iOS
+## Phase 3 — v1.0 : finition, publication Android
 
-- ⬜ **Essais sur téléphone** : mode Continu, « Ouvrir avec… », pédalier Bluetooth réel, temps d'import/d'ouverture, mémoire (pré-chargement, gros conducteurs), régularité du métronome.
+- ⬜ **Essais sur téléphone** : mode Continu ✅, « Ouvrir avec… », pédalier Bluetooth réel, temps d'import/d'ouverture, mémoire (pré-chargement, gros conducteurs), régularité du métronome.
 - ✅ **Traduction française** (première langue ajoutée, qui valide la chaîne i18n) : `locales/fr`, typographie française (espaces insécables, « guillemets »), pluriels selon les catégories de chaque langue (test de complétude adapté), réglage **Langue** (langue de l'appareil / English / Français) appliqué immédiatement et au démarrage (`<html lang>` compris), libellés trop longs raccourcis ou passés à la ligne (e2e `i18n-fr.mjs` : textes clés, débordements, captures).
 - ⬜ Ouverture d'une plateforme de traduction (Weblate ou Crowdin).
 - ✅ **Notation des notes** (automatique selon la langue / C D E / Do Ré Mi / C D E H avec B = Si♭) : tonalités et préréglages de transposition (« Instrument en Si♭ »), dans la fenêtre Transposition et les paramètres.
@@ -123,11 +124,9 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Tests de non-régression visuels sur le corpus.
 - 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône et **APK de release signé** à faire (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
-- ⬜ **Décision iOS** (ADR-005) : publier avec webmscore, demander une autorisation à Muse Group, ou variante sans webmscore.
-- ⬜ Build iOS (Capacitor), tests iPhone/iPad, ouverture de fichiers (UTI), dossier dans l'application Fichiers, métronome et bouton silencieux.
-- ⬜ Publication App Store selon la décision.
+- ✅ **Décision iOS** (ADR-005, 2026-11-26) : **Android uniquement**, pas de version iOS.
 
-**Livrable** : **v1.0** sur les stores Android, puis iOS. *(environ 6 à 8 semaines)*
+**Livrable** : **v1.0** sur Google Play et F-Droid. *(environ 6 à 8 semaines)*
 
 ---
 
@@ -142,7 +141,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Import MEI.
 - ⬜ **Annotations** sur un calque (crayon, surligneur, doigtés) sans modifier le fichier.
 - ⬜ Partage local entre appareils (ex. le chef envoie la setlist aux musiciens), sans serveur.
-- ⬜ Mise à jour de webmscore sur un MuseScore récent, ou convertisseur `.mscx` maison (selon la décision iOS).
+- ⬜ Mise à jour de webmscore sur un MuseScore récent, ou convertisseur `.mscx` maison (si des fichiers récents posent problème).
 - ⬜ Autres langues (via les contributions de traduction).
 
 **Écarté** : lecture audio de la partition (ADR-010), mise en page d'origine (ADR-002).
@@ -160,5 +159,5 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 | Métronome irrégulier dans la WebView | Faible | Moyen | Ordonnanceur Web Audio avec anticipation ; son vérifié sur téléphone (régularité non mesurée) ; plan B : plugin natif |
 | Pédaliers Bluetooth non reçus par la WebView | Faible–moyenne | Moyen | Touches configurables, testées au clavier ; à essayer avec un vrai pédalier |
 | Mémoire (worker de pré-chargement, gros conducteurs, mode Continu) | Moyenne | Moyen | Un seul morceau pré-chargé ; rendu paresseux des pages en mode Continu ; à mesurer sur téléphone |
-| Problème GPL / App Store | Moyenne | Moyen (iOS seulement) | Décision ADR-005 avant la phase 3 ; variante iOS sans webmscore |
+| Problème GPL / App Store | — | — | Sans objet : Android uniquement (ADR-005) |
 | webmscore abandonné | Élevée | Moyen | Fichier d'origine conservé (réimport possible) ; import isolé derrière `ScoreImporter` |

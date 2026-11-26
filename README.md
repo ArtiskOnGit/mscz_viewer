@@ -1,6 +1,6 @@
 # Pupitre
 
-**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur Android (d'abord) puis iOS, **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
+**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur **Android**, **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
 
 > 🟢 **Statut : phase 2 terminée (2026-11-25).** L'application Android fonctionne (APK de debug produit par la CI) et a été essayée sur un vrai téléphone ([retours](docs/TESTS_APPAREIL.md)). Prochaine étape : phase 3 (traduction française, finitions, publication). Voir la [roadmap](ROADMAP.md).
 
@@ -67,7 +67,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 
 | Projet | Rôle | Licence |
 |---|---|---|
-| [Capacitor](https://github.com/ionic-team/capacitor) (`@capacitor/core`, `@capacitor/android`, `@capacitor/cli`) | Coquille native Android/iOS | MIT |
+| [Capacitor](https://github.com/ionic-team/capacitor) (`@capacitor/core`, `@capacitor/android`, `@capacitor/cli`) | Coquille native Android | MIT |
 | [Capacitor plugins](https://github.com/ionic-team/capacitor-plugins) (`@capacitor/app`, `@capacitor/preferences`) | Cycle de vie de l'appli, « Ouvrir avec », préférences | MIT |
 | [Capacitor Filesystem](https://github.com/ionic-team/capacitor-filesystem) | Stockage des partitions sur l'appareil | MIT |
 | [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |

@@ -6,8 +6,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 | Question | Réponse | Conséquence |
 |---|---|---|
-| Plateforme prioritaire | **Android d'abord** | Phases 1 et 2 sur Android ; iOS en phase 3 |
-| Publication | **Sur les stores, à terme** | La question GPL / App Store doit être réglée avant la publication iOS (ADR-005) |
+| Plateforme prioritaire | **Android d'abord** puis, le 2026-11-26 : **Android uniquement** | Pas de version iOS (ADR-005) |
+| Publication | **Sur les stores, à terme** | Google Play + F-Droid (+ GitHub Releases) ; pas d'App Store (ADR-005) |
 | Licence GPL-3.0 | **Oui** | ADR-003 acceptée |
 | Framework UI | **Le plus simple et multiplateforme** | React + Ionic (ADR-004) |
 | Langues | **Anglais d'abord, conçu pour l'i18n** | ADR-009 |
@@ -39,9 +39,10 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - **Critère du porteur** : le plus simple et le plus multiplateforme.
 - **Pourquoi React plutôt que Svelte** : Ionic ne propose officiellement que Angular, React et Vue, donc pas Svelte. React a le plus de documentation, d'exemples et de bibliothèques. Capacitor fournit Android, iOS et le web à partir de la même base.
 
-### ADR-005 — Distribution — *Acceptée pour Android ; iOS à trancher en phase 3*
+### ADR-005 — Distribution : Android uniquement — *Acceptée (2026-11-26)*
 - **Android** : APK direct (GitHub Releases), puis **F-Droid** et **Google Play**. La GPL ne pose pas de problème sur ces canaux.
-- **iOS / App Store** : la compatibilité de la GPL avec les conditions de l'App Store est contestée. Une plainte d'un ayant droit de MuseScore pourrait faire retirer l'application. Options à étudier **avant la phase 3** :
+- **Décision du porteur (2026-11-26) : pas de version iOS.** Le projet ne cible qu'Android. Les éléments ci-dessous restent pour mémoire, si la question revenait un jour.
+- **iOS / App Store (pour mémoire)** : la compatibilité de la GPL avec les conditions de l'App Store est contestée. Une plainte d'un ayant droit de MuseScore pourrait faire retirer l'application. Options à étudier **avant la phase 3** :
   1. publier quand même (risque accepté ; d'autres applications GPL y sont publiées) ;
   2. demander une autorisation écrite ou une exception à Muse Group (détenteur principal des droits) ;
   3. publier sur iOS une variante **sans webmscore** (import MusicXML seulement, voire un convertisseur `.mscx` maison sous licence permissive).
@@ -71,7 +72,7 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 ### ADR-010 — Pas de lecture audio ; métronome optionnel — *Acceptée*
 - **Pas de synthèse audio** de la partition : pas de SoundFont, et pas de `synthAudio` de webmscore.
 - **Métronome optionnel** : clic généré avec Web Audio (oscillateur, aucun fichier son), calé sur le tempo de la partition, ses changements de tempo et de métrique, et le facteur de tempo. Il est utilisable **pendant le défilement automatique** ou **seul**.
-- iOS (phase 3) : Web Audio est coupé par le bouton silencieux. On le signalera dans l'interface, ou on passera par une session audio native si nécessaire.
+- iOS (sans objet depuis ADR-005, Android uniquement) : Web Audio est coupé par le bouton silencieux. On le signalera dans l'interface, ou on passera par une session audio native si nécessaire.
 
 ### ADR-011 — Setlists dans la v1 — *Acceptée*
 - Les setlists (programmes de répétition ou de concert) font partie de la v1, et sont prévues en phase 2.
@@ -138,7 +139,6 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 ## Questions encore ouvertes
 
 1. **Icône** de l'application (ADR-006).
-2. **Stratégie iOS / App Store** (ADR-005) : à trancher avant la phase 3.
 3. **Téléphone ou tablette en priorité** pour les tests et l'ergonomie Android ? Par défaut, les deux sont prévus, avec le téléphone en priorité.
 4. **Pédalier Bluetooth** : le porteur n'en a pas ; faut-il en emprunter un avant la v1, ou se contenter d'un clavier Bluetooth pour valider la réception des touches dans la WebView ?
 6. **Langue de la documentation et du code** : documentation en français, code et commentaires en anglais (appliqué depuis la phase 1).
