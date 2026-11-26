@@ -23,6 +23,8 @@ npm install        # copie aussi les fichiers de webmscore dans device-test/publ
 | `node s3-timeline/filter-parts.mjs <in.musicxml> P2,P3 <out.musicxml>` | S3 | Filtre les parties en recopiant les tempos et repères. |
 | `node device-test/e2e.mjs ../test-scores/<fichier>.mscz` | S1–S6 | Lance le banc de test dans Chromium headless (émulation Pixel 7). Nécessite `npx playwright install chromium`. |
 | `npm run device` | S5/S6 | Sert le **banc de test** sur le réseau local, pour un vrai téléphone. |
+| `for f in test-scores/*.mscz; do node spikes/s7-midi/compare.mjs "$f"; done` (depuis la racine de l'application) | S7 (2026-11-26, ADR-026) | MIDI de webmscore (`saveMidi(true, true)`) contre la timeline : pistes, canaux, parties, écart maximal début de mesure / note (≤ 0,71 ms sur le corpus). |
+| `node spikes/s7-midi/multistaff.mjs` (depuis la racine) | S7 | Pistes MIDI d'une partie à deux portées et d'une batterie (une piste par portée, canaux partagés, batterie canal 10). |
 
 ## Tester sur un téléphone Android (S5, S6, performances réelles)
 

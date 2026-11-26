@@ -90,6 +90,39 @@ describe('importScore', () => {
   });
 });
 
+describe('MIDI file (audio playback)', () => {
+  // webmscore: one track per staff named after the part; trumpet on channels 0 (open) and 1 (mute), tuba on 2.
+  const track = (name: string, channel: number) => {
+    const body = [0, 0xff, 0x03, name.length, ...[...name].map((c) => c.charCodeAt(0)), 0, 0x90 | channel, 60, 100, 0x60, 0x80 | channel, 60, 0, 0, 0xff, 0x2f, 0];
+    return [0x4d, 0x54, 0x72, 0x6b, 0, 0, 0, body.length, ...body];
+  };
+  const midi = new Uint8Array([0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 3, 1, 0xe0, ...track('Trumpet', 0), ...track('Trumpet', 1), ...track('Tuba', 2)]);
+  const withMidi = (): ScoreEngine => {
+    const base = fakeEngine();
+    return { convert: async (format, bytes) => ({ ...(await base.convert(format, bytes)), midi }) };
+  };
+
+  it('stores the MIDI file and the channels of each part', async () => {
+    const { fs, repo, deps } = setup(withMidi());
+    await importScore({ name: 'a.mscz', bytes: msczBytes() }, deps);
+    const score = (await repo.list())[0]!;
+    expect(score.hasMidi).toBe(true);
+    // 3 tracks for 2 parts of one staff: matched by name.
+    expect(score.parts.map((p) => p.midiChannels)).toEqual([[0, 1], [2]]);
+    expect(fs.files.has('scores/id-1/score.mid')).toBe(true);
+    expect(await repo.readMidi('id-1')).toEqual(midi);
+  });
+
+  it('imports without audio when the engine gives no (readable) MIDI file', async () => {
+    const base = fakeEngine();
+    const { repo, deps } = setup({ convert: async (f, b) => ({ ...(await base.convert(f, b)), midi: new Uint8Array([1, 2, 3]) }) });
+    await importScore({ name: 'a.mscz', bytes: msczBytes() }, deps);
+    const score = (await repo.list())[0]!;
+    expect(score.hasMidi).toBe(false);
+    expect(await repo.readMidi('id-1')).toBeUndefined();
+  });
+});
+
 describe('reimportScore', () => {
   it('converts the stored original again, keeping id, title and import date', async () => {
     const engine = fakeEngine();

@@ -2,6 +2,7 @@
 // - Each WebMscore.load() starts its own Web Worker; destroy(false) terminates it (phase 0: an engine error
 //   leaves the instance unusable, so we never reuse one).
 // - Never call savePositions(true) (segment positions): it crashes the engine (phase 0).
+// - saveMidi(true, true): repeats unfolded + RPNs (pitch bend range), for audio playback (ADR-026).
 import type { ImportFormat } from './formats';
 import type { EngineResult, ScoreEngine } from './scoreEngine';
 
@@ -9,6 +10,7 @@ interface WebMscoreInstance {
   metadata(): Promise<Record<string, unknown> & { parts?: { name: string; instrumentId?: string; program?: number }[] }>;
   saveXml(): Promise<string>;
   savePositions(ofSegments: boolean): Promise<string>;
+  saveMidi(midiExpandRepeats?: boolean, exportRPNs?: boolean): Promise<Uint8Array>;
   destroy(soft?: boolean): void;
 }
 interface WebMscoreStatic {
@@ -49,9 +51,17 @@ export const webMscoreEngine: ScoreEngine = {
       const meta = await score.metadata();
       const musicXml = await score.saveXml();
       const positions = JSON.parse(await score.savePositions(false)) as EngineResult['positions'];
+      // Repeats unfolded, like the positions: MIDI time = timeline time (spike S7, drift < 1 ms).
+      let midi: Uint8Array | undefined;
+      try {
+        midi = await score.saveMidi(true, true);
+      } catch (e) {
+        console.warn('saveMidi failed: no audio playback for this score', e);
+      }
       return {
         musicXml,
         positions,
+        midi,
         metadata: {
           title: str(meta.title),
           subtitle: str(meta.subtitle),

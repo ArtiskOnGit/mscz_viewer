@@ -6,12 +6,15 @@ import { readTimeSignatures, timelineFromWebMscore } from '../timeline/timeline'
 import { detectFormat, extensionOf, extractMsczThumbnail, sha256Hex, type ImportFormat } from './formats';
 import type { EngineResult, ScoreEngine } from './scoreEngine';
 import { unhideParts } from './unhideParts';
+import { parseMidi } from '../audio/midiFile';
+import { midiChannelsByPart, staffCounts } from '../audio/partMapping';
 
 /**
  * Bump when the pipeline output changes: older scores are re-imported from their original file.
  * 2: hidden MuseScore parts/staves are made visible before conversion (their beams were missing).
+ * 3: MIDI file (repeats unfolded) + MIDI channels of each part, for audio playback (ADR-026).
  */
-export const IMPORTER_VERSION = 2;
+export const IMPORTER_VERSION = 3;
 
 export interface ImportInput {
   name: string;
@@ -74,6 +77,7 @@ export async function importScore(input: ImportInput, deps: ImportDeps): Promise
     original: { bytes: input.bytes, ext: extensionOf(input.name) || format },
     musicXml: converted.musicXml,
     timeline: converted.timeline,
+    midi: converted.midi,
     thumbnail: format === 'mscz' ? extractMsczThumbnail(input.bytes) : undefined,
   });
   return { status: 'imported', score };
@@ -85,11 +89,11 @@ export async function reimportScore(score: Score, deps: ImportDeps): Promise<Sco
   if (!bytes) throw new ImportError('emptyFile', `${score.sourceFileName}: original file missing`);
   const converted = await convert({ name: score.sourceFileName, bytes }, score.sourceFormat, deps);
   const updated: Score = { ...score, ...converted.fields };
-  await deps.repo.replace(updated, { musicXml: converted.musicXml, timeline: converted.timeline });
+  await deps.repo.replace(updated, { musicXml: converted.musicXml, timeline: converted.timeline, midi: converted.midi });
   return updated;
 }
 
-type ConvertedFields = Pick<Score, 'subtitle' | 'composer' | 'importerVersion' | 'museScoreVersion' | 'measures' | 'durationSec' | 'initialTempoBpm' | 'parts' | 'rehearsalMarks'>;
+type ConvertedFields = Pick<Score, 'subtitle' | 'composer' | 'importerVersion' | 'museScoreVersion' | 'measures' | 'durationSec' | 'initialTempoBpm' | 'parts' | 'rehearsalMarks' | 'hasMidi'>;
 
 async function convert(input: ImportInput, format: ImportFormat, deps: ImportDeps) {
   const env = deps.xml ?? globalThis;
@@ -127,6 +131,9 @@ async function convert(input: ImportInput, format: ImportFormat, deps: ImportDep
     };
   });
 
+  const midiChannels = readMidiChannels(result.midi, doc, parts);
+  if (midiChannels) parts.forEach((p, i) => (p.midiChannels = midiChannels[i] ?? []));
+
   const timeline = timelineFromWebMscore(result.positions, readTimeSignatures(doc), meta.duration ? meta.duration * 1000 : undefined);
   const fields: ConvertedFields = {
     subtitle: meaningful(meta.subtitle),
@@ -138,8 +145,20 @@ async function convert(input: ImportInput, format: ImportFormat, deps: ImportDep
     initialTempoBpm: meta.tempo,
     parts,
     rehearsalMarks: readRehearsalMarks(doc),
+    hasMidi: !!midiChannels,
   };
-  return { fields, title: meaningful(meta.title), musicXml: result.musicXml, timeline };
+  return { fields, title: meaningful(meta.title), musicXml: result.musicXml, timeline, midi: midiChannels ? result.midi : undefined };
+}
+
+/** Channels of each part in the engine's MIDI file; undefined without a readable MIDI file (no audio). */
+function readMidiChannels(midi: Uint8Array | undefined, doc: Document, parts: Part[]): number[][] | undefined {
+  if (!midi?.length) return undefined;
+  try {
+    return midiChannelsByPart(parseMidi(midi), staffCounts(doc), parts.map((p) => p.name));
+  } catch (e) {
+    console.warn('unreadable MIDI file: no audio playback', e);
+    return undefined;
+  }
 }
 
 /** "onlyfuhnbrass_-_medley_Russ.mscz" → "onlyfuhnbrass - medley Russ" */

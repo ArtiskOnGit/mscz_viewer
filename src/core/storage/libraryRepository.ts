@@ -15,6 +15,7 @@ export const scorePaths = (id: ScoreId) => ({
   original: (ext: string) => `scores/${id}/original.${ext}`,
   musicXml: `scores/${id}/score.musicxml`,
   timeline: `scores/${id}/timeline.json`,
+  midi: `scores/${id}/score.mid`,
   thumbnail: `scores/${id}/thumbnail.png`,
 });
 
@@ -22,6 +23,7 @@ export interface NewScoreFiles {
   original: { bytes: Uint8Array; ext: string };
   musicXml: string;
   timeline: Timeline;
+  midi?: Uint8Array;
   thumbnail?: Uint8Array;
 }
 
@@ -54,6 +56,7 @@ export class LibraryRepository {
     await this.fs.writeBytes(p.original(files.original.ext), files.original.bytes);
     await this.fs.writeText(p.musicXml, files.musicXml);
     await this.fs.writeText(p.timeline, JSON.stringify(files.timeline));
+    if (files.midi) await this.fs.writeBytes(p.midi, files.midi);
     if (files.thumbnail) await this.fs.writeBytes(p.thumbnail, files.thumbnail);
     await this.mutate((scores) => [...scores, score]);
   }
@@ -63,6 +66,8 @@ export class LibraryRepository {
     const p = scorePaths(score.id);
     await this.fs.writeText(p.musicXml, files.musicXml);
     await this.fs.writeText(p.timeline, JSON.stringify(files.timeline));
+    if (files.midi) await this.fs.writeBytes(p.midi, files.midi);
+    else await this.fs.removeFile(p.midi);
     if (files.thumbnail) await this.fs.writeBytes(p.thumbnail, files.thumbnail);
     await this.mutate((scores) => scores.map((s) => (s.id === score.id ? score : s)));
   }
@@ -88,6 +93,11 @@ export class LibraryRepository {
   async readTimeline(id: ScoreId): Promise<Timeline | undefined> {
     const text = await this.fs.readText(scorePaths(id).timeline);
     return text ? (JSON.parse(text) as Timeline) : undefined;
+  }
+
+  /** MIDI file of the score (repeats unfolded), for audio playback. */
+  readMidi(id: ScoreId): Promise<Uint8Array | undefined> {
+    return this.fs.readBytes(scorePaths(id).midi);
   }
 
   readThumbnail(id: ScoreId): Promise<Uint8Array | undefined> {

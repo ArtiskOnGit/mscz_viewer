@@ -14,6 +14,8 @@ export interface Part {
   midiProgram?: number;
   /** Hidden in the original MuseScore file: not shown by default. */
   hiddenInSource?: boolean;
+  /** Channels of the part in the score's MIDI file (0-based, + 16 × port; drums on 9). See core/audio/partMapping. */
+  midiChannels?: number[];
 }
 
 /** Parts shown when the user has not chosen: the ones visible in MuseScore (all if none is). */
@@ -35,6 +37,8 @@ export interface Score {
   importedAt: string;
   lastOpenedAt?: string;
   importerVersion: number;
+  /** A MIDI file was generated at import (audio playback available). */
+  hasMidi?: boolean;
   museScoreVersion?: string;
   measures: number;
   durationSec?: number;
@@ -67,6 +71,22 @@ export interface Timeline {
 
 export type LayoutMode = 'pages' | 'continuous';
 
+/** Mixer of one part (score audio, ADR-026). */
+export interface PartMix {
+  /** 0..1 (slider position; the gain follows a fader curve, see core/audio/mixer.ts). */
+  volume: number;
+  muted: boolean;
+  solo: boolean;
+}
+
+/** Score audio mixer. Parts not listed have the default mix (100 %, not muted, not soloed). */
+export interface MixerState {
+  /** Master volume 0..1; undefined = the default of the settings. */
+  master?: number;
+  /** By MusicXML part id. */
+  parts: Record<string, PartMix>;
+}
+
 /** Display settings remembered per score. */
 export interface ScoreViewState {
   scoreId: ScoreId;
@@ -83,13 +103,16 @@ export interface ScoreViewState {
   lastMeasureIndex?: number;
   tempoFactor: number;
   metronomeEnabled: boolean;
+  /** Score audio on/off; undefined = the default of the settings. */
+  soundEnabled?: boolean;
+  mixer?: MixerState;
 }
 
 export interface SetlistItem {
   id: string;
   scoreId: ScoreId;
   note?: string;
-  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference'>>;
+  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'mixer'>>;
 }
 
 export interface Setlist {

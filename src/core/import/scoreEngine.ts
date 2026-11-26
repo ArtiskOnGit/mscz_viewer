@@ -19,6 +19,8 @@ export interface EngineResult {
   metadata: EngineMetadata;
   musicXml: string;
   positions: WebMscorePositions;
+  /** Standard MIDI file, repeats unfolded (audio playback). Missing if the engine could not export it. */
+  midi?: Uint8Array;
 }
 
 export interface ScoreEngine {
