@@ -19,6 +19,12 @@ const SYSTEM_SOUND_ATTRIBUTES = ['tempo', 'dacapo', 'segno', 'dalsegno', 'coda',
 
 export function filterParts(xml: string, keepIds: readonly string[], env: XmlEnv = globalThis): FilterResult {
   const doc = new env.DOMParser().parseFromString(xml, 'application/xml');
+  const copiedDirections = filterPartsInDocument(doc, keepIds);
+  return { xml: new env.XMLSerializer().serializeToString(doc), copiedDirections };
+}
+
+/** Same as filterParts, on a parsed document (modified in place); returns the number of copied directions. */
+export function filterPartsInDocument(doc: Document, keepIds: readonly string[]): number {
   const keep = new Set(keepIds);
   const parts = elementsByTag(doc, 'part');
   const kept = parts.filter((p) => keep.has(p.getAttribute('id') ?? ''));
@@ -34,8 +40,7 @@ export function filterParts(xml: string, keepIds: readonly string[], env: XmlEnv
   for (const p of parts) if (!keep.has(p.getAttribute('id') ?? '')) p.parentNode?.removeChild(p);
   for (const sp of elementsByTag(doc, 'score-part')) if (!keep.has(sp.getAttribute('id') ?? '')) sp.parentNode?.removeChild(sp);
   removeEmptyPartGroups(doc);
-
-  return { xml: new env.XMLSerializer().serializeToString(doc), copiedDirections };
+  return copiedDirections;
 }
 
 function copySystemDirections(source: Element, target: Element): number {

@@ -33,14 +33,20 @@ const BREAKING_ATTRIBUTES = ['key', 'time', 'clef', 'transpose'];
  * are read from the existing marks (first part), so calling the function twice is harmless.
  */
 export function groupMultiRests(xml: string, env: XmlEnv = globalThis, opts: MultiRestOptions = {}): MultiRestResult {
-  const minMeasures = Math.max(2, opts.minMeasures ?? 2);
   const doc = new env.DOMParser().parseFromString(xml, 'application/xml');
+  const { groups, changed } = groupMultiRestsInDocument(doc, opts);
+  return { xml: changed ? new env.XMLSerializer().serializeToString(doc) : xml, groups };
+}
+
+/** Same as groupMultiRests, on a parsed document (modified in place); `changed`: marks were added. */
+export function groupMultiRestsInDocument(doc: Document, opts: MultiRestOptions = {}): { groups: MultiRestGroup[]; changed: boolean } {
+  const minMeasures = Math.max(2, opts.minMeasures ?? 2);
   const parts = Array.from(doc.getElementsByTagName('part'));
-  if (parts.length === 0) return { xml, groups: [] };
+  if (parts.length === 0) return { groups: [], changed: false };
   const measuresByPart = parts.map((p) => childElements(p, 'measure'));
 
   if (doc.getElementsByTagName('multiple-rest').length > 0) {
-    return { xml, groups: existingGroups(measuresByPart[0] ?? []) };
+    return { groups: existingGroups(measuresByPart[0] ?? []), changed: false };
   }
 
   const count = Math.min(...measuresByPart.map((m) => m.length));
@@ -66,14 +72,14 @@ export function groupMultiRests(xml: string, env: XmlEnv = globalThis, opts: Mul
   }
   close(count);
 
-  if (groups.length === 0) return { xml, groups };
+  if (groups.length === 0) return { groups, changed: false };
   for (const measures of measuresByPart) {
     for (const g of groups) {
       const first = measures[g.start];
       if (first) addMultipleRest(doc, first, g.length);
     }
   }
-  return { xml: new env.XMLSerializer().serializeToString(doc), groups };
+  return { groups, changed: true };
 }
 
 /** Only rests, no direction / harmony / sound, and not a pickup measure. */

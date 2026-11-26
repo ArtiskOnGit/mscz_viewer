@@ -7,7 +7,15 @@ export interface LayoutInfo {
   pageCount: number;
   /** MEI measure ids in document order (merged multi-rest measures appear once). */
   measureIds: string[];
+  /** Page (1-based) of each measure of `measureIds`. */
+  measurePages: number[];
 }
+
+/**
+ * Fixed options: ids seeded so that a score loaded again gets the same ids (pages cached on disk, ADR-025, are
+ * mixed with pages rendered by a fresh worker).
+ */
+const FIXED_OPTIONS = { xmlIdSeed: 1 };
 
 let toolkit: VerovioToolkit | undefined;
 async function tk(): Promise<VerovioToolkit> {
@@ -22,7 +30,7 @@ const api = {
 
   async load(xml: string, options: Record<string, unknown>): Promise<LayoutInfo> {
     const t = await tk();
-    t.setOptions(options);
+    t.setOptions({ ...options, ...FIXED_OPTIONS });
     if (!t.loadData(xml)) throw new Error(`Verovio could not load the score: ${t.getLog()}`);
     return info(t);
   },
@@ -51,7 +59,7 @@ const api = {
 
 function info(t: VerovioToolkit): LayoutInfo {
   const measureIds = [...t.getMEI().matchAll(/<measure\b[^>]*xml:id="([^"]+)"/g)].map((m) => m[1] ?? '');
-  return { pageCount: t.getPageCount(), measureIds };
+  return { pageCount: t.getPageCount(), measureIds, measurePages: measureIds.map((id) => t.getPageWithElement(id)) };
 }
 
 export type RenderApi = typeof api;

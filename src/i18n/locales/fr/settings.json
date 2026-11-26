@@ -7,7 +7,8 @@
     "about": "À propos",
     "playback": "Défilement et métronome",
     "profile": "Mon instrument",
-    "pedal": "Pédalier / clavier"
+    "pedal": "Pédalier / clavier",
+    "storage": "Stockage"
   },
   "appTheme": {
     "label": "Thème de l’appli",
@@ -144,5 +145,12 @@
     "english": "C D E F G A B",
     "latin": "Do Ré Mi Fa Sol La Si",
     "german": "C D E F G A H (B = Si♭)"
+  },
+  "storage": {
+    "scores": "Partitions",
+    "renderCache": "Cache de rendu",
+    "renderCacheHint": "Pages déjà affichées, gardées sur l’appareil pour ouvrir les partitions plus vite.",
+    "clearCache": "Vider le cache de rendu",
+    "cleared": "Cache de rendu vidé"
   }
 }

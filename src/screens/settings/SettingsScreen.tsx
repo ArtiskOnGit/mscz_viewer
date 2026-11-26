@@ -15,6 +15,7 @@ import { noteName, TRANSPOSE_PRESETS, type NoteNamingSetting } from '../../core/
 import { supportedLanguages, type LanguageSetting } from '../../i18n';
 import { useNoteNaming } from '../../state/useNoteNaming';
 import { PedalKeysSection } from './PedalKeysSection';
+import { StorageSection } from './StorageSection';
 
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
@@ -151,6 +152,8 @@ export function SettingsScreen() {
           <IonListHeader>{t('sections.system')}</IonListHeader>
           <IonItem><IonToggle checked={settings.keepAwake} onIonChange={(e) => set('keepAwake', e.detail.checked)}>{t('keepAwake.label')}</IonToggle></IonItem>
           <IonItem button detail={false} onClick={reset}><IonLabel color="danger">{t('reset')}</IonLabel></IonItem>
+
+          <StorageSection />
 
           <IonListHeader>{t('sections.about')}</IonListHeader>
           <IonItem><IonLabel>{t('common:appName')}<IonNote style={{ display: 'block' }}>{t('about.version', { version: __APP_VERSION__ })}</IonNote></IonLabel></IonItem>

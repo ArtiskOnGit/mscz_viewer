@@ -1,7 +1,7 @@
 // Turn the stored MusicXML into the XML actually rendered: selected parts, multi-measure rests,
 // instrument names. See SPECIFICATIONS_TECHNIQUES §5.
-import { filterParts, type XmlEnv } from './filterParts';
-import { groupMultiRests, type MultiRestGroup } from './multiRests';
+import { filterPartsInDocument, type XmlEnv } from './filterParts';
+import { groupMultiRestsInDocument, type MultiRestGroup } from './multiRests';
 import { firstKeyFifths } from '../music/keys';
 
 export type PartNamesMode = 'auto' | 'full' | 'hidden';
@@ -24,16 +24,25 @@ export interface DisplayXml {
 }
 
 export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv = globalThis): DisplayXml {
-  const allIds = partIds(xml, env);
+  // One parse and (at most) one serialization for all the steps: big full scores are several MB of XML.
+  const doc = new env.DOMParser().parseFromString(xml, 'application/xml');
+  const allIds = scorePartIds(doc);
   const keep = opts.selectedParts.filter((id) => allIds.includes(id));
-  let out = keep.length > 0 && keep.length < allIds.length ? filterParts(xml, keep, env).xml : xml;
+  let changed = false;
+  if (keep.length > 0 && keep.length < allIds.length) {
+    filterPartsInDocument(doc, keep);
+    changed = true;
+  }
   const shownParts = keep.length > 0 ? keep.length : allIds.length;
 
   let multiRestGroups: MultiRestGroup[] = [];
-  if (opts.multiRests) ({ xml: out, groups: multiRestGroups } = groupMultiRests(out, env));
+  if (opts.multiRests) {
+    const r = groupMultiRestsInDocument(doc);
+    multiRestGroups = r.groups;
+    changed ||= r.changed;
+  }
 
   const hideNames = opts.partNames === 'hidden' || (opts.partNames === 'auto' && shownParts === 1);
-  const doc = new env.DOMParser().parseFromString(out, 'application/xml');
   if (hideNames) {
     for (const sp of Array.from(doc.getElementsByTagName('score-part'))) {
       for (const tag of ['part-name', 'part-abbreviation']) {
@@ -45,14 +54,16 @@ export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv
         for (const el of Array.from(sp.getElementsByTagName(tag))) el.parentNode?.removeChild(el);
       }
     }
-    out = new env.XMLSerializer().serializeToString(doc);
+    changed = true;
   }
+  const out = changed ? new env.XMLSerializer().serializeToString(doc) : xml;
   return { xml: out, staves: countStaves(doc), multiRestGroups, key: firstKeyFifths(doc) };
 }
 
+const scorePartIds = (doc: Document) => Array.from(doc.getElementsByTagName('score-part')).map((sp) => sp.getAttribute('id') ?? '');
+
 export function partIds(xml: string, env: XmlEnv = globalThis): string[] {
-  const doc = new env.DOMParser().parseFromString(xml, 'application/xml');
-  return Array.from(doc.getElementsByTagName('score-part')).map((sp) => sp.getAttribute('id') ?? '');
+  return scorePartIds(new env.DOMParser().parseFromString(xml, 'application/xml'));
 }
 
 /** Sum of <staves> of each part (1 when absent). */

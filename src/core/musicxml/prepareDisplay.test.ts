@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { partIds, prepareDisplayXml } from './prepareDisplay';
 import { parseXml, xmlEnv } from '../../test/xmlEnv';
+import { filterParts } from './filterParts';
+import { groupMultiRests } from './multiRests';
 
 const rest = '<note><rest measure="yes"/><duration>4</duration></note>';
 const play = '<note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration></note>';
@@ -16,6 +18,18 @@ const opts = { selectedParts: [] as string[], multiRests: true, partNames: 'auto
 
 describe('prepareDisplayXml', () => {
   it('lists part ids', () => expect(partIds(SCORE, xmlEnv)).toEqual(['P1', 'P2']));
+
+  it('gives the same XML as the separate steps, in a single parse', () => {
+    const steps = groupMultiRests(filterParts(SCORE, ['P1'], xmlEnv).xml, xmlEnv);
+    const r = prepareDisplayXml(SCORE, { selectedParts: ['P1'], multiRests: true, partNames: 'full' }, xmlEnv);
+    expect(r.xml).toBe(steps.xml);
+    expect(r.multiRestGroups).toEqual(steps.groups);
+  });
+
+  it('returns the stored XML untouched when there is nothing to change', () => {
+    const r = prepareDisplayXml(SCORE, { selectedParts: [], multiRests: true, partNames: 'full' }, xmlEnv);
+    expect(r.xml).toBe(SCORE);
+  });
 
   it('keeps everything and counts staves (piano = 2) when no part is selected', () => {
     const r = prepareDisplayXml(SCORE, opts, xmlEnv);

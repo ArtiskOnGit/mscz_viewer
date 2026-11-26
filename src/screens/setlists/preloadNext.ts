@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { DisplayXml } from '../../core/musicxml/prepareDisplay';
 import { RenderService, type ViewportOptions } from '../../core/render/renderService';
+import { renderCache } from '../../core/services';
 import type { AppSettings } from '../../core/settings';
 import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
 import { contentKeyOf, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData } from '../viewer/pieceData';
@@ -58,7 +59,7 @@ export async function preloadPiece(
   entry.display = { xml: data.xml, key: displayKeyOf(partsKey, settings), value: display };
   const viewport = viewportOf(display, shown, size, settings.defaultZoom);
   if (!viewport) return;
-  const renderer = new RenderService();
+  const renderer = new RenderService(renderCache); // render cache: the next piece may not need Verovio at all
   try {
     const layout = await renderer.load(display.xml, viewport);
     await renderer.page(Math.min(Math.max(1, data.view.lastPage), layout.pageCount));

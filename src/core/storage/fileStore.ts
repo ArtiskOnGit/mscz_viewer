@@ -13,9 +13,9 @@ export interface FileStore {
   removeFile(path: string): Promise<void>;
 }
 
-/** Capacitor Filesystem (Directory.Data). On the web, Capacitor stores files in IndexedDB. */
+/** Capacitor Filesystem (Directory.Data by default). On the web, Capacitor stores files in IndexedDB. */
 export class CapacitorFileStore implements FileStore {
-  private readonly directory = Directory.Data;
+  constructor(private readonly directory: Directory = Directory.Data) {}
 
   async readText(path: string) {
     try {
@@ -99,5 +99,18 @@ export class MemoryFileStore implements FileStore {
   }
   async removeFile(path: string) {
     this.files.delete(path);
+  }
+}
+
+/** Total size in bytes of the files under a directory (0 if it does not exist). */
+export async function directorySize(path: string, directory: Directory = Directory.Data): Promise<number> {
+  try {
+    const { files } = await Filesystem.readdir({ path, directory });
+    let total = 0;
+    for (const f of files) total += f.type === 'directory' ? await directorySize(`${path}/${f.name}`, directory) : f.size;
+    return total;
+  } catch (e) {
+    if (isNotFound(e)) return 0;
+    throw e;
   }
 }

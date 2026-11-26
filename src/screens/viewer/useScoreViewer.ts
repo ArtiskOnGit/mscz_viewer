@@ -1,7 +1,7 @@
 // Loading, rendering and navigation state of the viewer.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Score, ScoreViewState } from '../../core/model/types';
-import { viewStateRepository } from '../../core/services';
+import { renderCache, viewStateRepository } from '../../core/services';
 import type { AppSettings } from '../../core/settings';
 import { useSettings } from '../../state/settingsStore';
 import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
@@ -48,16 +48,17 @@ export function useScoreViewer(
   // --- end setlists ---
   const settingsLoaded = useSettings((st) => st.loaded);
 
-  renderer.current ??= pre?.renderer ?? new RenderService();
+  renderer.current ??= pre?.renderer ?? new RenderService(renderCache); // render cache: pages kept on disk
   // Dispose the worker on unmount (deferred: StrictMode's simulated unmount/remount must keep it).
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
+    if (!pre?.renderer) void renderer.current?.warmUp(); // Verovio starts while the score files are read and prepared
     return () => {
       mounted.current = false;
       setTimeout(() => !mounted.current && renderer.current?.dispose(), 0);
     };
-  }, []);
+  }, [pre]); // `pre` never changes (state)
 
   // 1. Load score, settings and MusicXML (once the global settings are known: they hold the "My instrument" profile).
   useEffect(() => {

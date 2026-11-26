@@ -7,7 +7,8 @@
     "about": "About",
     "playback": "Auto-scroll & metronome",
     "profile": "My instrument",
-    "pedal": "Pedal / keyboard"
+    "pedal": "Pedal / keyboard",
+    "storage": "Storage"
   },
   "appTheme": {
     "label": "App theme",
@@ -144,5 +145,12 @@
     "english": "C D E F G A B",
     "latin": "Do Ré Mi Fa Sol La Si",
     "german": "C D E F G A H (B = B♭)"
+  },
+  "storage": {
+    "scores": "Scores",
+    "renderCache": "Render cache",
+    "renderCacheHint": "Pages already displayed, kept on the device to open scores faster.",
+    "clearCache": "Clear render cache",
+    "cleared": "Render cache cleared"
   }
 }
