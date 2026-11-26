@@ -38,5 +38,6 @@
   "pressAgain": "Press again for the next piece",
   "deletedFrom": "Also removed from: {{names}}",
   "transpose": "Transpose",
-  "overrideBadge": "Custom"
+  "overrideBadge": "Custom",
+  "moreActions": "More actions: {{name}}"
 }

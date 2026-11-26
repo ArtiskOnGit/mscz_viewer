@@ -10,8 +10,8 @@
   "duplicate": "Dupliquer",
   "copyName": "{{name}} (copie)",
   "delete": {
-    "title": "Supprimer la setlist\u00a0?",
-    "message": "«\u00a0{{name}}\u00a0» sera supprimée. Les partitions restent dans la bibliothèque."
+    "title": "Supprimer la setlist ?",
+    "message": "« {{name}} » sera supprimée. Les partitions restent dans la bibliothèque."
   },
   "notFound": "Cette setlist est introuvable.",
   "play": "Jouer",
@@ -24,19 +24,20 @@
   "note": {
     "button": "Note",
     "title": "Note pour ce morceau",
-    "placeholder": "ex.\u00a0: départ sur le signe du chef"
+    "placeholder": "ex. : départ sur le signe du chef"
   },
   "parts": "Instruments",
   "partsCustom": "{{count}}/{{total}} instruments",
   "remove": "Retirer",
   "reorder": "Réordonner",
   "position": "{{index}}/{{count}}",
-  "next": "Suivant\u00a0: {{title}}",
+  "next": "Suivant : {{title}}",
   "last": "Dernier morceau",
   "previousPiece": "Morceau précédent",
   "nextPiece": "Morceau suivant",
   "pressAgain": "Appuyez encore pour le morceau suivant",
-  "deletedFrom": "Retirée aussi de\u00a0: {{names}}",
+  "deletedFrom": "Retirée aussi de : {{names}}",
   "transpose": "Transposer",
-  "overrideBadge": "Perso"
+  "overrideBadge": "Perso",
+  "moreActions": "Plus d’actions : {{name}}"
 }

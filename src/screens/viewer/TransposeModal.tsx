@@ -114,13 +114,14 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 function Stepper(p: { label: string; value: number; min: number; max: number; testId: string; onChange(n: number): void }) {
+  const { t } = useTranslation('viewer');
   return (
     <IonItem>
       <IonLabel>{p.label}</IonLabel>
       <IonButtons slot="end">
-        <IonButton onClick={() => p.onChange(clamp(p.value - 1, p.min, p.max))} disabled={p.value <= p.min}><IonIcon slot="icon-only" icon={removeCircleOutline} /></IonButton>
+        <IonButton onClick={() => p.onChange(clamp(p.value - 1, p.min, p.max))} disabled={p.value <= p.min} aria-label={t('transpose.decrease', { label: p.label })}><IonIcon slot="icon-only" icon={removeCircleOutline} aria-hidden="true" /></IonButton>
         <span style={{ minWidth: '2.5em', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }} data-testid={p.testId}>{signed(p.value)}</span>
-        <IonButton onClick={() => p.onChange(clamp(p.value + 1, p.min, p.max))} disabled={p.value >= p.max}><IonIcon slot="icon-only" icon={addCircleOutline} /></IonButton>
+        <IonButton onClick={() => p.onChange(clamp(p.value + 1, p.min, p.max))} disabled={p.value >= p.max} aria-label={t('transpose.increase', { label: p.label })}><IonIcon slot="icon-only" icon={addCircleOutline} aria-hidden="true" /></IonButton>
       </IonButtons>
     </IonItem>
   );

@@ -188,3 +188,28 @@
     animation: none;
   }
 }
+
+/* Footer: 48 px touch targets leave little room on a phone; keep the bar compact. */
+ion-footer ion-toolbar {
+  --padding-start: 0;
+  --padding-end: 0;
+}
+ion-footer ion-buttons {
+  margin: 0;
+}
+ion-footer .playback-bar {
+  gap: 0;
+}
+ion-footer .playback-bar ion-button {
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+}
+ion-footer .tempo-value {
+  min-width: 2.9em;
+}
+ion-footer .page-indicator {
+  margin-inline-start: 0;
+  min-width: 0;
+  white-space: nowrap;
+}

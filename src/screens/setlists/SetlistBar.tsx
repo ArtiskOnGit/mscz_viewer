@@ -11,13 +11,13 @@ export function SetlistBar({ sp }: { sp: SetlistPlayback }) {
   return (
     <IonToolbar color="light" className="setlist-bar">
       <IonButtons slot="start">
-        <IonButton onClick={sp.goPrev} disabled={!sp.hasPrev} aria-label={t('previousPiece')} data-testid="previous-piece"><IonIcon slot="icon-only" icon={playSkipBack} /></IonButton>
+        <IonButton onClick={sp.goPrev} disabled={!sp.hasPrev} aria-label={t('previousPiece')} data-testid="previous-piece"><IonIcon slot="icon-only" icon={playSkipBack} aria-hidden="true" /></IonButton>
       </IonButtons>
       <div className="setlist-bar-text" data-testid="setlist-bar">
         {t('position', { index: sp.index, count: sp.count })} · {sp.nextTitle ? t('next', { title: sp.nextTitle }) : t('last')}
       </div>
       <IonButtons slot="end">
-        <IonButton onClick={sp.goNext} disabled={!sp.hasNext} aria-label={t('nextPiece')} data-testid="next-piece"><IonIcon slot="icon-only" icon={playSkipForward} /></IonButton>
+        <IonButton onClick={sp.goNext} disabled={!sp.hasNext} aria-label={t('nextPiece')} data-testid="next-piece"><IonIcon slot="icon-only" icon={playSkipForward} aria-hidden="true" /></IonButton>
       </IonButtons>
     </IonToolbar>
   );

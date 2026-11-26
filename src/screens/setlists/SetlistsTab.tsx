@@ -2,9 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
-  IonFab, IonFabButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonText, useIonAlert,
+  IonButton, IonFab, IonFabButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonText, useIonActionSheet, useIonAlert,
 } from '@ionic/react';
-import { add, listOutline } from 'ionicons/icons';
+import { add, chevronForward, ellipsisVertical, listOutline } from 'ionicons/icons';
 import { routes } from '../../app/routes';
 import type { Setlist } from '../../core/model/types';
 import { useLibrary } from '../../state/libraryStore';
@@ -17,6 +17,7 @@ export function SetlistsTab() {
   const { setlists, loaded, load, create, rename, duplicate, remove } = useSetlists();
   const scores = useLibrary((s) => s.scores);
   const [presentAlert] = useIonAlert();
+  const [presentActions] = useIonActionSheet();
 
   useEffect(() => {
     if (!loaded) void load();
@@ -66,6 +67,18 @@ export function SetlistsTab() {
       ],
     });
 
+  // Same actions as the swipe options, for screen readers and keyboards (they cannot swipe).
+  const more = (s: Setlist) =>
+    void presentActions({
+      header: s.name,
+      buttons: [
+        { text: t('duplicate'), handler: () => void duplicate(s.id, t('copyName', { name: s.name })) },
+        { text: t('common:actions.rename'), handler: () => askRename(s) },
+        { text: t('common:actions.delete'), role: 'destructive', handler: () => askDelete(s) },
+        { text: t('common:actions.cancel'), role: 'cancel' },
+      ],
+    });
+
   return (
     <>
       {loaded && setlists.length === 0 ? (
@@ -74,12 +87,18 @@ export function SetlistsTab() {
         <IonList>
           {sorted.map((s) => (
             <IonItemSliding key={s.id}>
-              <IonItem button detail onClick={() => navigate(routes.setlist(s.id))}>
-                <IonIcon slot="start" icon={listOutline} />
-                <IonLabel>
-                  <h2>{s.name}</h2>
-                  <p>{details(s)}</p>
-                </IonLabel>
+              <IonItem>
+                <button type="button" className="item-open" onClick={() => navigate(routes.setlist(s.id))} data-testid="setlist-open">
+                  <IonIcon icon={listOutline} aria-hidden="true" className="item-open-icon" />
+                  <IonLabel>
+                    <h2>{s.name}</h2>
+                    <p>{details(s)}</p>
+                  </IonLabel>
+                  <IonIcon icon={chevronForward} aria-hidden="true" className="item-open-detail" />
+                </button>
+                <IonButton slot="end" fill="clear" color="medium" className="item-more" onClick={() => more(s)} aria-label={t('moreActions', { name: s.name })}>
+                  <IonIcon slot="icon-only" icon={ellipsisVertical} aria-hidden="true" />
+                </IonButton>
               </IonItem>
               <IonItemOptions side="end">
                 <IonItemOption color="medium" onClick={() => void duplicate(s.id, t('copyName', { name: s.name }))}>{t('duplicate')}</IonItemOption>
@@ -92,7 +111,7 @@ export function SetlistsTab() {
       )}
       <IonFab slot="fixed" vertical="bottom" horizontal="end">
         <IonFabButton aria-label={t('new')} data-testid="new-setlist" onClick={askCreate}>
-          <IonIcon icon={add} />
+          <IonIcon icon={add} aria-hidden="true" />
         </IonFabButton>
       </IonFab>
     </>

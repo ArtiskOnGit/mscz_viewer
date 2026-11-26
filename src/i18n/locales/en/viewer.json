@@ -16,7 +16,8 @@
     "staves_one": "{{count}} staff",
     "staves_other": "{{count}} staves",
     "apply": "Show",
-    "hiddenInSource": "hidden in MuseScore"
+    "hiddenInSource": "hidden in MuseScore",
+    "buttonCount": "Instruments {{selected}}/{{total}}"
   },
   "playback": {
     "play": "Play (auto-scroll at the score tempo)",
@@ -59,7 +60,9 @@
       "auto": "Auto",
       "sharps": "Sharps",
       "flats": "Flats"
-    }
+    },
+    "decrease": "{{label}}: minus 1",
+    "increase": "{{label}}: plus 1"
   },
   "myPart": "Showing your part: {{names}}",
   "pageHalf": "{{page}}½ / {{count}}",

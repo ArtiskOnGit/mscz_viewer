@@ -126,7 +126,7 @@ export function LibraryScreen() {
           <IonTitle>{t('title')}</IonTitle>
           <IonButtons slot="end">
             <IonButton routerLink={routes.settings} aria-label={t('settings')}>
-              <IonIcon slot="icon-only" icon={settingsOutline} />
+              <IonIcon slot="icon-only" icon={settingsOutline} aria-hidden="true" />
             </IonButton>
           </IonButtons>
         </IonToolbar>
@@ -173,7 +173,7 @@ export function LibraryScreen() {
         {tab === 'scores' && (
           <IonFab slot="fixed" vertical="bottom" horizontal="end">
             <IonFabButton aria-label={t('import.button')} disabled={!!importing} onClick={() => void pickScoreFiles().then(runImport)}>
-              <IonIcon icon={add} />
+              <IonIcon icon={add} aria-hidden="true" />
             </IonFabButton>
           </IonFab>
         )}

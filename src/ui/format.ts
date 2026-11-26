@@ -14,3 +14,10 @@ export function formatBytes(bytes: number, language: string): string {
   const [value, unit] = mb >= 1 ? [mb, 'megabyte'] : [Math.max(0, bytes) / 1024, 'kilobyte'];
   return new Intl.NumberFormat(language, { style: 'unit', unit, maximumFractionDigits: value < 10 ? 1 : 0 }).format(value);
 }
+
+/** Hours, minutes, seconds of a duration (for spoken durations: "5 min 10 s"). */
+export function splitDuration(totalSeconds: number | undefined): { h: number; m: number; s: number } | undefined {
+  if (totalSeconds === undefined || !Number.isFinite(totalSeconds)) return undefined;
+  const t = Math.round(totalSeconds);
+  return { h: Math.floor(t / 3600), m: Math.floor((t % 3600) / 60), s: t % 60 };
+}

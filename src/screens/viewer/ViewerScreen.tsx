@@ -306,11 +306,11 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               data-testid="lock-button"
               data-locked={String(locked)}
             >
-              <IonIcon slot="icon-only" icon={locked ? lockClosed : lockOpenOutline} />
+              <IonIcon slot="icon-only" icon={locked ? lockClosed : lockOpenOutline} aria-hidden="true" />
             </IonButton>
             {!locked && parts.length > 1 && (
-              <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.button')} data-testid="parts-button">
-                <IonIcon slot="start" icon={peopleOutline} />
+              <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.buttonCount', { selected: selectedCount, total: parts.length })} data-testid="parts-button">
+                <IonIcon slot="start" icon={peopleOutline} aria-hidden="true" />
                 {selectedCount}/{parts.length}
               </IonButton>
             )}
@@ -321,14 +321,14 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               data-testid="layout-toggle"
               data-layout={continuous ? 'continuous' : 'pages'}
             >
-              <IonIcon slot="icon-only" icon={continuous ? documentOutline : reorderFourOutline} />
+              <IonIcon slot="icon-only" icon={continuous ? documentOutline : reorderFourOutline} aria-hidden="true" />
             </IonButton>
             <IonButton onClick={() => setTransposeOpen(true)} aria-label={t('transpose.button')} data-testid="transpose-button">
               <span className="transpose-label">{t('transpose.badge', { value: transposeBadge })}</span>
             </IonButton>
-            <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} /></IonButton>
-            <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} /></IonButton>
-            <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} /></IonButton>
+            <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} aria-hidden="true" /></IonButton>
+            <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} aria-hidden="true" /></IonButton>
+            <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} aria-hidden="true" /></IonButton>
             </>}
           </IonButtons>
         </IonToolbar>
@@ -400,18 +400,18 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         ) : (
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={turnPrev} disabled={!continuous && v.page <= 1 && !half} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} /></IonButton>
+            <IonButton onClick={turnPrev} disabled={!continuous && v.page <= 1 && !half} aria-label={t('previousPage')}><IonIcon slot="icon-only" icon={chevronBack} aria-hidden="true" /></IonButton>
           </IonButtons>
           <div className="playback-bar">
             <IonButton fill="clear" onClick={togglePlay} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
-              <IonIcon slot="icon-only" icon={pb.playing ? pause : play} />
+              <IonIcon slot="icon-only" icon={pb.playing ? pause : play} aria-hidden="true" />
             </IonButton>
             <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor - 0.05)} aria-label={t('playback.slower')}>
-              <IonIcon slot="icon-only" icon={removeCircleOutline} />
+              <IonIcon slot="icon-only" icon={removeCircleOutline} aria-hidden="true" />
             </IonButton>
             <span className="tempo-value" data-testid="tempo">{t('playback.tempo', { percent: Math.round(tempoFactor * 100) })}</span>
             <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor + 0.05)} aria-label={t('playback.faster')}>
-              <IonIcon slot="icon-only" icon={addCircleOutline} />
+              <IonIcon slot="icon-only" icon={addCircleOutline} aria-hidden="true" />
             </IonButton>
             {/* Click: metronome with the auto-scroll on/off. Long press: metronome alone (no scrolling), again to stop. */}
             <IonButton
@@ -427,13 +427,13 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               data-metronome-only={String(pb.metronomeOnly)}
               data-metronome={String(metronome)}
             >
-              <IonIcon slot="icon-only" icon={timerOutline} />
+              <IonIcon slot="icon-only" icon={timerOutline} aria-hidden="true" />
             </IonButton>
             {pageLabel}
           </div>
           <IonButtons slot="end">
-            <IonButton onClick={() => setGotoOpen(true)} aria-label={t('goTo.button')} data-testid="goto-button"><IonIcon slot="icon-only" icon={navigateCircleOutline} /></IonButton>
-            <IonButton onClick={turnNext} disabled={!continuous && v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} /></IonButton>
+            <IonButton onClick={() => setGotoOpen(true)} aria-label={t('goTo.button')} data-testid="goto-button"><IonIcon slot="icon-only" icon={navigateCircleOutline} aria-hidden="true" /></IonButton>
+            <IonButton onClick={turnNext} disabled={!continuous && v.page >= v.pageCount} aria-label={t('nextPage')}><IonIcon slot="icon-only" icon={chevronForward} aria-hidden="true" /></IonButton>
           </IonButtons>
         </IonToolbar>
         )}

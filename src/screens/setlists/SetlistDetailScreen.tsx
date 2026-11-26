@@ -4,9 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   IonBackButton, IonBadge, IonButton, IonButtons, IonCheckbox, IonContent, IonFab, IonFabButton, IonFooter, IonHeader, IonIcon, IonItem,
   IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList, IonModal, IonNote, IonPage, IonReorder, IonReorderGroup, IonText,
-  IonTitle, IonToolbar, useIonAlert,
+  IonTitle, IonToolbar, useIonActionSheet, useIonAlert,
 } from '@ionic/react';
-import { add, play } from 'ionicons/icons';
+import { add, ellipsisVertical, play } from 'ionicons/icons';
 import { routes } from '../../app/routes';
 import { defaultPartIds, type ScoreViewState, type SetlistItem } from '../../core/model/types';
 import { viewStateRepository } from '../../core/services';
@@ -25,6 +25,7 @@ export function SetlistDetailScreen() {
   const { setlists, loaded, load, addScores, removeItem, moveItem, setNote, setOverride } = useSetlists();
   const { scores, loaded: libraryLoaded, load: loadLibrary } = useLibrary();
   const [presentAlert] = useIonAlert();
+  const [presentActions] = useIonActionSheet();
   const [adding, setAdding] = useState(false);
   const [partsItem, setPartsItem] = useState<SetlistItem>();
   // Transposition of a piece: edited over the score's own settings (`base`).
@@ -76,7 +77,7 @@ export function SetlistDetailScreen() {
           <IonTitle>{setlist?.name}</IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={() => playFrom(setlist?.items.find((it) => scoreById.has(it.scoreId)))} disabled={!setlist?.items.length}>
-              <IonIcon slot="start" icon={play} />
+              <IonIcon slot="start" icon={play} aria-hidden="true" />
               {t('play')}
             </IonButton>
           </IonButtons>
@@ -109,16 +110,39 @@ export function SetlistDetailScreen() {
                   : undefined;
                 return (
                   <IonItemSliding key={item.id}>
-                    <IonItem button={!!score} detail={false} onClick={() => playFrom(item)}>
-                      <IonNote slot="start" className="setlist-index">{index + 1}</IonNote>
-                      <IonLabel>
-                        <h2>{score?.title ?? t('missingScore')}</h2>
-                        {info && <p>{info}</p>}
-                        {item.note && <p><em>{item.note}</em></p>}
-                      </IonLabel>
-                      {item.override && (
-                        <IonBadge slot="end" color="medium" data-testid="override-badge">{shownTranspose ?? t('overrideBadge')}</IonBadge>
-                      )}
+                    <IonItem>
+                      <button type="button" className="item-open" disabled={!score} onClick={() => playFrom(item)} data-testid="setlist-item-open">
+                        <IonNote className="setlist-index">{index + 1}</IonNote>
+                        <IonLabel>
+                          <h2>{score?.title ?? t('missingScore')}</h2>
+                          {info && <p>{info}</p>}
+                          {item.note && <p><em>{item.note}</em></p>}
+                        </IonLabel>
+                        {item.override && (
+                          <IonBadge color="medium" data-testid="override-badge">{shownTranspose ?? t('overrideBadge')}</IonBadge>
+                        )}
+                      </button>
+                      <IonButton
+                        slot="end"
+                        fill="clear"
+                        color="medium"
+                        className="item-more"
+                        aria-label={t('moreActions', { name: score?.title ?? t('missingScore') })}
+                        onClick={() =>
+                          void presentActions({
+                            header: score?.title ?? t('missingScore'),
+                            buttons: [
+                              { text: t('note.button'), handler: () => askNote(item) },
+                              ...(score && score.parts.length > 1 ? [{ text: t('parts'), handler: () => setPartsItem(item) }] : []),
+                              ...(score ? [{ text: t('transpose'), handler: () => openTranspose(item) }] : []),
+                              { text: t('remove'), role: 'destructive', handler: () => void removeItem(setlistId, item.id) },
+                              { text: t('common:actions.cancel'), role: 'cancel' },
+                            ],
+                          })
+                        }
+                      >
+                        <IonIcon slot="icon-only" icon={ellipsisVertical} aria-hidden="true" />
+                      </IonButton>
                       <IonReorder slot="end" aria-label={t('reorder')} />
                     </IonItem>
                     <IonItemOptions side="end">
@@ -135,7 +159,7 @@ export function SetlistDetailScreen() {
         )}
         <IonFab slot="fixed" vertical="bottom" horizontal="end">
           <IonFabButton aria-label={t('addScores')} data-testid="add-scores" onClick={() => setAdding(true)}>
-            <IonIcon icon={add} />
+            <IonIcon icon={add} aria-hidden="true" />
           </IonFabButton>
         </IonFab>
         <AddScoresModal

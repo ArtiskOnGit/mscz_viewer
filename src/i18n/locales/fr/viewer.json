@@ -16,14 +16,15 @@
     "staves_one": "{{count}} portée",
     "staves_other": "{{count}} portées",
     "apply": "Afficher",
-    "hiddenInSource": "masqué dans MuseScore"
+    "hiddenInSource": "masqué dans MuseScore",
+    "buttonCount": "Instruments {{selected}}/{{total}}"
   },
   "playback": {
     "play": "Lecture (défilement au tempo de la partition)",
     "pause": "Pause",
     "slower": "Plus lent",
     "faster": "Plus vite",
-    "tempo": "{{percent}}\u00a0%",
+    "tempo": "{{percent}} %",
     "metronomeOn": "Métronome activé",
     "metronomeOff": "Métronome coupé",
     "countIn": "Décompte…",
@@ -59,9 +60,11 @@
       "auto": "Auto",
       "sharps": "Dièses",
       "flats": "Bémols"
-    }
+    },
+    "decrease": "{{label}} : moins 1",
+    "increase": "{{label}} : plus 1"
   },
-  "myPart": "Votre partie\u00a0: {{names}}",
+  "myPart": "Votre partie : {{names}}",
   "pageHalf": "{{page}}½ / {{count}}",
   "goTo": {
     "button": "Aller à la mesure",
@@ -79,7 +82,7 @@
   },
   "lock": {
     "lock": "Verrouiller (tournes de page seulement)",
-    "unlock": "Verrouillé\u00a0: maintenir pour déverrouiller",
+    "unlock": "Verrouillé : maintenir pour déverrouiller",
     "holdToUnlock": "Maintenez le cadenas pour déverrouiller"
   }
 }

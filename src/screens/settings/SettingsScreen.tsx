@@ -298,14 +298,30 @@ function MyInstrumentSection() {
           onIonChange={(e) => save(parseNames(String(e.detail.value ?? '')))}
         />
       </IonItem>
-      <IonItem lines="none"><IonLabel><IonNote>{t('myInstrument.quickPicks')}</IonNote></IonLabel></IonItem>
-      <div className="ion-padding-horizontal" data-testid="my-instrument-picks">
+      <IonItem lines="none"><IonLabel id="quick-picks-label"><IonNote>{t('myInstrument.quickPicks')}</IonNote></IonLabel></IonItem>
+      {/* Chips are toggles: announced as checkboxes, usable with the keyboard. */}
+      <IonItem lines="none">
+      <div className="quick-picks" role="group" aria-labelledby="quick-picks-label" data-testid="my-instrument-picks">
         {COMMON_INSTRUMENTS.map((p) => (
-          <IonChip key={p.id} outline={!isPicked(p, profile.names)} onClick={() => toggle(p)} data-testid={`pick-${p.id}`}>
+          <IonChip
+            key={p.id}
+            outline={!isPicked(p, profile.names)}
+            onClick={() => toggle(p)}
+            role="checkbox"
+            aria-checked={isPicked(p, profile.names)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              toggle(p);
+            }}
+            data-testid={`pick-${p.id}`}
+          >
             {t(`myInstrument.instruments.${p.id}`)}
           </IonChip>
         ))}
       </div>
+      </IonItem>
       <IonItem>
         <IonSelect
           label={t('defaultTranspose.label')}

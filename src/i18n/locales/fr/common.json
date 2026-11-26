@@ -9,5 +9,9 @@
     "close": "Fermer",
     "ok": "OK"
   },
-  "comingSoon": "Bientôt disponible"
+  "comingSoon": "Bientôt disponible",
+  "duration": {
+    "minutes": "{{m}} min {{s}} s",
+    "hours": "{{h}} h {{m}} min"
+  }
 }

@@ -39,7 +39,9 @@
   },
   "card": {
     "parts_one": "{{count}} instrument",
-    "parts_other": "{{count}} instruments"
+    "parts_other": "{{count}} instruments",
+    "partsNamed_one": "{{count}} instrument: {{names}}",
+    "partsNamed_other": "{{count}} instruments: {{names}}"
   },
   "rename": {
     "title": "Rename score",
@@ -73,5 +75,6 @@
     "hiddenInSource": "hidden in MuseScore",
     "resetView": "Reset display settings",
     "resetDone": "Display settings reset"
-  }
+  },
+  "moreActions": "More actions: {{title}}"
 }

@@ -45,7 +45,7 @@ export function PedalKeysSection({ keys, onChange }: Props) {
             {t(`pedal.${action}`)}
             <IonNote style={{ display: 'block' }} data-testid={`pedal-keys-${action}`}>{keys[action].length ? keys[action].join(', ') : t('pedal.none')}</IonNote>
           </IonLabel>
-          <IonButton slot="end" fill="outline" size="small" onClick={() => setCapturing(action)} data-testid={`pedal-set-${action}`}>{t('pedal.setKey')}</IonButton>
+          <IonButton slot="end" fill="outline" className="touch-48" onClick={() => setCapturing(action)} data-testid={`pedal-set-${action}`}>{t('pedal.setKey')}</IonButton>
         </IonItem>
       ))}
       <IonItem button detail={false} onClick={() => onChange(DEFAULT_PEDAL_KEYS)} data-testid="pedal-reset"><IonLabel>{t('pedal.reset')}</IonLabel></IonItem>

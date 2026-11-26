@@ -16,7 +16,7 @@
       "failed_other": "{{count}} n’ont pas pu être importées"
     },
     "errors": {
-      "unsupportedFormat": "{{name}}\u00a0: type de fichier non pris en charge. Utilisez .mscz, .mscx, .mxl ou .musicxml.",
+      "unsupportedFormat": "{{name}} : type de fichier non pris en charge. Utilisez .mscz, .mscx, .mxl ou .musicxml.",
       "emptyFile": "{{name}} est vide.",
       "engineFailed": "{{name}} n’a pas pu être lu. S’il vient d’une version récente de MuseScore, exportez-le en MusicXML (.mxl) et importez ce fichier.",
       "invalidMusicXml": "{{name}} ne contient aucune partie.",
@@ -29,7 +29,7 @@
   },
   "upgrade": "Mise à jour de vos partitions pour la nouvelle version ({{done}}/{{total}})…",
   "search": "Rechercher",
-  "noMatch": "Aucune partition ne correspond à «\u00a0{{query}}\u00a0».",
+  "noMatch": "Aucune partition ne correspond à « {{query}} ».",
   "sort": {
     "label": "Trier par",
     "recent": "Récentes",
@@ -39,15 +39,17 @@
   },
   "card": {
     "parts_one": "{{count}} instrument",
-    "parts_other": "{{count}} instruments"
+    "parts_other": "{{count}} instruments",
+    "partsNamed_one": "{{count}} instrument : {{names}}",
+    "partsNamed_other": "{{count}} instruments : {{names}}"
   },
   "rename": {
     "title": "Renommer la partition",
     "placeholder": "Titre (vide = titre d’origine)"
   },
   "delete": {
-    "title": "Supprimer la partition\u00a0?",
-    "message": "«\u00a0{{title}}\u00a0» sera supprimée de cet appareil."
+    "title": "Supprimer la partition ?",
+    "message": "« {{title}} » sera supprimée de cet appareil."
   },
   "setlists": {
     "empty": "Aucune setlist"
@@ -73,5 +75,6 @@
     "hiddenInSource": "masqué dans MuseScore",
     "resetView": "Réinitialiser l’affichage",
     "resetDone": "Réglages d’affichage réinitialisés"
-  }
+  },
+  "moreActions": "Plus d’actions : {{title}}"
 }
