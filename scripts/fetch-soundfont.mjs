@@ -33,7 +33,8 @@ if (await existing()) {
       : new Uint8Array(await (await fetch(SOUNDFONT.url, { signal: AbortSignal.timeout(120_000) })).arrayBuffer());
   } catch (e) {
     console.warn(`fetch-soundfont: could not download ${SOUNDFONT.url} (${e.message}). Audio playback will be unavailable until the file is in public/soundfonts/.`);
-    process.exit(0);
+    // In CI, never build an APK silently without sound.
+    process.exit(process.env.CI ? 1 : 0);
   }
   if (sha(bytes) !== SOUNDFONT.sha256) {
     console.error(`fetch-soundfont: ${SOUNDFONT.file} has an unexpected SHA-256 (${sha(bytes)}), not installed.`);
