@@ -40,8 +40,9 @@ export class MidiPlayer implements ScoreAudioSource {
 
   start(fromScoreMs: number): void {
     if (this.running) this.stop();
-    const now = this.synth.ctx.currentTime;
-    for (const { channel, message } of chaseMessages(this.midi.events, fromScoreMs, this.channels)) this.synth.send(message, channel, now);
+    // After the messages of the previous run still queued in the synth (they end before `ready`).
+    const at = Math.max(this.synth.ctx.currentTime, this.ready - 0.005);
+    for (const { channel, message } of chaseMessages(this.midi.events, fromScoreMs, this.channels)) this.synth.send(message, channel, at);
     this.cursor = firstEventAt(this.midi.events, fromScoreMs);
     this.synth.open(this.ready);
     this.running = true;
