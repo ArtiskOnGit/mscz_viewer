@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Le « p » de Pupitre dessiné comme une noire, hampe vers le bas, sur une portée -->
+  <rect width="512" height="512" rx="112" fill="#24398f"/>
+  <g stroke="#f4ecd8" stroke-opacity="0.35" stroke-width="8">
+    <line x1="72" y1="168" x2="440" y2="168"/>
+    <line x1="72" y1="206" x2="440" y2="206"/>
+    <line x1="72" y1="244" x2="440" y2="244"/>
+    <line x1="72" y1="282" x2="440" y2="282"/>
+    <line x1="72" y1="320" x2="440" y2="320"/>
+  </g>
+  <ellipse cx="282" cy="226" rx="92" ry="66" transform="rotate(-22 282 226)" fill="#f4ecd8"/>
+  <rect x="190" y="226" width="30" height="214" rx="15" fill="#f4ecd8"/>
+  <circle cx="380" cy="380" r="22" fill="#e8590c"/>
+</svg>

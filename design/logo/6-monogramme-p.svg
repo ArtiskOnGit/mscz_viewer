@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Monogramme : un P massif dont la panse est rayée par les cinq lignes d'une portée -->
+  <defs>
+    <clipPath id="bowl">
+      <path d="M208 96 H300 A112 112 0 0 1 300 320 H208 Z"/>
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#24398f"/>
+  <rect x="140" y="96" width="68" height="328" rx="20" fill="#f4ecd8"/>
+  <g clip-path="url(#bowl)" fill="#f4ecd8">
+    <rect x="200" y="96" width="230" height="24"/>
+    <rect x="200" y="146" width="230" height="24"/>
+    <rect x="200" y="196" width="230" height="24"/>
+    <rect x="200" y="246" width="230" height="24"/>
+    <rect x="200" y="296" width="230" height="24"/>
+  </g>
+  <circle cx="364" cy="388" r="30" fill="#e8590c"/>
+</svg>

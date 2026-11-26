@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Pastille ronde : silhouette pleine du pupitre, une note sur la feuille -->
+  <circle cx="256" cy="256" r="248" fill="#e8590c"/>
+  <path d="M136 132 L376 110 L384 262 L128 286 Z" fill="#fff"/>
+  <rect x="120" y="282" width="272" height="18" rx="9" transform="rotate(-5 256 291)" fill="#24398f"/>
+  <rect x="246" y="296" width="20" height="120" rx="10" fill="#fff"/>
+  <path d="M256 404 L180 446 M256 404 L332 446" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
+  <ellipse cx="236" cy="226" rx="34" ry="24" transform="rotate(-22 236 226)" fill="#24398f"/>
+  <rect x="258" y="130" width="12" height="96" rx="6" fill="#24398f"/>
+  <path d="M270 130 Q318 150 300 196" stroke="#24398f" stroke-width="12" fill="none" stroke-linecap="round"/>
+</svg>

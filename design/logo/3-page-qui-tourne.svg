@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Une page de partition dont le coin se tourne (le tourne-page) -->
+  <rect width="512" height="512" rx="112" fill="#e8590c"/>
+  <path d="M136 88 H336 L392 144 V424 H136 Z" fill="#f4ecd8"/>
+  <path d="M336 88 V144 H392 Z" fill="#c9bfa6"/>
+  <path d="M336 144 H392 L336 88 Z" fill="none"/>
+  <g stroke="#24398f" stroke-width="9" stroke-linecap="round">
+    <line x1="170" y1="190" x2="358" y2="190"/>
+    <line x1="170" y1="214" x2="358" y2="214"/>
+    <line x1="170" y1="238" x2="358" y2="238"/>
+    <line x1="170" y1="262" x2="358" y2="262"/>
+    <line x1="170" y1="286" x2="358" y2="286"/>
+    <line x1="170" y1="330" x2="358" y2="330"/>
+    <line x1="170" y1="354" x2="358" y2="354"/>
+    <line x1="170" y1="378" x2="300" y2="378"/>
+  </g>
+  <ellipse cx="236" cy="262" rx="20" ry="14" transform="rotate(-22 236 262)" fill="#24398f"/>
+  <rect x="249" y="196" width="8" height="66" fill="#24398f"/>
+  <ellipse cx="300" cy="238" rx="20" ry="14" transform="rotate(-22 300 238)" fill="#24398f"/>
+  <rect x="313" y="172" width="8" height="66" fill="#24398f"/>
+</svg>

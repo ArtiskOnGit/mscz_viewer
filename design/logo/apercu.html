@@ -1,0 +1,16 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><title>Pupitre — propositions de logo</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:24px;background:#eee}
+.grid{display:grid;grid-template-columns:repeat(3,300px);gap:24px}
+.card{background:#fff;border-radius:16px;padding:16px;text-align:center}
+.big{width:200px;height:200px}.row{display:flex;justify-content:center;gap:12px;align-items:center;margin-top:10px}
+.dark{background:#222;padding:8px;border-radius:10px}
+img.s48{width:48px;height:48px}img.s32{width:32px;height:32px}
+h3{margin:8px 0 0;font-size:15px}
+</style>
+<h2>Pupitre — propositions de logo</h2>
+<div class="grid" id="g"></div>
+<script>
+const items=[["1-pupitre-classique","1. Pupitre classique"],["2-note-p","2. Le « p » en noire"],["3-page-qui-tourne","3. Page qui tourne"],["4-ligne-epuree","4. Version épurée"],["5-pastille","5. Pastille ronde"],["6-monogramme-p","6. Monogramme P"]];
+for(const [f,t] of items){document.getElementById('g').insertAdjacentHTML('beforeend',`<div class="card"><img class="big" src="${f}.svg"><h3>${t}</h3><div class="row"><img class="s48" src="${f}.svg"><img class="s32" src="${f}.svg"><span class="dark"><img class="s48" src="${f}.svg"></span></div></div>`)}
+</script></html>
