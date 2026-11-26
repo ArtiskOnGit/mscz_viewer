@@ -47,3 +47,6 @@ spikes/device-test-dist/
 
 # APK de debug téléchargés depuis la CI
 /apk/
+
+# SoundFont téléchargé par scripts/fetch-soundfont.mjs (14,6 Mo, ADR-026)
+/public/soundfonts/*.sf3

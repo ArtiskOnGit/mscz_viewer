@@ -196,5 +196,12 @@
     "device": "Follow the device",
     "portrait": "Portrait",
     "landscape": "Landscape"
+  },
+  "soundDefault": {
+    "label": "Sound on for new scores",
+    "hint": "Instruments synthesized from the score during auto-scroll (General MIDI SoundFont, about 15 MB)"
+  },
+  "soundVolume": {
+    "label": "Sound volume: {{percent}} %"
   }
 }

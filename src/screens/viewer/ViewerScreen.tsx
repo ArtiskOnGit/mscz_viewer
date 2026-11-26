@@ -6,11 +6,11 @@ import {
 } from '@ionic/react';
 import {
   addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline,
-  lockClosed, lockOpenOutline, navigateCircleOutline, documentOutline, reorderFourOutline,
+  lockClosed, lockOpenOutline, navigateCircleOutline, documentOutline, reorderFourOutline, volumeHighOutline, volumeMuteOutline,
 } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
-import { defaultPartIds } from '../../core/model/types';
+import { defaultPartIds, type MixerState } from '../../core/model/types';
 import { useScoreViewer } from './useScoreViewer';
 import { PartsModal } from './PartsModal';
 import { usePageGestures } from './usePageGestures';
@@ -28,10 +28,15 @@ import { GoToModal } from './GoToModal';
 import { useLongPress } from './useLongPress';
 import { ContinuousView, type ContinuousHandle } from './ContinuousView';
 import { usePageTurnAnimation } from './usePageTurnAnimation';
+import { useScoreAudio } from './useScoreAudio';
+import { MixerModal } from './MixerModal';
+import { TempoPopover } from './TempoPopover';
+import { matchMyInstrument } from '../../core/profile/myInstrument';
 import './viewer.css';
 
 const UNLOCK_PRESS_MS = 800;
 const METRONOME_ONLY_PRESS_MS = 600;
+const SOUND_TOGGLE_PRESS_MS = 600;
 // Lock mode lasts for the app session (kept from one piece of a setlist to the next), never saved.
 let sessionLocked = false;
 
@@ -51,6 +56,8 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const [partsOpen, setPartsOpen] = useState(false);
   const [transposeOpen, setTransposeOpen] = useState(false);
   const [gotoOpen, setGotoOpen] = useState(false);
+  const [mixerOpen, setMixerOpen] = useState(false);
+  const [tempoOpen, setTempoOpen] = useState(false); // tempo popover
   const [locked, setLockedState] = useState(sessionLocked);
   const setLocked = (l: boolean) => {
     sessionLocked = l;
@@ -109,6 +116,17 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   // --- auto-scroll & metronome ---
   const tempoFactor = v.view?.tempoFactor ?? 1;
   const metronome = v.view?.metronomeEnabled ?? false;
+  // --- score audio (ADR-026): sound per score (default from the settings), mixer per score or setlist piece ---
+  const mixer = v.shown?.mixer;
+  const audio = useScoreAudio({ score: v.score, mixer, defaultMaster: settings.soundVolume });
+  const soundOn = (v.view?.soundEnabled ?? settings.soundDefault) && audio.available;
+  const setSound = (on: boolean) => {
+    v.update({ soundEnabled: on });
+    if (on) void audio.prepare(); // in the user gesture: the synth and SoundFont load now
+  };
+  const setMixer = (m: MixerState) => (sp.active ? sp.setMixer(m) : v.update({ mixer: m }));
+  const myParts = useMemo(() => matchMyInstrument(v.score?.parts ?? [], settings.myInstrument), [v.score, settings.myInstrument]);
+  // --- end score audio ---
   const pb = usePlayback({
     timeline: v.timeline,
     xmlToRendered: v.xmlToRendered,
@@ -122,6 +140,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     metronome,
     settings,
     continuous: continuous ? contRef : undefined,
+    audio: { on: soundOn, source: audio.source, prepare: audio.prepare },
   });
   // Tap on the metronome button / pedal "metronome" action: metronome with the auto-scroll on/off (stops "metronome only").
   const toggleMetronome = () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome }));
@@ -176,7 +195,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const onKey = useRef<(e: KeyboardEvent) => void>(undefined);
   useLayoutEffect(() => {
     onKey.current = (e) => {
-      if (partsOpen || transposeOpen || gotoOpen || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (partsOpen || transposeOpen || gotoOpen || mixerOpen || tempoOpen || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const action = pedalAction(e.code, settings.pedalKeys);
       if (!action) return;
       e.preventDefault();
@@ -272,6 +291,15 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     () => void pb.toggleMetronomeOnly(),
     toggleMetronome,
     METRONOME_ONLY_PRESS_MS,
+  );
+  // Sound button: tap = sound and mixer sheet; long press = sound on/off.
+  const soundPress = useLongPress(
+    () => {
+      setSound(!soundOn);
+      void toast({ message: soundOn ? t('sound.off') : t('sound.on'), duration: 1200, position: 'top' });
+    },
+    () => setMixerOpen(true),
+    SOUND_TOGGLE_PRESS_MS,
   );
   // --- end lock mode & metronome only ---
 
@@ -406,11 +434,21 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
             <IonButton fill="clear" onClick={togglePlay} disabled={!pb.available} aria-label={pb.playing ? t('playback.pause') : t('playback.play')}>
               <IonIcon slot="icon-only" icon={pb.playing ? pause : play} aria-hidden="true" />
             </IonButton>
-            <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor - 0.05)} aria-label={t('playback.slower')}>
+            {/* −/+ next to the tempo when the footer is wide enough (CSS); the tempo value opens the tempo popover. */}
+            <IonButton className="tempo-step" fill="clear" size="small" onClick={() => setTempo(tempoFactor - 0.05)} aria-label={t('playback.slower')}>
               <IonIcon slot="icon-only" icon={removeCircleOutline} aria-hidden="true" />
             </IonButton>
-            <span className="tempo-value" data-testid="tempo">{t('playback.tempo', { percent: Math.round(tempoFactor * 100) })}</span>
-            <IonButton fill="clear" size="small" onClick={() => setTempo(tempoFactor + 0.05)} aria-label={t('playback.faster')}>
+            <IonButton
+              className="tempo-button"
+              fill="clear"
+              size="small"
+              onClick={() => setTempoOpen(true)}
+              aria-label={t('playback.tempoButton', { percent: Math.round(tempoFactor * 100) })}
+              data-testid="tempo-button"
+            >
+              <span className="tempo-value" data-testid="tempo">{t('playback.tempo', { percent: Math.round(tempoFactor * 100) })}</span>
+            </IonButton>
+            <IonButton className="tempo-step" fill="clear" size="small" onClick={() => setTempo(tempoFactor + 0.05)} aria-label={t('playback.faster')}>
               <IonIcon slot="icon-only" icon={addCircleOutline} aria-hidden="true" />
             </IonButton>
             {/* Click: metronome with the auto-scroll on/off. Long press: metronome alone (no scrolling), again to stop. */}
@@ -429,6 +467,21 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
             >
               <IonIcon slot="icon-only" icon={timerOutline} aria-hidden="true" />
             </IonButton>
+            {/* Tap: sound and mixer sheet. Long press: sound on/off. */}
+            {audio.available && (
+              <IonButton
+                {...soundPress}
+                fill={soundOn ? 'solid' : 'clear'}
+                size="small"
+                aria-label={`${t('sound.button')} (${soundOn ? t('sound.on') : t('sound.off')})`}
+                title={t('sound.hint')}
+                data-testid="sound-button"
+                data-sound={String(soundOn)}
+                data-status={audio.status}
+              >
+                <IonIcon slot="icon-only" icon={soundOn ? volumeHighOutline : volumeMuteOutline} aria-hidden="true" />
+              </IonButton>
+            )}
             {pageLabel}
           </div>
           <IonButtons slot="end">
@@ -456,6 +509,22 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           if (sp.active && v.view) sp.setTranspose(value, v.view); // setlists: stored in the item override
           else v.update(value);
         }}
+      />
+      <TempoPopover isOpen={tempoOpen} value={tempoFactor} onChange={setTempo} onDismiss={() => setTempoOpen(false)} />
+      <MixerModal
+        isOpen={mixerOpen}
+        parts={parts}
+        soundOn={soundOn}
+        available={audio.available}
+        status={audio.status}
+        mixer={mixer}
+        defaultMaster={settings.soundVolume}
+        mine={myParts}
+        noProfile={!settings.myInstrument.names.length && !settings.myInstrument.instrumentIds.length}
+        inSetlist={sp.active}
+        onSound={setSound}
+        onChange={setMixer}
+        onDismiss={() => setMixerOpen(false)}
       />
       <PartsModal
         isOpen={partsOpen}

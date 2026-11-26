@@ -63,6 +63,10 @@ export interface AppSettings {
   metronomeDefault: boolean;
   /** Higher click on the first beat of each bar. */
   metronomeAccent: boolean;
+  /** Score audio (synthesized from the MIDI file) on for scores whose sound was never switched. */
+  soundDefault: boolean;
+  /** Master volume of the score audio (0..1) for scores without their own. */
+  soundVolume: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -97,6 +101,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   orientation: 'device',
   metronomeDefault: false,
   metronomeAccent: true,
+  soundDefault: false,
+  soundVolume: 0.8,
 };
 
 const KEY = 'settings';

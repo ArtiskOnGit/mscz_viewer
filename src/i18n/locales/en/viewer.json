@@ -32,7 +32,10 @@
     "metronomeOnlyStop": "Stop the metronome",
     "metronomeHint": "Tap: metronome with auto-scroll. Long press: metronome only, without scrolling.",
     "startAt": "▶ will start at bar {{bar}}",
-    "startAtCleared": "Start bar cleared"
+    "startAtCleared": "Start bar cleared",
+    "tempoButton": "Tempo {{percent}} % (change)",
+    "tempoSlider": "Tempo",
+    "tempoReset": "Back to 100 %"
   },
   "transpose": {
     "button": "Transpose",
@@ -84,5 +87,30 @@
     "lock": "Lock (only page turns)",
     "unlock": "Locked: hold to unlock",
     "holdToUnlock": "Hold the lock to unlock"
+  },
+  "sound": {
+    "button": "Sound and mixer",
+    "on": "Sound on",
+    "off": "Sound off",
+    "hint": "Tap: sound and mixer. Long press: sound on/off.",
+    "title": "Sound",
+    "toggle": "Play the score",
+    "toggleHint": "Instruments synthesized from the score, with the auto-scroll",
+    "loading": "Loading the instruments…",
+    "error": "The sound could not be loaded. Auto-scroll stays silent.",
+    "unavailable": "No sound for this score (it could not be converted).",
+    "master": "Volume: {{percent}} %",
+    "presets": "Quick mix",
+    "all": "All",
+    "onlyMine": "Only mine",
+    "withoutMine": "Without mine",
+    "noProfile": "Set “My instrument” in the settings to use “Only mine” and “Without mine”.",
+    "noMatch": "No part matches “My instrument” in this score.",
+    "parts": "Parts",
+    "volume": "Volume of {{name}}: {{percent}} %",
+    "mute": "Mute {{name}}",
+    "solo": "Solo {{name}}",
+    "soloShort": "S",
+    "setlistNote": "In this setlist, the mix is kept for this piece only."
   }
 }

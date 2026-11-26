@@ -1,6 +1,8 @@
 // Auto-scroll at the score tempo + metronome, driven by PlaybackEngine.
 // "Metronome only" mode: the same engine clicks along the timeline from the first measure of the displayed page
 // (tempo changes included), without count-in, highlight or page turns; pages are turned by hand meanwhile.
+// Score audio (ADR-026): with the sound on, the engine plays the score's MIDI on the same clock (never in
+// "metronome only" mode).
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { Timeline } from '../../core/model/types';
 import { PlaybackEngine } from '../../core/playback/playbackEngine';
@@ -8,6 +10,14 @@ import { eventOfMeasureFrom, firstEventOfMeasure } from '../../core/navigation/n
 import { autoScrollPage } from '../../core/navigation/pageTurn';
 import type { AppSettings } from '../../core/settings';
 import type { ContinuousHandle } from './ContinuousView';
+import type { ScoreAudioSource } from '../../core/audio/midiPlayer';
+
+export interface PlaybackAudio {
+  on: boolean;
+  source: ScoreAudioSource | undefined;
+  /** Loads the sound (user gesture); resolves to the source, undefined if unavailable. */
+  prepare(): Promise<ScoreAudioSource | undefined>;
+}
 
 interface Args {
   timeline: Timeline | undefined;
@@ -23,6 +33,7 @@ interface Args {
   settings: AppSettings;
   /** Continuous mode: the view follows the current measure (no page turns) and tells what is on screen. */
   continuous: RefObject<ContinuousHandle | null> | undefined;
+  audio?: PlaybackAudio;
 }
 
 export function usePlayback(a: Args) {
@@ -35,6 +46,7 @@ export function usePlayback(a: Args) {
   const current = useRef<number>(-1); // rendered measure index currently highlighted
   const resume = useRef<number | undefined>(undefined); // timeline event to resume from
   const armed = useRef<number | undefined>(undefined); // bar picked by a long press: the next ▶ starts there
+  const request = useRef(0); // incremented by each ▶ / pause: a ▶ waiting for the sound is cancelled by a pause
   const latest = useRef(a);
   useEffect(() => {
     latest.current = a;
@@ -142,7 +154,7 @@ export function usePlayback(a: Args) {
   const play = useCallback(async (from?: number) => {
     const e = engine.current;
     if (!e) return;
-    const { settings, tempoFactor, metronome } = latest.current;
+    const { settings, tempoFactor, metronome, audio } = latest.current;
     if (mode.current === 'metronome') e.pause();
     mode.current = 'scroll';
     setMetronomeOnly(false);
@@ -150,8 +162,18 @@ export function usePlayback(a: Args) {
     const picked = armed.current;
     armed.current = undefined;
     if (from === undefined && picked !== undefined) from = picked;
+    const startEventIndex = from ?? startEvent();
+    const req = ++request.current;
+    // Sound on: the synth and SoundFont are loaded on the first ▶ (silent playback if they cannot be).
+    const source = audio?.on ? (audio.source ?? (await audio.prepare())) : undefined;
+    if (req !== request.current || mode.current !== 'scroll') {
+      if (mode.current !== 'scroll') setPlaying(false);
+      return; // paused / "metronome only" while the sound was loading
+    }
+    e.setAudio(source, !!source);
     await e.play({
-      startEventIndex: from ?? startEvent(),
+      sound: !!source,
+      startEventIndex,
       countInMeasures: settings.countInMeasures,
       countInSound: settings.countInSound,
       tempoFactor,
@@ -163,6 +185,7 @@ export function usePlayback(a: Args) {
 
   const pause = useCallback(() => {
     const e = engine.current;
+    request.current++;
     if (!e) return;
     if (mode.current === 'metronome') {
       e.pause();
@@ -186,7 +209,9 @@ export function usePlayback(a: Args) {
     const { settings, tempoFactor } = latest.current;
     mode.current = 'metronome';
     setMetronomeOnly(true);
+    e.setAudio(latest.current.audio?.source, false);
     await e.play({
+      sound: false,
       startEventIndex: startEvent(false),
       countInMeasures: 0,
       countInSound: false,
@@ -241,6 +266,12 @@ export function usePlayback(a: Args) {
   );
 
   useEffect(() => engine.current?.setTempoFactor(a.tempoFactor), [a.tempoFactor]);
+  // Sound switched on/off (or loaded) while playing: starts/stops at the current position.
+  const audioOn = !!a.audio?.on;
+  const audioSource = a.audio?.source;
+  useEffect(() => {
+    engine.current?.setAudio(audioSource, audioOn && mode.current === 'scroll');
+  }, [audioOn, audioSource, a.timeline]);
   useEffect(() => {
     // The metronome-only mode always clicks, whatever the metronome toggle of the auto-scroll.
     if (mode.current !== 'metronome') engine.current?.setMetronome(a.metronome, a.settings.metronomeVolume);

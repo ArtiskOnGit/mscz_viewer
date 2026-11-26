@@ -46,8 +46,13 @@ export class PlaybackClock {
 
   /** Current score position in ms (may be negative during the lead-in). */
   scoreMs(): number {
+    return this.scoreMsAt(this.source.now());
+  }
+
+  /** Score position at a time-source time (s): what is heard at `t`, or what will be played at a future `t`. */
+  scoreMsAt(t: number): number {
     if (!this.running) return this.anchorScoreMs;
-    return this.anchorScoreMs + (this.source.now() - this.anchorTime) * 1000 * this.factor;
+    return this.anchorScoreMs + (t - this.anchorTime) * 1000 * this.factor;
   }
 
   /** Time-source time (s) at which a score position will be reached. */

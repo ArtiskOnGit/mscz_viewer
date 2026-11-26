@@ -196,5 +196,12 @@
     "device": "Suivre l’appareil",
     "portrait": "Portrait",
     "landscape": "Paysage"
+  },
+  "soundDefault": {
+    "label": "Son activé pour les nouvelles partitions",
+    "hint": "Instruments synthétisés à partir de la partition pendant le défilement (banque de sons General MIDI, 15 Mo environ)"
+  },
+  "soundVolume": {
+    "label": "Volume du son : {{percent}} %"
   }
 }

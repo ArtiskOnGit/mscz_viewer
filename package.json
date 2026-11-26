@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "cap:sync": "npm run build && cap sync",
     "android": "npm run cap:sync && cap open android",
-    "postinstall": "node scripts/copy-webmscore.mjs"
+    "postinstall": "node scripts/copy-webmscore.mjs && node scripts/fetch-soundfont.mjs"
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "^8.0.1",
@@ -38,6 +38,7 @@
     "react-i18next": "^18.0.3",
     "react-router": "^6.30.6",
     "react-router-dom": "^6.30.6",
+    "spessasynth_lib": "^4.4.10",
     "verovio": "^6.4.1",
     "webmscore": "^1.2.1",
     "zustand": "^5.1.0"

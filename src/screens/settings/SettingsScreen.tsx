@@ -212,6 +212,24 @@ export function SettingsScreen() {
             </IonToggle>
           </IonItem>
           <IonItem><IonToggle checked={settings.metronomeAccent} onIonChange={(e) => set('metronomeAccent', e.detail.checked)} data-testid="metronome-accent">{t('metronomeAccent.label')}</IonToggle></IonItem>
+          {/* Score audio (ADR-026) */}
+          <IonItem>
+            <IonToggle checked={settings.soundDefault} onIonChange={(e) => set('soundDefault', e.detail.checked)} data-testid="sound-default">
+              <IonLabel>{t('soundDefault.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('soundDefault.hint')}</IonNote></IonLabel>
+            </IonToggle>
+          </IonItem>
+          <IonItem>
+            <IonRange
+              label={t('soundVolume.label', { percent: Math.round(settings.soundVolume * 100) })}
+              labelPlacement="stacked"
+              min={0}
+              max={100}
+              step={5}
+              value={Math.round(settings.soundVolume * 100)}
+              onIonChange={(e) => set('soundVolume', Number(e.detail.value) / 100)}
+              data-testid="sound-volume"
+            />
+          </IonItem>
           <IonItem><IonToggle checked={settings.highlightMeasure} onIonChange={(e) => set('highlightMeasure', e.detail.checked)}>{t('highlightMeasure.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.tapPauses} onIonChange={(e) => set('tapPauses', e.detail.checked)}>{t('tapPauses.label')}</IonToggle></IonItem>
 

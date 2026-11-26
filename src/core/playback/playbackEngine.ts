@@ -1,12 +1,18 @@
 // Auto-scroll clock + metronome, on the Web Audio clock (SPECIFICATIONS_TECHNIQUES §6).
 // - Clicks are scheduled ~120 ms ahead with osc.start(t) ("lookahead scheduler"): never from setTimeout.
-// - The UI reads the same clock in requestAnimationFrame (current measure, page turns, beat flashes).
+// - The UI reads the same clock in requestAnimationFrame (current measure, page turns, beat flashes), shifted by the
+//   output latency so that the highlight matches what is heard.
+// - Score audio (ADR-026): an optional ScoreAudioSource (MidiPlayer) is fed by the same scheduler, on the same clock.
 import type { Timeline } from '../model/types';
 import { eventIndexAt } from '../timeline/timeline';
 import { PlaybackClock } from './clock';
 import { clicksFrom, countInClicks, countInDurationMs, type Click } from './clicks';
+import { acquireAudioContext, outputLatencyOf, releaseAudioContext } from '../audio/audioContext';
+import type { ScoreAudioSource } from '../audio/midiPlayer';
 
 const LOOKAHEAD_S = 0.12;
+/** Notes are sent further ahead: they cross to the synth's AudioWorklet and may hold many events. */
+const AUDIO_LOOKAHEAD_S = 0.2;
 const SCHEDULER_INTERVAL_MS = 25;
 const START_DELAY_S = 0.15;
 
@@ -27,6 +33,8 @@ export interface PlayOptions {
   volume: number;
   /** Higher click on the first beat of each bar (default true). */
   accent?: boolean;
+  /** Play the score audio (if an audio source is set). */
+  sound?: boolean;
 }
 
 export class PlaybackEngine {
@@ -41,6 +49,8 @@ export class PlaybackEngine {
   private raf = 0;
   private opts: PlayOptions | undefined;
   private startMs = 0;
+  private audio: ScoreAudioSource | undefined;
+  private latency = 0;
 
   constructor(
     private readonly timeline: Timeline,
@@ -55,16 +65,20 @@ export class PlaybackEngine {
   async play(opts: PlayOptions): Promise<void> {
     this.stopTimers();
     this.opts = { ...opts };
-    this.ctx ??= new AudioContext({ latencyHint: 'interactive' });
+    this.ctx ??= acquireAudioContext();
     await this.ctx.resume();
     const ctx = this.ctx;
+    this.latency = outputLatencyOf(ctx);
     const first = this.timeline.events[opts.startEventIndex];
     if (!first) return;
     this.startMs = first.startMs;
     this.clock = new PlaybackClock({ now: () => ctx.currentTime });
     this.clock.setTempoFactor(opts.tempoFactor);
     const leadIn = countInDurationMs(this.timeline, opts.startEventIndex, opts.countInMeasures);
-    this.clock.start(this.startMs - leadIn, START_DELAY_S);
+    // After a stop, the audio of the previous run is still being silenced for a few ms.
+    const audio = opts.sound ? this.audio : undefined;
+    this.clock.start(this.startMs - leadIn, Math.max(START_DELAY_S, (audio?.readyAt ?? 0) - ctx.currentTime + 0.01));
+    audio?.start(this.startMs);
     this.countIn = countInClicks(this.timeline, opts.startEventIndex, opts.countInMeasures);
     this.resetClicks(this.startMs);
     this.timer = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS);
@@ -81,6 +95,7 @@ export class PlaybackEngine {
     const pos = this.clock?.stop() ?? 0;
     this.stopTimers();
     this.cancelScheduled();
+    this.audio?.stop();
     this.flashes = [];
     return Math.max(0, eventIndexAt(this.timeline, pos));
   }
@@ -105,9 +120,25 @@ export class PlaybackEngine {
     if (!on) this.cancelScheduled((s) => s.t > (this.ctx?.currentTime ?? 0));
   }
 
+  /**
+   * Score audio source (undefined = none). Changing it or `on` while playing starts/stops the sound at the current
+   * position.
+   */
+  setAudio(source: ScoreAudioSource | undefined, on: boolean): void {
+    const wasOn = !!(this.opts?.sound && this.audio);
+    const changed = this.audio !== source;
+    if (this.audio && changed) this.audio.stop();
+    this.audio = source;
+    if (this.opts) this.opts.sound = on;
+    const clock = this.clock;
+    if (!clock?.playing) return;
+    if (on && source && (!wasOn || changed)) source.start(Math.max(this.startMs, clock.scoreMs()));
+    else if (!on) source?.stop();
+  }
+
   dispose(): void {
     this.pause();
-    void this.ctx?.close();
+    if (this.ctx) releaseAudioContext();
     this.ctx = undefined;
   }
 
@@ -121,6 +152,10 @@ export class PlaybackEngine {
     const clock = this.clock;
     const opts = this.opts;
     if (!ctx || !clock?.playing || !opts) return;
+    if (opts.sound && this.audio) {
+      const until = clock.scoreMsAt(ctx.currentTime + AUDIO_LOOKAHEAD_S);
+      this.audio.schedule(until, (ms) => clock.timeOf(ms), ctx.currentTime);
+    }
     const horizon = ctx.currentTime + LOOKAHEAD_S;
     for (;;) {
       const isCountIn = this.countIn.length > 0;
@@ -169,11 +204,13 @@ export class PlaybackEngine {
     const ctx = this.ctx;
     const clock = this.clock;
     if (!ctx || !clock) return;
-    while (this.flashes.length && this.flashes[0]!.t <= ctx.currentTime) {
+    // What is heard now was scheduled `latency` ago.
+    const heard = ctx.currentTime - this.latency;
+    while (this.flashes.length && this.flashes[0]!.t <= heard) {
       const f = this.flashes.shift()!;
       this.cb.onBeat(f.accent, f.countIn);
     }
-    const ms = clock.scoreMs();
+    const ms = clock.scoreMsAt(heard);
     if (ms < this.startMs) {
       this.cb.onFrame(-1, 0);
       return;

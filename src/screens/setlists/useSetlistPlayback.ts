@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useIonToast } from '@ionic/react';
 import { routes } from '../../app/routes';
-import type { SetlistItem } from '../../core/model/types';
+import type { MixerState, SetlistItem } from '../../core/model/types';
 import { useLibrary } from '../../state/libraryStore';
 import { useSetlists } from '../../state/setlistStore';
 import { transposeOverride, type TransposeSettings } from '../../core/setlists/effectiveView';
@@ -32,6 +32,8 @@ export interface SetlistPlayback {
   setParts(selectedParts: string[]): void;
   /** Transposition in setlist mode is stored in the item override (cleared when equal to the score's own `base`). */
   setTranspose(value: TransposeSettings, base: TransposeSettings): void;
+  /** Mixer in setlist mode is stored in the item override. */
+  setMixer(mixer: MixerState): void;
 }
 
 export function useSetlistPlayback(): SetlistPlayback {
@@ -97,6 +99,9 @@ export function useSetlistPlayback(): SetlistPlayback {
     },
     setTranspose: (value, base) => {
       if (setlist && current) void setOverride(setlist.id, current.id, transposeOverride(value, base));
+    },
+    setMixer: (mixer) => {
+      if (setlist && current) void setOverride(setlist.id, current.id, { mixer });
     },
   };
 }

@@ -139,7 +139,8 @@ const screens = async (theme) => {
       for (let j = i + 1; j < els.length; j++) {
         const a = els[i].r;
         const b = els[j].r;
-        if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push(`${els[i].el.className.split(' ')[0]}/${els[j].el.className.split(' ')[0]}`);
+        const nested = els[i].el.contains(els[j].el) || els[j].el.contains(els[i].el); // tempo value inside its button
+        if (!nested && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push(`${els[i].el.className.split(' ')[0]}/${els[j].el.className.split(' ')[0]}`);
       }
     const right = Math.max(...els.map((e) => e.r.right));
     return { out, fits: right <= window.innerWidth + 1 };

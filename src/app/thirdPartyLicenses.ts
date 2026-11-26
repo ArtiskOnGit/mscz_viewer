@@ -3,6 +3,9 @@ export const THIRD_PARTY = [
   { name: 'webmscore (MuseScore engine)', license: 'GPL-3.0', url: 'https://github.com/LibreScore/webmscore' },
   { name: 'Verovio', license: 'LGPL-3.0', url: 'https://github.com/rism-digital/verovio' },
   { name: 'Leipzig & Bravura music fonts', license: 'SIL OFL 1.1', url: 'https://github.com/rism-digital/leipzig' },
+  { name: 'spessasynth_lib / spessasynth_core (synthesizer)', license: 'Apache-2.0', url: 'https://github.com/spessasus/spessasynth_lib' },
+  // MIT notice: "Copyright (c) 2000-2002, 2008 Frank Wen; Mono version Copyright (c) 2014-16 Michael Cowgill" (public/soundfonts/).
+  { name: 'FluidR3Mono GM SoundFont (Frank Wen, Michael Cowgill)', license: 'MIT', url: 'https://github.com/musescore/MuseScore/tree/v2.3.2/share/sound' },
   { name: 'Ionic Framework', license: 'MIT', url: 'https://github.com/ionic-team/ionic-framework' },
   { name: 'Capacitor', license: 'MIT', url: 'https://github.com/ionic-team/capacitor' },
   { name: 'React', license: 'MIT', url: 'https://github.com/facebook/react' },

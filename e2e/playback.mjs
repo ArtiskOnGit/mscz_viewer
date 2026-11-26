@@ -28,8 +28,13 @@ await page.evaluate(() => {
     else if (c.includes('beat')) window.__beats.beat++;
   }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 });
+// Phone in portrait: −/+ are in the tempo popover (opened from the tempo value).
+await page.locator('[data-testid=tempo-button]').click();
+await page.waitForTimeout(400);
 await page.getByRole('button', { name: 'Faster' }).click(); // 105 %
 for (let i = 0; i < 9; i++) await page.getByRole('button', { name: 'Faster' }).click(); // 150 %
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
 console.log('tempo', await page.locator('[data-testid=tempo]').innerText());
 await page.getByRole('button', { name: 'Metronome off' }).click();
 await page.getByRole('button', { name: /Play/ }).click();

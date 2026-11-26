@@ -30,9 +30,12 @@
     "countIn": "Décompte…",
     "noTimeline": "Le défilement automatique n’est pas disponible pour cette partition.",
     "metronomeOnlyStop": "Arrêter le métronome",
-    "metronomeHint": "Toucher\u00a0: métronome avec défilement. Appui long\u00a0: métronome seul, sans défilement.",
+    "metronomeHint": "Toucher : métronome avec défilement. Appui long : métronome seul, sans défilement.",
     "startAt": "▶ partira de la mesure {{bar}}",
-    "startAtCleared": "Mesure de départ annulée"
+    "startAtCleared": "Mesure de départ annulée",
+    "tempoButton": "Tempo {{percent}}\u00a0% (modifier)",
+    "tempoSlider": "Tempo",
+    "tempoReset": "Revenir à 100\u00a0%"
   },
   "transpose": {
     "button": "Transposer",
@@ -84,5 +87,30 @@
     "lock": "Verrouiller (tournes de page seulement)",
     "unlock": "Verrouillé : maintenir pour déverrouiller",
     "holdToUnlock": "Maintenez le cadenas pour déverrouiller"
+  },
+  "sound": {
+    "button": "Son et mixage",
+    "on": "Son activé",
+    "off": "Son coupé",
+    "hint": "Toucher : son et mixage. Appui long : son activé ou coupé.",
+    "title": "Son",
+    "toggle": "Jouer la partition",
+    "toggleHint": "Instruments synthétisés à partir de la partition, avec le défilement",
+    "loading": "Chargement des instruments…",
+    "error": "Le son n’a pas pu être chargé. Le défilement reste silencieux.",
+    "unavailable": "Pas de son pour cette partition (elle n’a pas pu être convertie).",
+    "master": "Volume : {{percent}} %",
+    "presets": "Mixage rapide",
+    "all": "Tous",
+    "onlyMine": "Moi seul",
+    "withoutMine": "Sans moi",
+    "noProfile": "Indiquez « Mon instrument » dans les paramètres pour utiliser « Moi seul » et « Sans moi ».",
+    "noMatch": "Aucune partie ne correspond à « Mon instrument » dans cette partition.",
+    "parts": "Parties",
+    "volume": "Volume de {{name}} : {{percent}} %",
+    "mute": "Couper {{name}}",
+    "solo": "{{name}} en solo",
+    "soloShort": "S",
+    "setlistNote": "Dans cette setlist, le mixage est gardé pour ce morceau seulement."
   }
 }

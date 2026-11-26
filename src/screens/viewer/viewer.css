@@ -208,8 +208,112 @@ ion-footer .playback-bar ion-button {
 ion-footer .tempo-value {
   min-width: 2.9em;
 }
+ion-footer .tempo-button {
+  min-width: 48px;
+  --padding-start: 2px;
+  --padding-end: 2px;
+  text-transform: none;
+  font-size: 1rem;
+}
+/* Phone in portrait: no room for −/+ next to the tempo (they are in the tempo popover). */
+@media (max-width: 479px) {
+  ion-footer .tempo-step {
+    display: none;
+  }
+}
+.tempo-popover {
+  --width: 260px;
+}
+.tempo-popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tempo-popover-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.2em;
+}
 ion-footer .page-indicator {
   margin-inline-start: 0;
   min-width: 0;
   white-space: nowrap;
+}
+
+/* Sound and mixer sheet (ADR-026). */
+.mixer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 16px 8px;
+}
+/* Native toggle buttons (reliable aria-pressed), 48 px targets. */
+.mixer-btn {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--ion-color-primary);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+.mixer-btn.on {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+.mixer-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mixer-btn:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
+}
+.mixer-btn ion-icon {
+  font-size: 1.4em;
+  vertical-align: middle;
+}
+.mixer-preset {
+  flex: 1 1 auto;
+}
+.mixer-mute.on {
+  background: var(--ion-color-danger);
+  border-color: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}
+.mixer-solo {
+  font-weight: 700;
+}
+.mixer-solo.on {
+  background: var(--ion-color-warning);
+  border-color: var(--ion-color-warning);
+  color: var(--ion-color-warning-contrast);
+}
+.mixer-note {
+  display: block;
+  padding: 0 16px 8px;
+}
+.mixer-part-body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 4px 0;
+}
+.mixer-part-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mixer-part-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mixer-part-name.silent {
+  opacity: 0.55;
+}
+.mixer-part ion-range {
+  padding-top: 0;
 }
