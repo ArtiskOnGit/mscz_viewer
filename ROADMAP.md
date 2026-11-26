@@ -121,7 +121,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Optimisation des performances (cache disque SVG, gros conducteurs, appareils modestes).
 - ⬜ Accessibilité (tailles des cibles tactiles, lecteurs d'écran pour la bibliothèque, les setlists et les paramètres).
 - ⬜ Tests de non-régression visuels sur le corpus.
-- ⬜ Identifiant Android définitif (ADR-006), icône, **APK de release signé** (clé de publication, GitHub Releases).
+- 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône et **APK de release signé** à faire (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
 - ⬜ **Décision iOS** (ADR-005) : publier avec webmscore, demander une autorisation à Muse Group, ou variante sans webmscore.
 - ⬜ Build iOS (Capacitor), tests iPhone/iPad, ouverture de fichiers (UTI), dossier dans l'application Fichiers, métronome et bouton silencieux.

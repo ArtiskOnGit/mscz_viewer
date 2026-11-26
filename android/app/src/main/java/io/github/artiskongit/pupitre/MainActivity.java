@@ -1,4 +1,4 @@
-package app.pupitre.viewer;
+package io.github.artiskongit.pupitre;
 
 import com.getcapacitor.BridgeActivity;
 

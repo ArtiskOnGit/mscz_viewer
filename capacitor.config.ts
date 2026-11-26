@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-// NOTE: appId is permanent once published on a store. Provisional until the app name is chosen (ADR-006).
+// Permanent Android applicationId (ADR-006): never change it once published on a store.
 const config: CapacitorConfig = {
-  appId: 'app.pupitre.viewer',
+  appId: 'io.github.artiskongit.pupitre',
   appName: 'Pupitre',
   webDir: 'dist',
   android: {

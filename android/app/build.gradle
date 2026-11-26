@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "app.pupitre.viewer"
+    namespace = "io.github.artiskongit.pupitre"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.pupitre.viewer"
+        applicationId "io.github.artiskongit.pupitre"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

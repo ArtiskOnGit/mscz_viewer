@@ -49,7 +49,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-006 — Nom de l'application : « Pupitre » — *Acceptée (2026-11-26)*
 - Nom définitif : **Pupitre** (français pour « music stand »), y compris pour l'interface anglaise : choix assumé du porteur du projet (« tant pis pour les anglais »).
-- Reste à faire avant publication : vérifier la disponibilité sur Google Play et F-Droid et l'absence de marque déposée gênante ; choisir l'**identifiant Android définitif** (`applicationId`, immuable une fois publié — l'actuel `app.pupitre.viewer` est provisoire) ; créer l'icône. Le nom ne doit pas contenir « MuseScore ».
+- Reste à faire avant publication : vérifier la disponibilité sur Google Play et F-Droid et l'absence de marque déposée gênante ; créer l'icône.
+- **Identifiant Android** (`applicationId`, immuable une fois publié) : **`io.github.artiskongit.pupitre`** (2026-11-26), basé sur le compte GitHub du porteur (convention F-Droid, aucun domaine à posséder). Il remplace `app.pupitre.viewer` : une réinstallation unique a été nécessaire sur le téléphone de test. Le nom ne doit pas contenir « MuseScore ».
 
 ### ADR-007 — Stockage : fichiers + index JSON — *Acceptée*
 - Index `library.json` et `setlists.json`, fichiers dans l'espace privé de l'application, derrière les interfaces `LibraryRepository` et `SetlistRepository`. Passage à SQLite si le volume ou la recherche le demandent.
@@ -136,7 +137,7 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ## Questions encore ouvertes
 
-1. **Identifiant Android définitif** (ADR-006) et icône.
+1. **Icône** de l'application (ADR-006).
 2. **Stratégie iOS / App Store** (ADR-005) : à trancher avant la phase 3.
 3. **Téléphone ou tablette en priorité** pour les tests et l'ergonomie Android ? Par défaut, les deux sont prévus, avec le téléphone en priorité.
 4. **Pédalier Bluetooth** : le porteur n'en a pas ; faut-il en emprunter un avant la v1, ou se contenter d'un clavier Bluetooth pour valider la réception des touches dans la WebView ?
