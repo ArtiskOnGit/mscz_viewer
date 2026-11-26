@@ -55,8 +55,11 @@ await step('select 2nd part only', async () => {
 });
 await page.screenshot({ path: `${shots}/viewer-part.png` });
 await step('zoom in ×2', async () => {
-  await page.getByRole('button', { name: 'Zoom in' }).click();
-  await page.getByRole('button', { name: 'Zoom in' }).click();
+  // Zoom controls live in a popover (header too narrow on a phone).
+  await page.locator('[data-testid=zoom-button]').click();
+  await page.locator('[data-testid=zoom-in]').click();
+  await page.locator('[data-testid=zoom-in]').click();
+  await page.keyboard.press('Escape');
   await page.waitForTimeout(1500);
 });
 await page.screenshot({ path: `${shots}/viewer-part-zoom.png` });

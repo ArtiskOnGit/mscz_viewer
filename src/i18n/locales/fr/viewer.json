@@ -33,9 +33,9 @@
     "metronomeHint": "Toucher : métronome avec défilement. Appui long : métronome seul, sans défilement.",
     "startAt": "▶ partira de la mesure {{bar}}",
     "startAtCleared": "Mesure de départ annulée",
-    "tempoButton": "Tempo {{percent}}\u00a0% (modifier)",
+    "tempoButton": "Tempo {{percent}} % (modifier)",
     "tempoSlider": "Tempo",
-    "tempoReset": "Revenir à 100\u00a0%"
+    "tempoReset": "Revenir à 100 %"
   },
   "transpose": {
     "button": "Transposer",
@@ -112,5 +112,7 @@
     "solo": "{{name}} en solo",
     "soloShort": "S",
     "setlistNote": "Dans cette setlist, le mixage est gardé pour ce morceau seulement."
-  }
+  },
+  "zoom": "Zoom",
+  "zoomValue": "{{percent}} %"
 }

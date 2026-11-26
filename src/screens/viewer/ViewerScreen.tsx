@@ -5,8 +5,9 @@ import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonPage, IonSpinner, IonTitle, IonToolbar, useIonToast,
 } from '@ionic/react';
 import {
-  addOutline, chevronBack, chevronForward, pause, peopleOutline, play, removeOutline, scanOutline, timerOutline, removeCircleOutline, addCircleOutline,
+  chevronBack, chevronForward, pause, peopleOutline, play, timerOutline, removeCircleOutline, addCircleOutline,
   lockClosed, lockOpenOutline, navigateCircleOutline, documentOutline, reorderFourOutline, volumeHighOutline, volumeMuteOutline,
+  searchOutline,
 } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
@@ -31,6 +32,7 @@ import { usePageTurnAnimation } from './usePageTurnAnimation';
 import { useScoreAudio } from './useScoreAudio';
 import { MixerModal } from './MixerModal';
 import { TempoPopover } from './TempoPopover';
+import { ZoomPopover } from './ZoomPopover';
 import { matchMyInstrument } from '../../core/profile/myInstrument';
 import './viewer.css';
 
@@ -55,6 +57,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   const [chrome, setChrome] = useState(true);
   const [partsOpen, setPartsOpen] = useState(false);
   const [transposeOpen, setTransposeOpen] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const [gotoOpen, setGotoOpen] = useState(false);
   const [mixerOpen, setMixerOpen] = useState(false);
   const [tempoOpen, setTempoOpen] = useState(false); // tempo popover
@@ -354,9 +357,9 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
             <IonButton onClick={() => setTransposeOpen(true)} aria-label={t('transpose.button')} data-testid="transpose-button">
               <span className="transpose-label">{t('transpose.badge', { value: transposeBadge })}</span>
             </IonButton>
-            <IonButton onClick={() => v.setZoom(v.zoom / 1.15)} aria-label={t('zoomOut')}><IonIcon slot="icon-only" icon={removeOutline} aria-hidden="true" /></IonButton>
-            <IonButton onClick={() => v.update({ zoom: 'auto' })} aria-label={t('zoomReset')}><IonIcon slot="icon-only" icon={scanOutline} aria-hidden="true" /></IonButton>
-            <IonButton onClick={() => v.setZoom(v.zoom * 1.15)} aria-label={t('zoomIn')}><IonIcon slot="icon-only" icon={addOutline} aria-hidden="true" /></IonButton>
+            <IonButton onClick={() => setZoomOpen(true)} aria-label={t('zoom')} data-testid="zoom-button">
+              <IonIcon slot="icon-only" icon={searchOutline} aria-hidden="true" />
+            </IonButton>
             </>}
           </IonButtons>
         </IonToolbar>
@@ -498,6 +501,15 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         measureCount={v.score?.measures ?? 0}
         onGo={goToMeasure}
         onDismiss={() => setGotoOpen(false)}
+      />
+      <ZoomPopover
+        isOpen={zoomOpen}
+        value={v.zoom}
+        isAuto={v.view?.zoom === 'auto' || v.view?.zoom === undefined}
+        onZoomOut={() => v.setZoom(v.zoom / 1.15)}
+        onZoomIn={() => v.setZoom(v.zoom * 1.15)}
+        onAuto={() => v.update({ zoom: 'auto' })}
+        onDismiss={() => setZoomOpen(false)}
       />
       <TransposeModal
         isOpen={transposeOpen}

@@ -106,7 +106,7 @@ check('go to bar 1 → page 1', (await pageNumber()) === 1, await indicator());
 await page.locator('[data-testid=lock-button]').click();
 await page.waitForTimeout(200);
 check('locked', (await page.locator('[data-testid=lock-button]').getAttribute('data-locked')) === 'true');
-check('toolbar buttons hidden', (await page.getByRole('button', { name: 'Zoom in' }).count()) === 0 && (await page.locator('[data-testid=goto-button]').count()) === 0);
+check('toolbar buttons hidden', (await page.locator('[data-testid=zoom-button]').count()) === 0 && (await page.locator('[data-testid=goto-button]').count()) === 0);
 const stage = await page.locator('[data-testid=score-stage]').boundingBox();
 await page.mouse.click(stage.x + stage.width / 2, stage.y + stage.height / 2);
 await page.waitForTimeout(200);
@@ -122,7 +122,7 @@ await page.waitForTimeout(200);
 check('short press does not unlock', (await page.locator('[data-testid=lock-button]').getAttribute('data-locked')) === 'true');
 await longPress('[data-testid=lock-button]', 950);
 check('long press unlocks', (await page.locator('[data-testid=lock-button]').getAttribute('data-locked')) === 'false');
-check('toolbar buttons back', (await page.getByRole('button', { name: 'Zoom in' }).count()) === 1);
+check('toolbar buttons back', (await page.locator('[data-testid=zoom-button]').count()) === 1);
 
 // --- metronome only ---
 await longPress('[data-testid=metronome-button]', 750);

@@ -112,5 +112,7 @@
     "solo": "Solo {{name}}",
     "soloShort": "S",
     "setlistNote": "In this setlist, the mix is kept for this piece only."
-  }
+  },
+  "zoom": "Zoom",
+  "zoomValue": "{{percent}} %"
 }

@@ -124,13 +124,17 @@ check('rendering pages above does not move the reading position', after !== unde
 // --- zoom: relayout keeping the first measure on screen ---
 await page.waitForTimeout(400); // the view reports the first measure on screen once the scroll settles
 const anchor = await topMeasure();
-await page.getByRole('button', { name: 'Zoom in' }).click();
+await page.locator('[data-testid=zoom-button]').click();
+await page.locator('[data-testid=zoom-in]').click();
+await page.keyboard.press('Escape');
 await page.waitForTimeout(2500);
 await waitContinuous();
 const zoomed = await offsetOf(anchor.id);
 check('zoom keeps the position', zoomed !== undefined && zoomed > -0.05 && zoomed < 0.3, `measure ${anchor.id} at ${zoomed?.toFixed(3)} of the screen`);
 await page.screenshot({ path: `${shots}/continuous-zoomed.png` });
-await page.getByRole('button', { name: 'Automatic zoom' }).click();
+await page.locator('[data-testid=zoom-button]').click();
+await page.locator('[data-testid=zoom-auto]').click();
+await page.keyboard.press('Escape');
 await page.waitForTimeout(2500);
 await waitContinuous();
 
