@@ -68,7 +68,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | Projet | Rôle | Licence |
 |---|---|---|
 | [Capacitor](https://github.com/ionic-team/capacitor) (`@capacitor/core`, `@capacitor/android`, `@capacitor/cli`) | Coquille native Android | MIT |
-| [Capacitor plugins](https://github.com/ionic-team/capacitor-plugins) (`@capacitor/app`, `@capacitor/preferences`) | Cycle de vie de l'appli, « Ouvrir avec », préférences | MIT |
+| [Capacitor plugins](https://github.com/ionic-team/capacitor-plugins) (`@capacitor/app`, `@capacitor/preferences`, `@capacitor/screen-orientation`) | Cycle de vie de l'appli, « Ouvrir avec », préférences, verrouillage de l'orientation | MIT |
 | [Capacitor Filesystem](https://github.com/ionic-team/capacitor-filesystem) | Stockage des partitions sur l'appareil | MIT |
 | [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |
 | [Keep Awake](https://github.com/capacitor-community/keep-awake) | Écran toujours allumé | MIT |
@@ -91,6 +91,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [TypeScript](https://github.com/microsoft/TypeScript) | Langage | Apache-2.0 |
 | [Vitest](https://github.com/vitest-dev/vitest) | Tests unitaires | MIT |
 | [Playwright](https://github.com/microsoft/playwright) | Tests de bout en bout (Chromium headless) | Apache-2.0 |
+| [axe-core](https://github.com/dequelabs/axe-core) | Contrôle d'accessibilité automatique (e2e `accessibility.mjs`) | MPL-2.0 |
 | [ESLint](https://github.com/eslint/eslint), [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint), [eslint-plugin-react-hooks](https://github.com/facebook/react), [eslint-plugin-i18next](https://github.com/edvardchen/eslint-plugin-i18next), [globals](https://github.com/sindresorhus/globals) | Analyse du code (dont la règle « pas de texte en dur ») | MIT / ISC |
 | [@xmldom/xmldom](https://github.com/xmldom/xmldom), [jsdom](https://github.com/jsdom/jsdom) | DOM XML/HTML pour les tests sous Node | MIT |
 | [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) (`@types/*`) | Types TypeScript | MIT |
@@ -148,6 +149,8 @@ node e2e/setlists.mjs "$PWD" /tmp/shots      # setlists, morceau suivant, pré-c
 node e2e/profile.mjs "$PWD" /tmp/shots       # profil « My instrument »
 node e2e/settings.mjs "$PWD" /tmp/shots      # couleurs de partition
 node e2e/i18n-fr.mjs "$PWD" /tmp/shots       # interface en français, langue, notation des notes, débordements
+node e2e/display-settings.mjs "$PWD" /tmp/shots  # police, numéros de mesure, titre, zones de tap, animation, métronome par défaut
+node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clair + sombre, cibles ≥ 48 px, noms des boutons
 ```
 
 | Dossier | Contenu |

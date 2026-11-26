@@ -24,6 +24,7 @@ Un **lecteur de partitions MuseScore pour musiciens en répétition**. Il ne ser
 4. **Réglages mémorisés par partition** : on rouvre la partition comme on l'a laissée (instruments, transposition, zoom, page, mode d'affichage, tempo, métronome).
 5. **Interface qui s'efface** : un tap au centre masque les barres d'outils et la partition occupe tout l'écran. ✏️ Pas de masquage automatique après quelques secondes : on a préféré un geste explicite (une barre qui disparaît seule gêne quand on cherche un bouton).
 6. **Mise en page adaptée à l'écran** : la musique est toujours remise en page pour l'écran de l'appareil. On ne reproduit pas les sauts de page du fichier d'origine (ADR-002).
+7. **Accessibilité** ✅ : cibles tactiles d'au moins 48 px, boutons à icône nommés (anglais et français), éléments de liste lus en entier par les lecteurs d'écran (bibliothèque : titre, compositeur, instruments, durée), bouton « ⋮ plus d'actions » qui reprend les options par balayage (inaccessibles au lecteur d'écran et au clavier), contraste suffisant en thème clair et sombre, animations coupées si le système le demande. Vérifié automatiquement par axe-core (e2e `accessibility.mjs`) ; ⬜ essai avec TalkBack.
 
 ## 2. Formats pris en charge
 
@@ -115,7 +116,7 @@ Options de navigation :
 - ⬜ **Deux pages côte à côte** sur tablette en paysage (phase 3).
 - ✅ **Pédalier Bluetooth / clavier** : la plupart des pédaliers envoient des touches clavier (flèches, Page suivante/précédente, Espace, Entrée). Les touches sont configurables dans les paramètres (voir §3.4). ⚠️ Jamais essayé avec un vrai pédalier.
 - ✅ **Aller à la mesure n°** (numéro imprimé, ou rang) ou à une **marque de répétition** (A, B, C…). Le prochain ▶ part de cette mesure.
-- ✏️ Pas d'animation de tournage (tournage instantané) ; en mode Continu, « suivant » fait un défilement doux.
+- ✅ **Animation de tournage** (paramètre) : aucune, glissement (par défaut) ou fondu, 140 ms, désactivée quand le système demande de réduire les animations ; en mode Continu, « suivant » fait un défilement doux.
 
 #### 3.2.3 Zoom
 - ✅ **Pincement** à deux doigts, boutons `−` / `+` (pas de 15 %) et « zoom automatique » (dépend du nombre de portées affichées). ⬜ Préréglages 75 %…200 %.
@@ -140,7 +141,7 @@ Options de navigation :
 - ✅ **Surlignage de la mesure courante** (option, en couleur).
 - **Comportement** :
   - ✅ mode **Continu** : défilement doux qui garde le **système en cours à la ligne de lecture** (réglable, 33 % depuis le haut par défaut) et avance progressivement vers le système suivant ; pas de saccade au changement de système ; si l'utilisateur fait défiler au doigt, le suivi s'interrompt un instant ;
-  - ✅ mode **Pages** : la page tourne quand la moitié de la dernière mesure de la page est jouée. ⬜ Avance réglable de N mesures ;
+  - ✅ mode **Pages** : par défaut, la page tourne quand la moitié de la dernière mesure de la page est jouée ; **avance réglable** : la page tourne quand la mesure en cours est à N mesures (0–4) de la fin de la page (0 = au début de la page suivante). Un retour en arrière (reprise) n'est jamais anticipé de plus d'une demi-mesure ;
   - ✅ lors d'une reprise, l'affichage **revient en arrière** immédiatement (page précédente, ou saut en mode Continu).
 - ✅ **Toucher l'écran pendant la lecture** met en pause (option). ✏️ Un nouveau tap ne relance pas : on relance avec ▶ (évite les départs accidentels).
 - ✅ Pause automatique quand l'application passe en arrière-plan.
@@ -149,7 +150,7 @@ Options de navigation :
 
 #### 3.2.6 Métronome (optionnel)
 - ✅ Bouton **métronome** dans la barre de navigation : un tap active ou coupe le clic pendant le défilement (désactivé par défaut, état mémorisé par partition). Touche dédiée au pédalier.
-- ✅ **Son** : clic court généré par l'application, **accent sur le premier temps**. Volume réglable. ⬜ Accent désactivable, son coupé (visuel seul) : phase 3.
+- ✅ **Son** : clic court généré par l'application, **accent sur le premier temps** (désactivable). Volume réglable. Actif ou non pour les nouvelles partitions (paramètre). ⬜ Son coupé (visuel seul).
 - ✅ **Visuel** : un point clignote à chaque temps (rouge = premier temps).
 - ✅ **Tempo** : il suit le tempo de la partition, ses **changements de tempo et de métrique**, et le facteur de tempo.
 - **Deux usages** :
@@ -169,7 +170,7 @@ Options de navigation :
 - ✅ **Écran toujours allumé** tant que la partition est ouverte (option, activée par défaut).
 - ✅ **Thème de la partition** : clair, sépia, sombre, contraste élevé, dans les paramètres. ✏️ Pas de réglage rapide dans la visualisation.
 - ✅ **Infos** : titre dans la barre ; les autres informations sont dans la bibliothèque.
-- ✅ **Orientation** : suit l'appareil (nouvelle mise en page à la rotation). ⬜ Verrouillage de l'orientation (phase 3).
+- ✅ **Orientation** : suit l'appareil (nouvelle mise en page à la rotation) ou verrouillée en portrait / paysage (paramètre, Android).
 
 ### 3.3 Onglet Setlists (dans la Bibliothèque)
 
@@ -197,27 +198,29 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | | Noms d'instruments | auto (masqués si une seule partie) / complets / masqués | auto | ✅ ✏️ pas d'« abrégés » |
 | | Silences multi-mesures regroupés (vue filtrée) | oui / non | oui | ✅ |
 | | Zoom par défaut (première ouverture) | 50–200 % du zoom automatique | 100 % (le zoom automatique dépend du nombre de portées) | ✅ |
-| | Police musicale | Leipzig / Bravura / Leland | Leipzig | ⬜ (phase 3) |
+| | Police musicale | Leipzig / Bravura / Leland (incluses dans Verovio) | Leipzig | ✅ |
 | | Notation des notes | anglaise / latine / allemande | selon la langue | ✅ |
-| | Numéros de mesure | aucun / début de système / toutes / toutes les 5 | début de système (rendu Verovio) | ⬜ (phase 3) |
-| | Afficher titre et en-têtes | oui / non | — | ✏️ toujours masqués (gain de place) |
+| | Numéros de mesure | aucun / début de ligne / toutes / toutes les 5 | début de ligne | ✅ |
+| | Afficher le titre (titre et compositeur au-dessus de la première page) | oui / non | oui | ✅ |
 | **Navigation** | Mode d'affichage des nouvelles partitions | Pages / Continu | Pages | ✅ |
-| | Zones de tap pour tourner les pages | oui / non | oui (tiers de l'écran) | ✅ ⬜ largeur réglable |
+| | Zones de tap pour tourner les pages | oui / non ; largeur 20–45 % de l'écran | oui, 33 % | ✅ |
 | | Balayage pour tourner | oui / non | oui | ✅ |
 | | Demi-page | oui / non | non | ✅ |
 | | Deux pages en paysage (tablette) | oui / non | oui | ⬜ (phase 3) |
-| | Animation de tournage | aucune / glissement / fondu | — | ✏️ aucune |
+| | Animation de tournage | aucune / glissement / fondu (140 ms, aucune si « réduire les animations ») | glissement | ✅ |
 | **Pédalier / clavier** | Touches de chaque action : page suivante, page précédente, lecture/pause, **métronome**, **morceau suivant**, **morceau précédent** (capture « Press your pedal… », ajouter ou remplacer ; une touche n'appartient qu'à une action) | codes de touches | suivante : →, ↓, PgDn, Espace, Entrée ; précédente : ←, ↑, PgUp, Retour arrière ; lecture : P, touche média ; métronome : M ; morceaux : touches média piste suivante/précédente | ✅ + « restaurer les touches par défaut » |
 | **Défilement auto** | Hauteur de la ligne de lecture (mode Continu) | 10–60 % | 33 % | ✅ |
 | | Décompte | 0 / 1 / 2 mesures | 1 | ✅ |
 | | Clic sonore du décompte (même métronome coupé) | oui / non | oui | ✅ |
 | | Surligner la mesure courante | oui / non | oui | ✅ |
 | | Toucher = pause | oui / non | oui | ✅ |
-| | Avance de tournage (mode Pages) | 0–4 mesures | — | ⬜ (tournage à mi-dernière mesure) |
+| | Avance de tournage (mode Pages) | mi-dernière mesure / 0–4 mesures avant la fin | mi-dernière mesure | ✅ |
 | **Métronome** | Volume | 0–100 % | 70 % | ✅ |
-| | Activé par défaut, son on/off, accent, indicateur visuel | | | ⬜ (phase 3) |
+| | Activé pour les nouvelles partitions | oui / non | non | ✅ |
+| | Accent sur le premier temps | oui / non | oui | ✅ |
+| | Son coupé (visuel seul) | | | ⬜ |
 | **Système** | Écran toujours allumé | oui / non | oui | ✅ |
-| | Verrouiller l'orientation | non / portrait / paysage | non | ⬜ (phase 3) |
+| | Orientation de l'écran | suivre l'appareil / portrait / paysage | suivre l'appareil | ✅ (Android) |
 | | Langue | système / English / Français… | système | ✅ |
 | | Réinitialiser les paramètres | | | ✅ |
 | **Stockage** | Espace utilisé (partitions, cache de rendu), vider le cache de rendu | | | ✅ |
