@@ -172,14 +172,14 @@
     "label": "Largeur des zones de toucher : {{percent}} % de l’écran"
   },
   "pageTurnAnimation": {
-    "label": "Animation du tournage de page",
+    "label": "Animation des pages",
     "none": "Aucune",
     "slide": "Glissement",
     "fade": "Fondu"
   },
   "turnLookahead": {
     "label": "Défilement auto : tourner la page",
-    "half": "Au milieu de la dernière mesure",
+    "half": "Mi-dernière mesure",
     "end": "À la fin de la page",
     "bars_one": "{{count}} mesure avant la fin",
     "bars_other": "{{count}} mesures avant la fin"

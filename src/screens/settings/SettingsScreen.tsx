@@ -142,6 +142,7 @@ export function SettingsScreen() {
           <IonItem>
             <IonSelect
               label={t('pageTurnAnimation.label')}
+              labelPlacement="stacked"
               interface="popover"
               value={settings.pageTurnAnimation}
               data-testid="page-turn-animation"
@@ -194,6 +195,7 @@ export function SettingsScreen() {
           <IonItem>
             <IonSelect
               label={t('turnLookahead.label')}
+              labelPlacement="stacked"
               interface="popover"
               value={settings.turnLookahead}
               data-testid="turn-lookahead"
