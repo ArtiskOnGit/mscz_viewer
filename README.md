@@ -13,7 +13,8 @@
 - 🔍 **Zoomer** (pincement ou boutons, nouvelle mise en page). Le zoom est mémorisé pour chaque partition.
 - ♯♭ **Transposer** (demi-tons, octave, préréglages Si♭/Mi♭/Fa, hauteur réelle, choix ♯/♭ pour les tonalités enharmoniques).
 - ▶️ **Faire défiler automatiquement** au tempo de la partition, avec les changements de tempo et les **reprises**, un facteur de tempo (50–150 %), un décompte et le surlignage de la mesure en cours ; départ depuis la page affichée, une mesure choisie (« aller à ») ou **touchée** (appui long).
-- 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul »). La partition elle-même n'est jamais jouée en audio.
+- 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul »).
+- 🔊 **Entendre la partition** pendant le défilement (instruments General MIDI synthétisés, hors ligne), parfaitement calée sur le défilement (tempo 50–150 %, reprises, décompte, départ depuis une mesure), avec un **mixeur** : volume, muet et solo par partie, volume général, raccourcis « Tous / Moi seul / Sans moi » (profil « My instrument ») ; mémorisé par partition et par morceau de setlist.
 - 🧭 **Aller à une mesure** ou à une **marque de répétition** ; **mode verrouillé** contre les touchers accidentels.
 - 🦶 **Pédalier Bluetooth / clavier** : touches configurables pour page suivante/précédente, lecture/pause, métronome, morceau suivant/précédent.
 - 📋 **Setlists** : préparer le programme d'une répétition ou d'un concert (instruments et transposition par morceau), puis enchaîner les morceaux ; le morceau suivant est pré-chargé.
@@ -33,7 +34,7 @@
 | Lecture des fichiers | **[webmscore](https://github.com/LibreScore/webmscore)** (MuseScore 4.0 compilé en WASM, GPL) | Seul moteur libre qui lit fidèlement le format MuseScore. Utilisé **uniquement à l'import** (y compris pour le MusicXML) pour produire MusicXML, métadonnées et timeline |
 | Rendu | **[Verovio](https://www.verovio.org)** 6.4 (LGPL-3.0), dans un Web Worker | Mise en page adaptée à l'écran, transposition, projet très actif |
 | Stockage | Fichiers locaux + index JSON ; cache disque des pages rendues (LRU) | Simple, hors ligne ; réouverture rapide des gros conducteurs |
-| Défilement et métronome | Horloge commune sur Web Audio (sons générés, aucun fichier audio) | Précis, léger, toujours synchronisés |
+| Défilement, métronome et son | Horloge commune sur Web Audio ; son de la partition : MIDI produit à l'import (webmscore) joué par **[spessasynth](https://github.com/spessasus/spessasynth_lib)** (AudioWorklet) avec la banque **FluidR3Mono GM** (14,6 Mo), chargés seulement si on active le son | Précis, toujours synchronisés, hors ligne |
 | i18n | i18next + react-i18next, anglais de référence, français | Traductions faciles à ajouter ; notation des notes C D E / Do Ré Mi / C D E H |
 
 Détails et justification : voir la documentation ci-dessous.
@@ -62,6 +63,13 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [webmscore](https://github.com/LibreScore/webmscore) (fork de [MuseScore](https://github.com/musescore/MuseScore)) | Lecture des `.mscz`/`.mscx`/MusicXML à l'import (MuseScore compilé en WebAssembly) | GPL-3.0 |
 | [Verovio](https://github.com/rism-digital/verovio) | Rendu des partitions en SVG, transposition, mise en page adaptée à l'écran | LGPL-3.0 |
 | [Leipzig](https://github.com/rism-digital/leipzig) | Police musicale SMuFL utilisée par Verovio | SIL OFL 1.1 |
+
+### Son de la partition (ADR-026)
+
+| Projet | Rôle | Licence |
+|---|---|---|
+| [spessasynth_lib](https://github.com/spessasus/spessasynth_lib) / [spessasynth_core](https://github.com/spessasus/spessasynth_core) | Synthétiseur SoundFont (SF2/SF3) dans un AudioWorklet | Apache-2.0 |
+| [FluidR3Mono_GM.sf3](https://github.com/musescore/MuseScore/tree/v2.3.2/share/sound) (FluidR3 de Frank Wen, version mono de Michael Cowgill, distribuée par MuseScore) | Banque de sons General MIDI (14,6 Mo, téléchargée par `scripts/fetch-soundfont.mjs` ; licence dans `public/soundfonts/FluidR3Mono_License.md`) | MIT |
 
 ### Application
 
@@ -129,6 +137,8 @@ Prérequis : Node.js ≥ 22 (la CI utilise Node 24). Le SDK Android n'est **pas*
 
 ```bash
 npm install            # copie aussi les fichiers de webmscore dans public/ (scripts/copy-webmscore.mjs)
+                       # et télécharge la banque de sons dans public/soundfonts/ (scripts/fetch-soundfont.mjs ;
+                       # hors ligne : SOUNDFONT_FILE=/chemin/FluidR3Mono_GM.sf3 node scripts/fetch-soundfont.mjs)
 npm run dev            # application dans le navigateur (http://localhost:5173)
 npm test               # tests unitaires (Vitest)
 npm run lint           # ESLint (dont la règle « pas de texte en dur », ADR-009)
@@ -153,16 +163,19 @@ node e2e/settings.mjs "$PWD" /tmp/shots      # couleurs de partition
 node e2e/i18n-fr.mjs "$PWD" /tmp/shots       # interface en français, langue, notation des notes, débordements
 node e2e/display-settings.mjs "$PWD" /tmp/shots  # police, numéros de mesure, titre, zones de tap, animation, métronome par défaut
 node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clair + sombre, cibles ≥ 48 px, noms des boutons
+node e2e/audio.mjs "$PWD" /tmp/shots        # son de la partition : chargement à la demande, mixeur, niveau de sortie, pause
+node e2e/pickbar.mjs "$PWD" /tmp/shots      # appui long sur une mesure
+node e2e/performance.mjs "$PWD" /tmp/shots  # temps d'ouverture, cache de rendu, workers
 ```
 
 | Dossier | Contenu |
 |---|---|
 | `src/app/` | Coquille de l'application, routes, thème, licences tierces |
 | `src/screens/library/` | Bibliothèque (liste, import, informations) |
-| `src/screens/viewer/` | Visualisation : pages, mode Continu (`ContinuousView`), gestes, défilement auto, modales (instruments, transposition, aller à) |
+| `src/screens/viewer/` | Visualisation : pages, mode Continu (`ContinuousView`), gestes, défilement auto, son et mixeur (`useScoreAudio`, `MixerModal`), modales (instruments, transposition, aller à, tempo) |
 | `src/screens/setlists/` | Onglet et détail des setlists, mode « Play », pré-chargement du morceau suivant |
 | `src/screens/settings/` | Paramètres, capture des touches du pédalier |
-| `src/core/` | Logique sans interface, testée : `import/`, `musicxml/`, `render/`, `timeline/`, `playback/`, `navigation/`, `music/`, `setlists/`, `profile/`, `storage/` |
+| `src/core/` | Logique sans interface, testée : `import/`, `musicxml/`, `render/`, `timeline/`, `playback/`, `audio/` (MIDI, synthé, mixeur), `navigation/`, `music/`, `setlists/`, `profile/`, `storage/` |
 | `src/state/` | Stores Zustand (bibliothèque, setlists, paramètres) |
 | `src/i18n/` | Traductions (`locales/en` = référence, `locales/fr`) |
 | `e2e/` | Scripts de bout en bout (Playwright) |

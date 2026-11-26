@@ -134,7 +134,7 @@ Options de navigation :
 #### 3.2.5 Défilement automatique au tempo
 - ✅ Bouton **▶ / ⏸** (aussi au pédalier : touche « lecture/pause »). ✏️ Pas d'appui long au pédalier.
 - ✅ Le tempo vient du fichier MuseScore : indications et **changements de tempo**, **reprises, voltas, D.C., D.S., Coda dépliées** dans l'ordre de jeu.
-- ✅ **Facteur de tempo** de 50 % à 150 % par pas de 5 %, réglable **pendant** la lecture, mémorisé par partition. ⬜ Saisie directe d'un BPM.
+- ✅ **Facteur de tempo** de 50 % à 150 % par pas de 5 %, réglable **pendant** la lecture, mémorisé par partition. Sur téléphone en portrait, toucher la valeur du tempo ouvre une petite fenêtre (−/+, curseur, retour à 100 %) ; sur un écran plus large, −/+ restent à côté de la valeur. ⬜ Saisie directe d'un BPM.
 - ✅ **Décompte** (count-in) : 0, 1 ou 2 mesures, visuel (« Count-in… ») et sonore si activé.
 - ✅ **Départ depuis** : la page affichée (mode Pages), la première mesure à l'écran (mode Continu), la position de pause si elle est encore à l'écran, la mesure choisie avec « Aller à », ou une **mesure touchée**.
 - ✅ **Mesure touchée** : un **appui long** (0,5 s) sur une mesure, en mode Pages comme en mode Continu, la sélectionne (mesure en bleu, message « ▶ partira de la mesure N ») ; le ▶ suivant part de cette mesure (sa première occurrence à partir de la position courante dans l'ordre de jeu, sinon la dernière avant : 2e passage d'une reprise). Pendant la lecture, l'appui long relance immédiatement depuis la mesure touchée. Un nouvel appui long sur la même mesure annule le choix. Les taps courts gardent leur rôle (zones de tap) ; rien en mode verrouillé. *(À essayer sur téléphone.)*
@@ -146,7 +146,7 @@ Options de navigation :
 - ✅ **Toucher l'écran pendant la lecture** met en pause (option). ✏️ Un nouveau tap ne relance pas : on relance avec ▶ (évite les départs accidentels).
 - ✅ Pause automatique quand l'application passe en arrière-plan.
 - ⬜ *(phase 4)* **Boucle** sur une plage de mesures.
-- ✅ La partition n'est **jamais jouée** en audio (ADR-010). Seul le métronome produit un son.
+- ✅ **Son de la partition** (ADR-026, depuis le 2026-11-26 ; remplace « jamais jouée », ADR-010) : voir §3.2.6 bis.
 
 #### 3.2.6 Métronome (optionnel)
 - ✅ Bouton **métronome** dans la barre de navigation : un tap active ou coupe le clic pendant le défilement (désactivé par défaut, état mémorisé par partition). Touche dédiée au pédalier.
@@ -157,6 +157,14 @@ Options de navigation :
   - ✅ **synchronisé** avec le défilement automatique (démarre après le décompte, s'arrête avec la lecture) ;
   - ✅ **seul** (*metronome only*, **appui long** sur le bouton métronome) : bat au tempo de la partition depuis la première mesure de la page affichée, en suivant la timeline (changements de tempo compris), sans défilement ni surlignage, pendant qu'on tourne les pages à la main ; un tap l'arrête. ⬜ BPM saisi à la main (phase 4).
 - ⬜ *(phase 4)* Subdivisions et sons au choix.
+
+#### 3.2.6 bis Son de la partition et mixeur (ADR-026)
+- ✅ **Son** : pendant le défilement automatique, la partition est **jouée** (instruments General MIDI synthétisés à partir de la partition), calée sur le défilement : tempo et facteur de tempo, reprises, décompte (le son commence après), départ depuis une page, une mesure choisie ou touchée, pause qui coupe aussitôt. Le **métronome** peut jouer en même temps. Son coupé = défilement muet comme avant.
+- ✅ **Bouton haut-parleur** dans la barre du bas (si la partition a du son) : un **toucher** ouvre la feuille « Son » (la partition reste visible au-dessus) ; un **appui long** active ou coupe le son. Rien n'est chargé tant que le son n'a pas été activé (≈ 1 s la première fois, PC).
+- ✅ **Feuille « Son »** : interrupteur « Jouer la partition », **volume général**, **mixage rapide** « Tous », « Moi seul », « Sans moi » (d'après le profil « My instrument » ; message si le profil est vide ou ne correspond à aucune partie), puis **une ligne par partie** : nom, **muet**, **solo**, curseur de volume (0–100 %). Les réglages s'appliquent tout de suite, même pendant la lecture.
+- ✅ Son activé/coupé et mixage **mémorisés par partition** ; en setlist, le mixage est gardé **pour le morceau** (surcharge). Paramètres : son activé pour les nouvelles partitions, volume par défaut.
+- ✅ Le son est à la **hauteur réelle** (la transposition d'affichage ne le change pas).
+- ⬜ *(phase 4)* Banque de sons plus riche en option, réverbération réglable.
 
 #### 3.2.7 Navigation dans une setlist
 - ✅ Quand la partition est ouverte depuis une setlist, un bandeau indique « 2/6 · Next: titre » avec les boutons morceau précédent / suivant.
@@ -247,5 +255,4 @@ Les paramètres globaux servent de **valeurs par défaut** pour les partitions o
 - Compte en ligne, synchronisation dans le cloud, téléchargement depuis musescore.com.
 - Annotations à main levée : envisagées après la v1 (phase 4), comme un **calque** au-dessus de la partition, sans modifier le fichier.
 - Lecture de PDF ou d'images scannées.
-- **Lecture audio de la partition** (synthèse, accompagnement) : écartée (ADR-010).
 - **Mise en page d'origine** du fichier MuseScore : écartée au profit de la mise en page adaptée à l'écran (ADR-002).

@@ -30,6 +30,7 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | Workers | **Comlink** | Appels vers le worker Verovio |
 | Import | **webmscore 1.2.1** (MuseScore 4.0 en WASM) | **Tous les formats** (`.mscz`, `.mscx`, `.mxl`, `.musicxml`) → MusicXML + métadonnées + positions (ADR-017) |
 | Rendu | **Verovio 6.4.1** (`verovio/wasm` + `verovio/esm`) | MusicXML → SVG, transposition |
+| Son de la partition | **spessasynth_lib 4.4** (Apache-2.0, AudioWorklet) + banque **FluidR3Mono_GM.sf3** (MIT, 14,6 Mo) | MIDI de l'import joué sur l'horloge du défilement, mixeur par partie (ADR-026) |
 | ZIP | **fflate** | Miniature des `.mscz`, parties masquées (ADR-018), `.mxl` |
 | Coquille native | **Capacitor 8.6** | Android (iOS en phase 3) |
 | Fichiers | `@capacitor/filesystem` | Partitions dans l'espace privé (`Directory.Data`) |
@@ -60,7 +61,9 @@ Cibles : **Android 7.0+ (API 24, défaut de Capacitor 8)**, cible API 36 ; iOS 1
 │  Stores : libraryStore · setlistStore · settingsStore                     │
 │  Services : LibraryRepository · ViewStateRepository · SetlistRepository · │
 │             importScore · RenderService · PlaybackEngine (horloge Web     │
-│             Audio + clics) · gestes / pédalier (usePageGestures, keydown) │
+│             Audio + clics + notes MIDI) · gestes / pédalier               │
+│  AudioWorklet (chargé quand on active le son) : synthé spessasynth +      │
+│             banque SF3 (ADR-026), sur la même AudioContext                │
 └───────────────┬────────────────────────────────┬─────────────────────────┘
                 │ webmscore (worker interne)     │ Comlink
      ┌──────────▼───────────┐        ┌───────────▼────────────┐ ┌────────────────────────┐
@@ -82,13 +85,15 @@ mscz_viewer/
 ├── README.md, ROADMAP.md, docs/
 ├── .github/workflows/ci.yml     # lint, typecheck, tests, build web, APK de debug
 ├── scripts/copy-webmscore.mjs   # copie les fichiers de webmscore dans public/ (postinstall)
+├── scripts/fetch-soundfont.mjs  # télécharge la banque de sons dans public/soundfonts/ (postinstall, SHA-256)
 ├── src/
 │   ├── app/                     # App, routes, thème, licences tierces
 │   ├── screens/
 │   │   ├── library/             # LibraryScreen, ScoreItem, ScoreInfoModal, miniatures
 │   │   ├── setlists/            # SetlistsTab, SetlistDetailScreen, SetlistBar, useSetlistPlayback, preloadNext
 │   │   ├── viewer/              # ViewerScreen, ContinuousView, useScoreViewer, usePlayback, usePageGestures,
-│   │   │                        # useLongPress, PartsModal, TransposeModal, GoToModal, pieceData
+│   │   │                        # useLongPress, PartsModal, TransposeModal, GoToModal, pieceData,
+│   │   │                        # useScoreAudio, MixerModal, TempoPopover
 │   │   └── settings/            # SettingsScreen, PedalKeysSection, StorageSection
 │   ├── core/                    # logique sans interface, testée (Vitest)
 │   │   ├── model/               # types : Score, Part, Timeline, ScoreViewState, Setlist
@@ -98,6 +103,7 @@ mscz_viewer/
 │   │   ├── render/              # RenderService, render.worker.ts, options Verovio, transposeOption, cache disque (renderCache)
 │   │   ├── timeline/            # timeline depuis les positions webmscore, métriques
 │   │   ├── playback/            # PlaybackClock, clics du métronome, PlaybackEngine, table des mesures
+│   │   ├── audio/               # lecture MIDI (midiFile), pistes → parties, ordonnancement, MidiPlayer, synthé, mixeur
 │   │   ├── navigation/          # aller à, demi-page, touches du pédalier, mode Continu (fenêtre, lissage)
 │   │   ├── music/               # tonalités, transposition, préférence ♯/♭
 │   │   ├── setlists/            # réglages effectifs (surcharge d'entrée)
@@ -147,6 +153,7 @@ interface Part {
   instrumentId?: string;    // identifiant MuseScore (ex. "bb-trumpet")
   midiProgram?: number;
   hiddenInSource?: boolean; // masquée dans MuseScore : pas affichée par défaut
+  midiChannels?: number[];  // canaux de la partie dans score.mid (+ 16 × port ; batterie = 9), ADR-026
 }
 
 /** Ordre de jeu réel, reprises dépliées. */
@@ -167,7 +174,7 @@ interface SetlistItem {
   scoreId: ScoreId;
   note?: string;
   override?: Partial<Pick<ScoreViewState,
-    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference'>>;
+    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'mixer'>>;
 }
 
 /** Réglages mémorisés pour chaque partition (viewstates.json). */
@@ -184,12 +191,14 @@ interface ScoreViewState {
   lastMeasureIndex?: number;
   tempoFactor: number;      // 0.5 – 1.5
   metronomeEnabled: boolean;
+  soundEnabled?: boolean;   // son de la partition ; absent = réglage par défaut (ADR-026)
+  mixer?: MixerState;       // { master?: 0..1, parts: { [musicXmlId]: { volume, muted, solo } } }
 }
 ```
 
 ✏️ Écarts avec le modèle d'origine : pas de `arranger`, `keySignature`, `timeSignature` dans `Score` ; `Part` sans `staves` / `transposition` / `hasTab` / `hasDrums` (lus dans le MusicXML au besoin) ; pas de `bpm` / `beatOffsetsMs` dans la timeline (le métronome bat les temps de la métrique sur la durée de la mesure).
 
-**Paramètres globaux** (`AppSettings`, `src/core/settings.ts`, clé Preferences `settings`, fusionnés avec les valeurs par défaut au chargement) : `appTheme`, `scoreTheme`, `partNames`, `multiRests`, `tapZones`, `swipe`, `keepAwake`, `defaultZoom`, `countInMeasures`, `countInSound`, `metronomeVolume`, `highlightMeasure`, `tapPauses`, `myInstrument` (noms + identifiants d'instruments), `defaultTranspose`, `pedalKeys` (codes de touches par action : `next`, `prev`, `playPause`, `metronome`, `nextPiece`, `previousPiece`), `halfPageTurn`, `defaultLayoutMode`, `readingLine`.
+**Paramètres globaux** (`AppSettings`, `src/core/settings.ts`, clé Preferences `settings`, fusionnés avec les valeurs par défaut au chargement) : `appTheme`, `scoreTheme`, `partNames`, `multiRests`, `tapZones`, `swipe`, `keepAwake`, `defaultZoom`, `countInMeasures`, `countInSound`, `metronomeVolume`, `highlightMeasure`, `tapPauses`, `myInstrument` (noms + identifiants d'instruments), `defaultTranspose`, `pedalKeys` (codes de touches par action : `next`, `prev`, `playPause`, `metronome`, `nextPiece`, `previousPiece`), `halfPageTurn`, `defaultLayoutMode`, `readingLine`, `soundDefault`, `soundVolume` (ADR-026).
 
 ### 3.2 Stockage sur l'appareil
 
@@ -202,6 +211,7 @@ Directory.Data/
     ├── original.<ext>              # fichier d'origine (conservé pour le réimport)
     ├── score.musicxml              # MusicXML complet (sortie de l'import)
     ├── timeline.json
+    ├── score.mid                   # MIDI, reprises dépliées (son de la partition, ADR-026)
     └── thumbnail.png               # si présente dans le .mscz
 ```
 
@@ -226,8 +236,9 @@ webmscore n'est chargé qu'au premier import (script `webmscore.js` + fichiers `
 2. **Empreinte** SHA-256 (WebCrypto) → un fichier identique n'est pas réimporté.
 3. **Détection du format** : extension + signature (`PK` = ZIP ; contenu `.mscx` → mscz, `META-INF/container.xml` → mxl).
 4. **Parties masquées** (mscz/mscx, ADR-018) : une copie du fichier rend visibles toutes les parties et portées ; les index des parties masquées sont mémorisés (`hiddenInSource`).
-5. **Conversion par webmscore** (tous les formats, ADR-017) : `WebMscore.load(format, bytes)` démarre **un worker neuf par fichier** (une erreur WASM rend l'instance inutilisable), puis `metadata()`, `saveXml()` (MusicXML complet), `savePositions(false)` (positions des mesures dans l'ordre de jeu, reprises dépliées). ⚠️ **Jamais `savePositions(true)`** (plante). `destroy()` termine le worker.
+5. **Conversion par webmscore** (tous les formats, ADR-017) : `WebMscore.load(format, bytes)` démarre **un worker neuf par fichier** (une erreur WASM rend l'instance inutilisable), puis `metadata()`, `saveXml()` (MusicXML complet), `savePositions(false)` (positions des mesures dans l'ordre de jeu, reprises dépliées), `saveMidi(true, true)` (MIDI, reprises dépliées, ADR-026 ; un échec n'empêche pas l'import : partition sans son). ⚠️ **Jamais `savePositions(true)`** (plante). `destroy()` termine le worker.
 6. **Timeline** : positions webmscore + **métrique de chaque mesure** lue dans le MusicXML.
+6 bis. **MIDI** (ADR-026) : lu par `core/audio/midiFile.ts` ; une piste par portée → canaux de chaque partie (`Part.midiChannels`, nombre de portées lu dans le MusicXML, repli sur les noms) ; `hasMidi` dans la partition. Spike S7 (`spikes/s7-midi/`) : écart MIDI/timeline ≤ 0,71 ms, sans dérive.
 7. **Métadonnées** : titre (textes d'exemple de MuseScore ignorés), compositeur, parties, mesures, durée, tempo initial, marques de répétition, version de MuseScore.
 8. **Miniature** : `Thumbnails/thumbnail.png` de l'archive (fflate).
 9. **Écriture** des fichiers puis de l'index.
@@ -270,7 +281,7 @@ Mesures `e2e/performance.mjs` (PC, Chromium headless, Pixel 7 émulé), avant �
 
 Workers : aucun après un import, aucun après avoir quitté la visualisation ou une setlist, au plus 2 pendant une setlist (vérifié par l'e2e).
 
-## 6. Défilement automatique et métronome
+## 6. Défilement automatique, métronome et son de la partition
 
 ### 6.1 Timeline
 
@@ -279,11 +290,11 @@ Workers : aucun après un import, aucun après avoir quitté la visualisation ou
 
 ### 6.2 Horloge partagée (`PlaybackClock`)
 
-Le défilement et le métronome lisent la **même horloge** : temps partition = temps écoulé × facteur de tempo + décalage ; changer le facteur recalcule le décalage, sans saut. Source de temps : `AudioContext.currentTime`.
+Le défilement, le métronome et le son de la partition lisent la **même horloge** : temps partition = temps écoulé × facteur de tempo + décalage ; changer le facteur recalcule le décalage, sans saut. Source de temps : `AudioContext.currentTime` d'une **AudioContext unique** pour l'application (`core/audio/audioContext.ts`, suspendue quand aucune visualisation ne l'utilise). `scoreMsAt(t)` donne la position à n'importe quel instant (horizon de l'ordonnanceur, latence).
 
 ### 6.3 Moteur (`PlaybackEngine`) et défilement
 
-- Chaque image (`requestAnimationFrame`) : événement courant de la timeline (recherche dichotomique) et progression dans la mesure → `onFrame(index, progression)`.
+- Chaque image (`requestAnimationFrame`) : événement courant de la timeline (recherche dichotomique) et progression dans la mesure → `onFrame(index, progression)`. La position affichée est celle **entendue** : `currentTime − (outputLatency + baseLatency)` (plafonné à 300 ms), pour le surlignage, le tournage et le clignotement du métronome.
 - **Mode Pages** : surlignage de la mesure courante ; la page tourne quand la moitié de la dernière mesure de la page est jouée ; saut arrière immédiat pour une reprise. ⬜ Avance de N mesures.
 - **Mode Continu** (ADR-019) : position cible = haut du système de la mesure courante, interpolé vers le système suivant selon (rang de la mesure dans le système + progression) / nombre de mesures du système ; `scrollTop` cible = cette hauteur − ligne de lecture × hauteur d'écran. Lissage par un **ressort à amortissement critique** (solution exacte sur le pas de temps : stable et sans oscillation à toute fréquence d'images ; retard ≈ 2v/ω, ω = 5 s⁻¹) ; saut immédiat si la cible recule de plus de 10 % d'écran (reprise) ou avance de plus de 75 % ; suivi suspendu 1,5 s après un défilement au doigt. Le surlignage est réappliqué quand la page de la mesure courante vient d'être rendue.
 - **Départ** : position de pause si elle est à l'écran, sinon première mesure de la page (Pages) ou première mesure à l'écran (Continu), ou mesure choisie par « Aller à ».
@@ -292,13 +303,23 @@ Le défilement et le métronome lisent la **même horloge** : temps partition = 
 
 ### 6.4 Métronome
 
-Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
 - **Son** : Web Audio, oscillateur court avec enveloppe, fréquence plus aiguë pour l'accent du premier temps. Aucun fichier audio.
 - **Ordonnancement** : « lookahead scheduler » (minuterie toutes les 25 ms qui programme les clics des 120 ms suivantes avec `osc.start(t)`). Jamais de son déclenché par `setTimeout`.
 - **Temps des clics** : calculés depuis la timeline (métrique de chaque mesure, reprises comprises) et le facteur de tempo.
 - **Métronome seul** : le même moteur suit la timeline depuis la première mesure de la page affichée, sans décompte, surlignage ni tournage.
 - **Indicateur visuel** : point clignotant à chaque temps.
-- ⬜ Compensation de latence (`outputLatency`), subdivisions, BPM saisi.
+- ✅ Compensation de la latence de sortie (côté affichage, voir §6.3). ⬜ Subdivisions, BPM saisi.
+
+### 6.5 Son de la partition (ADR-026, remplace ADR-010)
+
+- **Source** : `score.mid` produit à l'import (reprises dépliées : temps MIDI = temps de la timeline, écart mesuré ≤ 0,71 ms), lu par `midiFile.ts` (formats 0/1, carte des tempos, ports MIDI) en une liste d'événements datés en ms.
+- **Synthétiseur** (`core/audio/synth.ts`, seul fichier qui connaît spessasynth) : `WorkletSynthesizer` de spessasynth_lib sur l'AudioContext commune, banque `public/soundfonts/FluidR3Mono_GM.sf3`. **Chargement paresseux** au premier besoin (son activé, ou ▶ avec le son activé) : import dynamique du module, `audioWorklet.addModule` du processeur, banque téléchargée depuis les assets ; puis **préchargement** des échantillons utilisés par la partition (séquenceur de la bibliothèque chargé sans jouer). Un seul synthé pour l'application, libéré 60 s après la fermeture de la dernière visualisation. Échantillons décodés plafonnés à 96 Mo. Sortie : synthé → fondu (pause) → volume général → haut-parleur.
+- **Ordonnancement** (`MidiPlayer`, appelé par l'ordonnanceur du `PlaybackEngine` toutes les 25 ms) : événements des **200 ms suivantes** envoyés avec leur heure `clock.timeOf(ms)` (`sendMessage(…, { time })`, exécutés à l'échantillon près dans l'AudioWorklet). Facteur de tempo, reprises et décompte viennent de l'horloge (le son commence à la première mesure jouée). Note en retard de plus de 60 ms (fil principal bloqué) : sautée ; les autres messages sont envoyés tout de suite.
+- **Départ en cours de partition** (page, « aller à », appui long) : remise à zéro des contrôleurs puis rétablissement de l'état de chaque canal à cet instant (`chaseMessages` : sélection de banque et RPN dans l'ordre, programme, derniers contrôleurs, pitch bend) ; les notes commencées avant ne sont pas rejouées.
+- **Pause, saut, son coupé** : les messages déjà envoyés ne s'annulent pas ; la sortie est fondue à zéro en 20 ms (réverbération comprise), un « all notes off » + « all sound off » suit le dernier message envoyé, et la sortie reste fermée jusqu'au départ suivant, qui attend ce moment (`readyAt`).
+- **Mixeur** (`core/audio/mixer.ts`) : volume (courbe quadratique), muet, solo par partie → `gain` de chaque canal MIDI de la partie ; volume général sur un `GainNode`. Raccourcis « Tous / Moi seul / Sans moi » (muet/solo d'après « My instrument », volumes gardés). Mémorisé dans `ScoreViewState.mixer` (ou la surcharge du morceau en setlist) ; son activé/coupé dans `soundEnabled`.
+- **Interface** : bouton haut-parleur de la barre du bas (toucher = feuille « Son » : activer, volume, mixage rapide, une ligne par partie avec muet, solo et curseur ; appui long = son activé/coupé). Le métronome joue avec le son. Sur téléphone en portrait, −/+ du tempo passent dans une petite fenêtre ouverte depuis la valeur du tempo (place pour le bouton).
+- **Crochet de test** (serveur de développement seulement) : `window.__pupitreAudio` (niveau crête de la sortie du synthé, voix) pour l'e2e `audio.mjs`.
 
 ## 7. Entrées utilisateur
 
@@ -359,15 +380,16 @@ Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
 | webmscore (WASM + JS + données) | **~18 Mo** (mesuré en phase 0) |
 | Verovio (WASM intégré au JS) | **~8,4 Mo** (2,5 Mo gzip) |
 | Application (JS/CSS) | moins de 2 Mo |
-| **Total de l'application installée** | **environ 30 Mo** |
+| Son : banque FluidR3Mono_GM.sf3 + AudioWorklet spessasynth (ADR-026) | **~16,3 Mo** (banque 14,6 + AudioWorklet 0,84 + module chargé à la demande 0,86, 0,27 gzip) |
+| **Total de l'application installée** | **environ 46 Mo** |
 
-Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, terminé ensuite). Verovio : une instance par partition ouverte, plus une pour le morceau suivant en setlist. En mode Continu, le nombre de pages dans le DOM est borné. À surveiller sur téléphone : gros conducteurs (30 parties et plus), appareils modestes, et Android qui tue une application gourmande quand le sélecteur de fichiers passe au premier plan.
+Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, terminé ensuite). Verovio : une instance par partition ouverte, plus une pour le morceau suivant en setlist. En mode Continu, le nombre de pages dans le DOM est borné. Son (ADR-026) : rien tant qu'il n'est pas activé ; ensuite la banque compressée (14,6 Mo) et les échantillons décodés de la partition (plafond 96 Mo) dans l'AudioWorklet, libérés 60 s après la dernière visualisation. À surveiller sur téléphone : gros conducteurs (30 parties et plus), appareils modestes, et Android qui tue une application gourmande quand le sélecteur de fichiers passe au premier plan.
 
 ## 13. Qualité et tests
 
 - **Corpus** (`test-scores/`, non versionné, fichiers du porteur) : MuseScore 2.1, 3.6.2, 4.5.2, 4.6.2 ; reprises et voltas, nombreux changements de tempo et de métrique, marques de répétition, instruments transpositeurs, batterie, parties masquées. ⬜ À compléter : grilles d'accords, paroles, D.S. al Coda, piano, tablature.
-- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 195 tests) : filtrage MusicXML, silences multi-mesures, préparation du XML affiché en une passe, parties masquées, formats et import, « Ouvrir avec » et « Partager vers », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier, mesure touchée : identifiant SVG → mesure MusicXML → événement de départ, mesure sous le doigt), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, cache disque des pages (clé, LRU, effacement), réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes.
-- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français), `pickbar` (appui long sur une mesure, pages venant du cache disque), `performance` (temps d'ouverture des gros conducteurs, préparation du XML, Verovio, workers restants, Paramètres → Stockage ; affiche un résumé JSON). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
+- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 227 tests) : filtrage MusicXML, silences multi-mesures, préparation du XML affiché en une passe, parties masquées, formats et import, « Ouvrir avec » et « Partager vers », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier, mesure touchée : identifiant SVG → mesure MusicXML → événement de départ, mesure sous le doigt), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, cache disque des pages (clé, LRU, effacement), réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes ; son (ADR-026) : lecture des fichiers MIDI (carte des tempos, statut courant, ports), pistes → parties, rétablissement de l'état des canaux, ordonnancement sur l'horloge (facteur de tempo, notes en retard, silence), mixeur (volume, muet, solo, raccourcis), import avec MIDI.
+- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français), `pickbar` (appui long sur une mesure, pages venant du cache disque), `performance` (temps d'ouverture des gros conducteurs, préparation du XML, Verovio, workers restants, Paramètres → Stockage ; affiche un résumé JSON), `audio` (son activé à la demande, banque non chargée avant, mixeur muet/solo/raccourcis, niveau de sortie pendant la lecture, silence quand tout est muet, en pause ou son coupé, tempo 150 % avec métronome, mixeur mémorisé). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
 - ⬜ **Tests de non-régression visuels** (phase 3).
 - **Tests sur appareil** (manuels) : voir [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 

@@ -2,7 +2,7 @@
 
 Les estimations sont indicatives, pour un développeur seul sur son temps libre. Chaque phase se termine par une **version utilisable**.
 
-**Cadre validé** (voir [DECISIONS.md](docs/DECISIONS.md)) : **Android d'abord**, publication sur les stores à terme, licence **GPL-3.0**, **Capacitor + Ionic React + TypeScript**, interface **en anglais d'abord** et prête pour l'i18n, **mise en page adaptée à l'écran**, **pas de lecture audio** mais un **métronome optionnel**, **setlists dans la v1**, fichiers **MuseScore 3.0 à 4.x et plus**.
+**Cadre validé** (voir [DECISIONS.md](docs/DECISIONS.md)) : **Android d'abord**, publication sur les stores à terme, licence **GPL-3.0**, **Capacitor + Ionic React + TypeScript**, interface **en anglais d'abord** et prête pour l'i18n, **mise en page adaptée à l'écran**, **métronome optionnel** et, depuis le 2026-11-26, **lecture audio de la partition avec mixeur** (ADR-026, qui remplace « pas de lecture audio », ADR-010), **setlists dans la v1**, fichiers **MuseScore 3.0 à 4.x et plus**.
 
 Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ reporté
 
@@ -123,6 +123,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Deux pages côte à côte sur tablette en paysage.
 - 🟨 **Optimisation des performances** (ADR-025) : ✅ cache disque des pages rendues (clé = XML affiché + toutes les options Verovio, 64 Mo, LRU, « Vider le cache de rendu » dans Paramètres → Stockage) ; ✅ XML affiché préparé en une passe (≈ 190 → 70 ms) ; ✅ Verovio démarré pendant la lecture des fichiers ; ✅ workers terminés en quittant la visualisation ou la setlist (e2e `performance.mjs`). Réouverture de Toccata ≈ 2,9 → 0,85 s, première ouverture ≈ 3,6 → 2,8 s (PC). ⬜ Compiler le WASM de Verovio une seule fois (≈ 1 s par worker), mesures sur un appareil modeste.
 - ✅ **Accessibilité** (2026-11-26) : cibles tactiles ≥ 48 px (barres d'outils, listes, paramètres, visualisation), boutons à icône nommés en anglais et en français, éléments de liste lus en entier par les lecteurs d'écran (titre, compositeur, instruments, durée « 5 min 10 s »), bouton « plus d'actions » (les options par balayage sont inaccessibles au lecteur d'écran et au clavier), choix rapides d'instrument annoncés comme cases à cocher, contraste du thème sombre corrigé, contour de focus visible. Contrôle automatique : e2e `accessibility.mjs` (axe-core, WCAG 2.1 AA, thèmes clair et sombre ; échoue sur les violations graves). ⬜ À essayer avec TalkBack sur le téléphone.
+- ✅ **Lecture audio de la partition** (2026-11-26, ADR-026, remplace ADR-010) : fichier MIDI produit à l'import par webmscore (reprises dépliées ; écart avec la timeline < 1 ms, spike S7 ; réimport automatique des partitions existantes, `IMPORTER_VERSION` 3), synthétiseur **spessasynth** (Apache-2.0) dans un AudioWorklet et banque **FluidR3Mono GM** (MIT, 14,6 Mo), chargés seulement quand on active le son ; notes envoyées par l'ordonnanceur du défilement sur la **même horloge** (tempo 50–150 %, reprises, décompte, départ depuis une mesure, pause qui coupe aussitôt) ; position affichée décalée de la latence de sortie ; **mixeur** par partie (volume, muet, solo) + volume général, raccourcis « Tous / Moi seul / Sans moi » (profil « My instrument »), mémorisé par partition et par morceau de setlist ; bouton haut-parleur dans la barre du bas (appui long = son activé/coupé), réglages par défaut dans les paramètres ; le facteur de tempo passe dans une petite fenêtre sur téléphone en portrait (place libérée pour le bouton). e2e `audio.mjs`. ⬜ À essayer sur téléphone : latence et alignement, craquements, mémoire, temps de chargement.
 - ⬜ Tests de non-régression visuels sur le corpus.
 - 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône ✅ (logo 4, `scripts/generate-icons.mjs`) ; **APK de release signé** à faire (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
@@ -135,6 +136,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 ## Phase 4 — Évolutions (après la v1, par ordre de priorité indicatif)
 
 - ⬜ **Boucle** sur une plage de mesures (travail d'un passage).
+- ⬜ Audio : banque de sons plus riche en option (téléchargée à la demande, ADR-026), réverbération réglable, transposition du son (instrument transpositeur joué à la hauteur écrite), mixeur dans les combinaisons d'instruments.
 - ⬜ Métronome : subdivisions, choix des sons, calibration de la latence, BPM saisi en mode « métronome seul ».
 - ⬜ Étiquettes, dossiers, favoris.
 - ⬜ Setlists : séparateurs (« Intermission »), export/partage d'une setlist, saut direct à un morceau depuis la visualisation.
@@ -146,7 +148,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Mise à jour de webmscore sur un MuseScore récent, ou convertisseur `.mscx` maison (si des fichiers récents posent problème).
 - ⬜ Autres langues (via les contributions de traduction).
 
-**Écarté** : lecture audio de la partition (ADR-010), mise en page d'origine (ADR-002).
+**Écarté** : mise en page d'origine (ADR-002). *(La lecture audio, écartée par ADR-010, a été ajoutée le 2026-11-26 : ADR-026.)*
 
 ---
 
