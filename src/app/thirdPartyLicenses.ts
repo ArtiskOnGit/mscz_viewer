@@ -13,6 +13,7 @@ export const THIRD_PARTY = [
   { name: 'fflate', license: 'MIT', url: 'https://github.com/101arrowz/fflate' },
   { name: 'capacitor-file-picker (Capawesome)', license: 'Apache-2.0', url: 'https://github.com/capawesome-team/capacitor-plugins' },
   { name: 'capacitor-keep-awake', license: 'MIT', url: 'https://github.com/capacitor-community/keep-awake' },
+  { name: 'capacitor-share-target (Capgo)', license: 'MPL-2.0', url: 'https://github.com/Cap-go/capacitor-share-target' },
 ] as const;
 
 export const SOURCE_URL = 'https://github.com/ArtiskOnGit/mscz_viewer';

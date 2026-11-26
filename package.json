@@ -25,6 +25,7 @@
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/preferences": "^8.0.1",
     "@capawesome/capacitor-file-picker": "^8.1.1",
+    "@capgo/capacitor-share-target": "^8.0.68",
     "@ionic/react": "^9.0.13",
     "@ionic/react-router": "^9.0.13",
     "comlink": "^4.4.2",

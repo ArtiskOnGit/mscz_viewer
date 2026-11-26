@@ -10,7 +10,7 @@ import { add, settingsOutline } from 'ionicons/icons';
 import { routes } from '../../app/routes';
 import type { Score } from '../../core/model/types';
 import { onRestoredPick, pickScoreFiles } from '../../core/import/filePicker';
-import { onOpenWith } from '../../core/import/openWith';
+import { onOpenWith, onShareReceived } from '../../core/import/openWith';
 import type { ImportInput } from '../../core/import/importScore';
 import { useLibrary, type ImportReport } from '../../state/libraryStore';
 import { ScoreItem } from './ScoreItem';
@@ -66,18 +66,21 @@ export function LibraryScreen() {
   // Files picked right before Android restarted the app (see filePicker.ts).
   useEffect(() => onRestoredPick((inputs) => void runImport(inputs)), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // "Open with…" from another app: import, then open the score.
-  useEffect(
-    () =>
-      onOpenWith((input) =>
-        void importFiles([input]).then((report) => {
-          const score = report.imported[0] ?? report.duplicates[0];
-          if (score) navigate(routes.viewer(score.id));
-          else reportImport(report);
-        }),
-      ),
-    [], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  // "Open with…" / "Share to" from another app: import, then open the score (a single file) or report (several).
+  useEffect(() => {
+    const importAndOpen = (inputs: ImportInput[]) =>
+      void importFiles(inputs).then((report) => {
+        const score = inputs.length === 1 ? (report.imported[0] ?? report.duplicates[0]) : undefined;
+        if (score) navigate(routes.viewer(score.id));
+        else reportImport(report);
+      });
+    const offOpen = onOpenWith((input) => importAndOpen([input]));
+    const offShare = onShareReceived(importAndOpen);
+    return () => {
+      offOpen();
+      offShare();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visible = useMemo(() => {
     const q = query.trim().toLocaleLowerCase();
