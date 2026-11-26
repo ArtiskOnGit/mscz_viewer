@@ -36,7 +36,8 @@ Les deux moteurs choisis, **webmscore** et **Verovio**, sont disponibles en **We
 | Préférences | `@capacitor/preferences` | Paramètres globaux (clé `settings`) |
 | Sélecteur de fichiers | `@capawesome/capacitor-file-picker` | Import multi-fichiers |
 | Écran allumé | `@capacitor-community/keep-awake` | |
-| Ouvrir avec | `@capacitor/app` (`appUrlOpen`, URL de lancement) + `intent-filter` `VIEW` | ✏️ Pas de plugin « send-intent » : « Partager vers » ⬜ |
+| Ouvrir avec | `@capacitor/app` (`appUrlOpen`, URL de lancement) + `intent-filter` `VIEW` | |
+| Partager vers | `@capgo/capacitor-share-target` (MPL-2.0) + `intent-filter` `SEND` / `SEND_MULTIPLE` | Fichiers copiés dans le cache de l'application (ADR-024) |
 | Survie au sélecteur de fichiers | `@capacitor/app` (`appRestoredResult`) | Android peut tuer l'activité pendant le sélecteur (phase 0) |
 | i18n | **i18next 27** + **react-i18next** + `eslint-plugin-i18next` | EN (référence), FR |
 | Tests | **Vitest 5** (unitaires, environnement Node ; Verovio WASM chargé dans certains tests) + **Playwright** (scripts `e2e/`, Chromium headless) | |
@@ -88,13 +89,13 @@ mscz_viewer/
 │   │   ├── setlists/            # SetlistsTab, SetlistDetailScreen, SetlistBar, useSetlistPlayback, preloadNext
 │   │   ├── viewer/              # ViewerScreen, ContinuousView, useScoreViewer, usePlayback, usePageGestures,
 │   │   │                        # useLongPress, PartsModal, TransposeModal, GoToModal, pieceData
-│   │   └── settings/            # SettingsScreen, PedalKeysSection
+│   │   └── settings/            # SettingsScreen, PedalKeysSection, StorageSection
 │   ├── core/                    # logique sans interface, testée (Vitest)
 │   │   ├── model/               # types : Score, Part, Timeline, ScoreViewState, Setlist
 │   │   ├── storage/             # FileStore, LibraryRepository, ViewStateRepository, SetlistRepository
 │   │   ├── import/              # importScore (+ réimport), formats, webmscoreEngine, unhideParts, openWith
 │   │   ├── musicxml/            # filterParts (ADR-012), multiRests, prepareDisplay
-│   │   ├── render/              # RenderService, render.worker.ts, options Verovio, transposeOption
+│   │   ├── render/              # RenderService, render.worker.ts, options Verovio, transposeOption, cache disque (renderCache)
 │   │   ├── timeline/            # timeline depuis les positions webmscore, métriques
 │   │   ├── playback/            # PlaybackClock, clics du métronome, PlaybackEngine, table des mesures
 │   │   ├── navigation/          # aller à, demi-page, touches du pédalier, mode Continu (fenêtre, lissage)
@@ -205,7 +206,15 @@ Directory.Data/
 ```
 
 - Écritures d'index **atomiques** (fichier temporaire puis renommage), file d'attente d'écritures par dépôt.
-- ⬜ Cache disque des SVG (phase 3) : aujourd'hui, les pages rendues sont gardées **en mémoire** jusqu'à la mise en page suivante.
+- ✅ **Cache disque des pages rendues** (ADR-025) dans `Directory.Cache` (Android peut le vider ; il se reconstruit) :
+
+```
+Directory.Cache/render-cache/
+├── index.json                      # { [clé]: { bytes, lastUsed, pages } } — taille et LRU
+└── <clé>/                          # clé = SHA-256(XML affiché + options Verovio + versions)
+    ├── layout.json                 # nombre de pages, identifiants des mesures, page de chaque mesure
+    └── <n>.svg                     # pages déjà rendues
+```
 - Migrations : par `importerVersion` pour les partitions (réimport) et par fusion avec les valeurs par défaut pour les paramètres et les réglages de partition.
 - Passage à SQLite derrière les mêmes interfaces si le volume l'exige.
 
@@ -229,14 +238,16 @@ webmscore n'est chargé qu'au premier import (script `webmscore.js` + fichiers `
 
 Exécuté dans `render.worker.ts` (Verovio WASM, via Comlink). Une instance par partition ouverte, terminée à la fermeture.
 
-1. **XML affiché** (`prepareDisplay`, thread principal) :
+1. **XML affiché** (`prepareDisplay`, thread principal, **une seule analyse DOM** et au plus une sérialisation pour toutes les étapes, ADR-025) :
    - **filtrage des parties** : on retire les `<score-part>` / `<part>` non sélectionnés et les groupes vides, en **recopiant les indications système** (tempo, métronome, repères, sauts) vers la première partie conservée (ADR-012) ;
    - **silences multi-mesures** regroupés (`<multiple-rest>`), coupés aux repères, changements d'armure/métrique/tempo, reprises, voltas et doubles barres ; la table « mesure MusicXML → mesure rendue » en tient compte ;
    - **noms d'instruments** masqués pour une partie seule (option) ;
    - **tonalité** de la première partie affichée (et `<transpose><chromatic>` pour la hauteur réelle).
 2. **Options Verovio** (`verovioOptions`) : `scale` (zoom automatique selon le nombre de portées × zoom de la partition), `pageWidth` / `pageHeight` = zone d'affichage en unités Verovio, marges 40, `breaks: 'auto'` (ADR-002), `adjustPageHeight` **vrai en mode Continu** (ADR-019), `header` / `footer: 'none'`, `systemDivider: 'none'`, `svgViewBox`, `transpose`, `transposeToSoundingPitch` (hauteur réelle).
 3. **Transposition** (ADR-020) : quand la tonalité est connue, `transpose` reçoit un **intervalle** (`m2`, `-A1`, `M9`, `-d2`…) calculé à partir de la tonalité d'arrivée choisie (préférence auto/♯/♭) ; sinon un nombre de demi-tons. Comportement vérifié contre Verovio 6.4 dans les tests unitaires.
-4. `loadData(xml)` quand le contenu change (parties, transposition, options d'affichage) ; `redoLayout()` quand seule la géométrie change (taille, rotation, zoom, mode Pages/Continu). Après chaque mise en page : nombre de pages, identifiants des mesures (`getMEI()`), page de chaque mesure (`getPageWithElement`).
+4. `loadData(xml)` quand le contenu change (parties, transposition, options d'affichage) ; `redoLayout()` quand seule la géométrie change (taille, rotation, zoom, mode Pages/Continu). Après chaque mise en page : nombre de pages, identifiants des mesures (`getMEI()`), page de chaque mesure (`getPageWithElement`), en un seul aller-retour. Identifiants **déterministes** (`xmlIdSeed`) : une partition rechargée garde les mêmes.
+   - **Cache disque** (ADR-025) : avant Verovio, `RenderService` calcule la clé (SHA-256 du XML affiché, de l'objet d'options Verovio entier à clés triées, des versions de Verovio et de l'application) ; si la mise en page est en cache, elle et les pages en cache sont servies **sans charger la partition dans Verovio** ; le worker n'est mis à jour (chargement ou nouvelle mise en page) que pour une page absente ou un élément inconnu. Chaque page rendue est écrite en arrière-plan. 64 Mo au plus, éviction LRU ; Paramètres → Stockage montre l'espace utilisé et vide le cache.
+   - Le worker et Verovio (WASM, ≈ 1 s) **démarrent dès l'ouverture** de la visualisation, pendant la lecture des fichiers.
 5. **Rendu paresseux** :
    - mode **Pages** : page courante puis pré-rendu de n+1, n−1, n+2 ; cache en mémoire jusqu'à la mise en page suivante ;
    - mode **Continu** : pages empilées dans un défilement natif ; seules les pages proches de la position de lecture sont dans le DOM (4 rendues, 8 gardées), les autres sont des emplacements de hauteur mesurée ou estimée ; ancrage du défilement géré par la vue (`overflow-anchor: none`).
@@ -245,6 +256,19 @@ Exécuté dans `render.worker.ts` (Verovio WASM, via Comlink). Une instance par 
 **Thèmes** : le SVG est inséré dans le DOM ; Verovio dessine en `currentColor`, la couleur vient de variables CSS par thème de partition (`data-score-theme`).
 
 **Objectifs de performance** (téléphone milieu de gamme, à mesurer) : première page en moins de 1,5 s ; tournage de page pré-rendue en moins de 100 ms ; relayout après zoom en moins de 1 s pour une partie seule de 200 mesures. Mesures e2e (PC, Chromium) : ouverture du morceau suivant d'une setlist ≈ 1,5 s, ≈ 0,4 s pré-chargé.
+
+Mesures `e2e/performance.mjs` (PC, Chromium headless, Pixel 7 émulé), avant → après ADR-025 :
+
+| | Toccata (7 parties, 122 mesures, 1,6 Mo) | Medley (5 parties, 143 mesures, 1,2 Mo) |
+|---|---|---|
+| Préparation du XML (conducteur) | 191 → 67 ms | 209 → 69 ms |
+| Démarrage de Verovio (worker + WASM) | ≈ 1,1 s | ≈ 1,1 s |
+| Chargement + mise en page Verovio | ≈ 0,8 s | ≈ 0,5 s |
+| Nouvelle mise en page (zoom) | ≈ 0,35 s | ≈ 0,25 s |
+| Première ouverture (clic → 1re page) | 3,6 → 2,8 s | 3,0 → 2,1 s |
+| Réouverture (cache disque) | 2,9 → 0,84 s | 2,4 → 0,73 s |
+
+Workers : aucun après un import, aucun après avoir quitté la visualisation ou une setlist, au plus 2 pendant une setlist (vérifié par l'e2e).
 
 ## 6. Défilement automatique et métronome
 
@@ -278,8 +302,9 @@ Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
 
 ## 7. Entrées utilisateur
 
-- **Gestes** (`usePageGestures`, pointer events) : tap par zones (tiers gauche/droit = précédent/suivant, centre = barres d'outils), balayage horizontal, pincement (CSS `transform: scale` pendant le geste, nouvelle mise en page à la fin). En mode Continu, la zone de partition a `touch-action: pan-y` : le défilement vertical est natif, les taps, balayages horizontaux et pincements restent en JS (pincement à vérifier sur téléphone).
+- **Gestes** (`usePageGestures`, pointer events) : tap par zones (tiers gauche/droit = précédent/suivant, centre = barres d'outils), **appui long** (0,5 s sans bouger) = choisir la mesure de départ du défilement, balayage horizontal, pincement (CSS `transform: scale` pendant le geste, nouvelle mise en page à la fin). En mode Continu, la zone de partition a `touch-action: pan-y` : le défilement vertical est natif, les taps, balayages horizontaux et pincements restent en JS (pincement à vérifier sur téléphone).
 - **Appuis longs** (`useLongPress`) : 0,6 s sur le métronome = métronome seul ; 0,8 s sur le cadenas = déverrouillage.
+- **Appui long sur une mesure** (0,5 s, modes Pages et Continu, pas en mode verrouillé) : la mesure sous le doigt est l'élément `g.measure` sous le point (`elementsFromPoint` puis `closest`), sinon celle dont le rectangle contient le point ou la plus proche sur la même ligne (`boxAtPoint` ; en demi-page, seule la couche visible à cette hauteur). Son identifiant SVG donne la mesure rendue (`measureIds`), puis la première mesure MusicXML qu'elle dessine (`xmlToRendered`, silences multi-mesures compris : `xmlMeasureOfId`). L'événement de départ est sa première occurrence dans la timeline à partir de la position courante (événement joué, position de pause ou première mesure à l'écran), sinon la dernière avant (`eventOfMeasureFrom`). Le ▶ suivant part de là ; pendant la lecture, relance immédiate. Marque visuelle : règle CSS injectée pour l'identifiant choisi (elle s'applique aussi aux pages rendues plus tard en mode Continu).
 - **Clavier / pédalier** : écouteur `keydown` global sur la Visualisation (ignoré dans les champs de saisie et les modales), table `KeyboardEvent.code` → action configurable (`src/core/navigation/pedalKeys.ts`) :
 
 | Action | Touches par défaut |
@@ -297,8 +322,8 @@ Aucune lecture audio de la partition (ADR-010) ; le métronome est le seul son.
 
 | Besoin | Android (fait) | iOS (phase 3) |
 |---|---|---|
-| Ouvrir avec | ✅ `intent-filter` `ACTION_VIEW` (`content`/`file`, MIME `application/x-musescore`, MusicXML, `octet-stream`, `zip`, `xml`…) ; le contenu est vérifié avant l'import. ⚠️ Non essayé sur téléphone | `CFBundleDocumentTypes` + UTI |
-| Partager vers | ⬜ `ACTION_SEND` | Extension de partage |
+| Ouvrir avec | ✅ `intent-filter` `ACTION_VIEW` (`content`/`file`, MIME `application/x-musescore`, MusicXML, `octet-stream`, `zip`, `xml`…) ; le contenu est vérifié avant l'import. Validé sur téléphone (2026-11-26) | `CFBundleDocumentTypes` + UTI |
+| Partager vers | ✅ `intent-filter` `ACTION_SEND` / `ACTION_SEND_MULTIPLE` (mêmes MIME) + `@capgo/capacitor-share-target` : fichiers copiés dans le cache, lus, importés puis effacés ; démarrage à froid et à chaud (ADR-024). ⚠️ Non essayé sur téléphone | Extension de partage |
 | Écran allumé | ✅ plugin keep-awake | plugin |
 | Réseau | ✏️ La permission `INTERNET` est encore déclarée (défaut de Capacitor) ; l'application ne fait aucun appel réseau. ⬜ La retirer avant publication | Pas de réseau |
 | Stockage | Stockage interne de l'application | `Library/` ou `Documents/` |
@@ -341,8 +366,8 @@ Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, termin
 ## 13. Qualité et tests
 
 - **Corpus** (`test-scores/`, non versionné, fichiers du porteur) : MuseScore 2.1, 3.6.2, 4.5.2, 4.6.2 ; reprises et voltas, nombreux changements de tempo et de métrique, marques de répétition, instruments transpositeurs, batterie, parties masquées. ⬜ À compléter : grilles d'accords, paroles, D.S. al Coda, piano, tablature.
-- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 180 tests) : filtrage MusicXML, silences multi-mesures, parties masquées, formats et import, « Ouvrir avec », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes.
-- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
+- **Tests unitaires** (Vitest, `src/**/*.test.ts`, 195 tests) : filtrage MusicXML, silences multi-mesures, préparation du XML affiché en une passe, parties masquées, formats et import, « Ouvrir avec » et « Partager vers », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier, mesure touchée : identifiant SVG → mesure MusicXML → événement de départ, mesure sous le doigt), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, cache disque des pages (clé, LRU, effacement), réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes.
+- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français), `pickbar` (appui long sur une mesure, pages venant du cache disque), `performance` (temps d'ouverture des gros conducteurs, préparation du XML, Verovio, workers restants, Paramètres → Stockage ; affiche un résumé JSON). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
 - ⬜ **Tests de non-régression visuels** (phase 3).
 - **Tests sur appareil** (manuels) : voir [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 

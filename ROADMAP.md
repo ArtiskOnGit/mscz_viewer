@@ -113,14 +113,15 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 
 ## Phase 3 — v1.0 : finition, publication Android
 
-- ⬜ **Essais sur téléphone** : mode Continu ✅, « Ouvrir avec… », pédalier Bluetooth réel, temps d'import/d'ouverture, mémoire (pré-chargement, gros conducteurs), régularité du métronome.
+- ⬜ **Essais sur téléphone** : mode Continu ✅, « Ouvrir avec… » ✅, préférence ♯/♭ ✅ (2026-11-26) ; à faire : « Partager vers », appui long sur une mesure, cache de rendu, pédalier Bluetooth réel, temps d'import/d'ouverture, mémoire (pré-chargement, gros conducteurs), régularité du métronome.
 - ✅ **Traduction française** (première langue ajoutée, qui valide la chaîne i18n) : `locales/fr`, typographie française (espaces insécables, « guillemets »), pluriels selon les catégories de chaque langue (test de complétude adapté), réglage **Langue** (langue de l'appareil / English / Français) appliqué immédiatement et au démarrage (`<html lang>` compris), libellés trop longs raccourcis ou passés à la ligne (e2e `i18n-fr.mjs` : textes clés, débordements, captures).
 - ⬜ Ouverture d'une plateforme de traduction (Weblate ou Crowdin).
 - ✅ **Notation des notes** (automatique selon la langue / C D E / Do Ré Mi / C D E H avec B = Si♭) : tonalités et préréglages de transposition (« Instrument en Si♭ »), dans la fenêtre Transposition et les paramètres.
-- ⬜ Paramètres restants : police musicale, numéros de mesure, en-têtes, largeur des zones de tap, animation de tournage, avance de tournage, verrouillage de l'orientation, métronome actif par défaut / accent / indicateur visuel, stockage (espace utilisé).
-- ⬜ « Share to » (intent `SEND`) ; départ du défilement depuis une mesure touchée.
+- ⬜ Paramètres restants : police musicale, numéros de mesure, en-têtes, largeur des zones de tap, animation de tournage, avance de tournage, verrouillage de l'orientation, métronome actif par défaut / accent / indicateur visuel. Stockage ✅ (espace utilisé, vider le cache de rendu).
+- ✅ **« Partager vers »** (intents `SEND` / `SEND_MULTIPLE`, plugin `@capgo/capacitor-share-target`, ADR-024) : import de un ou plusieurs fichiers, ouverture s'il n'y en a qu'un ; démarrage à froid et à chaud. *(Build Gradle validé par la CI ; à essayer sur téléphone.)*
+- ✅ **Départ du défilement depuis une mesure touchée** : appui long (0,5 s) sur une mesure, en mode Pages et Continu (marque bleue, première occurrence à partir de la position courante ; relance immédiate pendant la lecture) ; e2e `pickbar.mjs`.
 - ⬜ Deux pages côte à côte sur tablette en paysage.
-- ⬜ Optimisation des performances (cache disque SVG, gros conducteurs, appareils modestes).
+- 🟨 **Optimisation des performances** (ADR-025) : ✅ cache disque des pages rendues (clé = XML affiché + toutes les options Verovio, 64 Mo, LRU, « Vider le cache de rendu » dans Paramètres → Stockage) ; ✅ XML affiché préparé en une passe (≈ 190 → 70 ms) ; ✅ Verovio démarré pendant la lecture des fichiers ; ✅ workers terminés en quittant la visualisation ou la setlist (e2e `performance.mjs`). Réouverture de Toccata ≈ 2,9 → 0,85 s, première ouverture ≈ 3,6 → 2,8 s (PC). ⬜ Compiler le WASM de Verovio une seule fois (≈ 1 s par worker), mesures sur un appareil modeste.
 - ⬜ Accessibilité (tailles des cibles tactiles, lecteurs d'écran pour la bibliothèque, les setlists et les paramètres).
 - ⬜ Tests de non-régression visuels sur le corpus.
 - 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône et **APK de release signé** à faire (clé de publication, GitHub Releases).

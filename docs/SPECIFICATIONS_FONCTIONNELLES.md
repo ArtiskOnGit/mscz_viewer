@@ -73,7 +73,8 @@ L'application a **trois écrans** principaux. La Bibliothèque a deux onglets, *
 
 **Import**
 - ✅ Depuis le bouton « Import » (sélecteur de fichiers : stockage local, Google Drive…).
-- 🟨 **« Ouvrir avec… »** (Android, intent `VIEW`) : la partition est importée puis ouverte. Fait, **pas encore essayé sur téléphone**. ⬜ « Partager vers… » (intent `SEND`, phase 3).
+- ✅ **« Ouvrir avec… »** (Android, intent `VIEW`) : la partition est importée puis ouverte. Validé sur téléphone le 2026-11-26.
+- ✅ **« Partager vers… »** (Android, intents `SEND` / `SEND_MULTIPLE`, depuis la messagerie, le mail, Drive…) : un fichier partagé est importé puis ouvert ; plusieurs fichiers sont importés, avec le bilan habituel (importés, doublons, erreurs). Mêmes types de fichiers que « Ouvrir avec… » (ADR-024). *(À essayer sur téléphone.)*
 - ✅ Progression (« Importing x (2/5)… ») et bilan (importées, déjà présentes, en échec). Un fichier en échec affiche un message clair avec un conseil (exporter en MusicXML depuis MuseScore).
 - ✅ **Doublons** : un fichier identique (même empreinte SHA-256) n'est pas réimporté. ⬜ « Même titre, contenu différent → Remplacer / Garder les deux » : pas fait (les deux sont gardés).
 - ✅ **Mise à jour automatique** : quand le pipeline d'import change, les partitions déjà importées sont réimportées depuis leur fichier d'origine au démarrage, avec un message de progression (ADR-018).
@@ -134,7 +135,8 @@ Options de navigation :
 - ✅ Le tempo vient du fichier MuseScore : indications et **changements de tempo**, **reprises, voltas, D.C., D.S., Coda dépliées** dans l'ordre de jeu.
 - ✅ **Facteur de tempo** de 50 % à 150 % par pas de 5 %, réglable **pendant** la lecture, mémorisé par partition. ⬜ Saisie directe d'un BPM.
 - ✅ **Décompte** (count-in) : 0, 1 ou 2 mesures, visuel (« Count-in… ») et sonore si activé.
-- ✅ **Départ depuis** : la page affichée (mode Pages), la première mesure à l'écran (mode Continu), la position de pause si elle est encore à l'écran, ou la mesure choisie avec « Aller à ». ⬜ Mesure touchée (phase 3).
+- ✅ **Départ depuis** : la page affichée (mode Pages), la première mesure à l'écran (mode Continu), la position de pause si elle est encore à l'écran, la mesure choisie avec « Aller à », ou une **mesure touchée**.
+- ✅ **Mesure touchée** : un **appui long** (0,5 s) sur une mesure, en mode Pages comme en mode Continu, la sélectionne (mesure en bleu, message « ▶ partira de la mesure N ») ; le ▶ suivant part de cette mesure (sa première occurrence à partir de la position courante dans l'ordre de jeu, sinon la dernière avant : 2e passage d'une reprise). Pendant la lecture, l'appui long relance immédiatement depuis la mesure touchée. Un nouvel appui long sur la même mesure annule le choix. Les taps courts gardent leur rôle (zones de tap) ; rien en mode verrouillé. *(À essayer sur téléphone.)*
 - ✅ **Surlignage de la mesure courante** (option, en couleur).
 - **Comportement** :
   - ✅ mode **Continu** : défilement doux qui garde le **système en cours à la ligne de lecture** (réglable, 33 % depuis le haut par défaut) et avance progressivement vers le système suivant ; pas de saccade au changement de système ; si l'utilisateur fait défiler au doigt, le suivi s'interrompt un instant ;
@@ -218,14 +220,15 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | | Verrouiller l'orientation | non / portrait / paysage | non | ⬜ (phase 3) |
 | | Langue | système / English / Français… | système | ✅ |
 | | Réinitialiser les paramètres | | | ✅ |
-| **Stockage** | Espace utilisé, vider le cache, export/import de la bibliothèque | | | ⬜ (phases 3–4) |
+| **Stockage** | Espace utilisé (partitions, cache de rendu), vider le cache de rendu | | | ✅ |
+| | Export/import de la bibliothèque | | | ⬜ (phase 4) |
 | **À propos** | Version, **licences open source** (GPL, Verovio, webmscore…), lien vers les sources, crédits, mention de marque MuseScore | | | ✅ |
 
 Les paramètres globaux servent de **valeurs par défaut** pour les partitions ouvertes pour la première fois. Les réglages faits dans l'écran Visualisation sont mémorisés **par partition** et l'emportent sur ces défauts.
 
 ## 4. Récits utilisateurs prioritaires (MVP)
 
-1. ✅ *En tant que* clarinettiste, *je veux* importer le `.mscz` reçu par e-mail *afin de* le lire à la répétition sans réseau. *(« Ouvrir avec » à essayer sur téléphone.)*
+1. ✅ *En tant que* clarinettiste, *je veux* importer le `.mscz` reçu par e-mail *afin de* le lire à la répétition sans réseau. *(« Ouvrir avec » validé sur téléphone ; « Partager vers » à essayer.)*
 2. ✅ *En tant que* musicien, *je veux* n'afficher que ma partie *afin d'*avoir une partition lisible sur un téléphone.
 3. 🟨 *En tant que* musicien, *je veux* tourner la page avec une pédale Bluetooth *afin de* garder les mains sur l'instrument. *(Fait ; vrai pédalier pas encore essayé.)*
 4. ✅ *En tant que* saxophoniste alto, *je veux* transposer une partie en ut vers le Mib *afin de* la jouer directement.

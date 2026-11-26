@@ -6,13 +6,13 @@
 
 ## Ce que fait l'application
 
-- 📂 **Importer** des fichiers `.mscz` / `.mscx` (**MuseScore 2.x, 3.x et 4.x** ; testés : 2.1, 3.6, 4.5, 4.6) et `.mxl` / `.musicxml` / `.xml`, depuis le sélecteur de fichiers (multi-sélection) ou « Ouvrir avec… » sur Android. Doublons détectés, recherche, tri, renommage, informations.
+- 📂 **Importer** des fichiers `.mscz` / `.mscx` (**MuseScore 2.x, 3.x et 4.x** ; testés : 2.1, 3.6, 4.5, 4.6) et `.mxl` / `.musicxml` / `.xml`, depuis le sélecteur de fichiers (multi-sélection), « Ouvrir avec… » ou « Partager vers » (mail, messagerie, Drive) sur Android. Doublons détectés, recherche, tri, renommage, informations.
 - 🎼 **Afficher** la partition (lecture seule), toujours **remise en page pour l'écran** du téléphone ou de la tablette.
 - 🎷 **Choisir les instruments** à afficher (un seul, plusieurs, ou le conducteur complet), avec silences multi-mesures regroupés et profil **« My instrument »** qui présélectionne sa partie.
 - 📄 **Deux modes d'affichage** : **Pages** (balayage, zones de tap, boutons, clavier/pédalier, option **demi-page**) ou **Continu** (un seul rouleau vertical).
 - 🔍 **Zoomer** (pincement ou boutons, nouvelle mise en page). Le zoom est mémorisé pour chaque partition.
 - ♯♭ **Transposer** (demi-tons, octave, préréglages Si♭/Mi♭/Fa, hauteur réelle, choix ♯/♭ pour les tonalités enharmoniques).
-- ▶️ **Faire défiler automatiquement** au tempo de la partition, avec les changements de tempo et les **reprises**, un facteur de tempo (50–150 %), un décompte et le surlignage de la mesure en cours.
+- ▶️ **Faire défiler automatiquement** au tempo de la partition, avec les changements de tempo et les **reprises**, un facteur de tempo (50–150 %), un décompte et le surlignage de la mesure en cours ; départ depuis la page affichée, une mesure choisie (« aller à ») ou **touchée** (appui long).
 - 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul »). La partition elle-même n'est jamais jouée en audio.
 - 🧭 **Aller à une mesure** ou à une **marque de répétition** ; **mode verrouillé** contre les touchers accidentels.
 - 🦶 **Pédalier Bluetooth / clavier** : touches configurables pour page suivante/précédente, lecture/pause, métronome, morceau suivant/précédent.
@@ -32,7 +32,7 @@
 | Multiplateforme | **Capacitor 8** + **Ionic React 9** + **React 19** + **TypeScript 6** + Vite 8 | Les moteurs de partition sont en WebAssembly : une seule pile technique, testable dans le navigateur |
 | Lecture des fichiers | **[webmscore](https://github.com/LibreScore/webmscore)** (MuseScore 4.0 compilé en WASM, GPL) | Seul moteur libre qui lit fidèlement le format MuseScore. Utilisé **uniquement à l'import** (y compris pour le MusicXML) pour produire MusicXML, métadonnées et timeline |
 | Rendu | **[Verovio](https://www.verovio.org)** 6.4 (LGPL-3.0), dans un Web Worker | Mise en page adaptée à l'écran, transposition, projet très actif |
-| Stockage | Fichiers locaux + index JSON | Simple, hors ligne |
+| Stockage | Fichiers locaux + index JSON ; cache disque des pages rendues (LRU) | Simple, hors ligne ; réouverture rapide des gros conducteurs |
 | Défilement et métronome | Horloge commune sur Web Audio (sons générés, aucun fichier audio) | Précis, léger, toujours synchronisés |
 | i18n | i18next + react-i18next, anglais de référence, français | Traductions faciles à ajouter ; notation des notes C D E / Do Ré Mi / C D E H |
 
@@ -72,6 +72,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [Capacitor Filesystem](https://github.com/ionic-team/capacitor-filesystem) | Stockage des partitions sur l'appareil | MIT |
 | [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |
 | [Keep Awake](https://github.com/capacitor-community/keep-awake) | Écran toujours allumé | MIT |
+| [Capgo Share Target](https://github.com/Cap-go/capacitor-share-target) | « Partager vers » (réception de fichiers partagés) | MPL-2.0 |
 | [Ionic Framework](https://github.com/ionic-team/ionic-framework) (`@ionic/react`, `@ionic/react-router`) | Composants d'interface mobile | MIT |
 | [Ionicons](https://github.com/ionic-team/ionicons) | Icônes | MIT |
 | [React](https://github.com/react/react) (`react`, `react-dom`) | Interface | MIT |
