@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Version épurée en traits : cinq lignes de portée forment le plateau du pupitre -->
+  <rect width="512" height="512" rx="112" fill="#f4ecd8"/>
+  <g stroke="#24398f" stroke-width="14" stroke-linecap="round" fill="none">
+    <line x1="120" y1="150" x2="392" y2="118"/>
+    <line x1="120" y1="180" x2="392" y2="148"/>
+    <line x1="120" y1="210" x2="392" y2="178"/>
+    <line x1="120" y1="240" x2="392" y2="208"/>
+    <line x1="120" y1="270" x2="392" y2="238"/>
+    <line x1="256" y1="262" x2="256" y2="400"/>
+    <polyline points="186,432 256,392 326,432"/>
+  </g>
+  <line x1="104" y1="300" x2="408" y2="264" stroke="#e8590c" stroke-width="18" stroke-linecap="round"/>
+</svg>

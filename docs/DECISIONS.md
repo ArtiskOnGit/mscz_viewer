@@ -50,7 +50,7 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ### ADR-006 — Nom de l'application : « Pupitre » — *Acceptée (2026-11-26)*
 - Nom définitif : **Pupitre** (français pour « music stand »), y compris pour l'interface anglaise : choix assumé du porteur du projet (« tant pis pour les anglais »).
-- Reste à faire avant publication : vérifier la disponibilité sur Google Play et F-Droid et l'absence de marque déposée gênante ; créer l'icône.
+- Reste à faire avant publication : vérifier la disponibilité sur Google Play et F-Droid et l'absence de marque déposée gênante ; ~~créer l'icône~~ : **logo 4 « version épurée »** retenu le 2026-11-26 (cinq lignes de portée formant le plateau d'un pupitre, bleu nuit `#24398f` et orange `#e8590c` sur crème `#f4ecd8`, formes géométriques SVG uniquement ; `design/logo/4-ligne-epuree.svg`). Icônes Android (adaptative, carrée, ronde), écrans de démarrage et favicon générés par `scripts/generate-icons.mjs`.
 - **Identifiant Android** (`applicationId`, immuable une fois publié) : **`io.github.artiskongit.pupitre`** (2026-11-26), basé sur le compte GitHub du porteur (convention F-Droid, aucun domaine à posséder). Il remplace `app.pupitre.viewer` : une réinstallation unique a été nécessaire sur le téléphone de test. Le nom ne doit pas contenir « MuseScore ».
 
 ### ADR-007 — Stockage : fichiers + index JSON — *Acceptée*
@@ -154,7 +154,6 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 
 ## Questions encore ouvertes
 
-1. **Icône** de l'application (ADR-006).
 3. **Téléphone ou tablette en priorité** pour les tests et l'ergonomie Android ? Par défaut, les deux sont prévus, avec le téléphone en priorité.
 4. **Pédalier Bluetooth** : le porteur n'en a pas ; faut-il en emprunter un avant la v1, ou se contenter d'un clavier Bluetooth pour valider la réception des touches dans la WebView ?
 6. **Langue de la documentation et du code** : documentation en français, code et commentaires en anglais (appliqué depuis la phase 1).

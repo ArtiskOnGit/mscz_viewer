@@ -124,7 +124,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - 🟨 **Optimisation des performances** (ADR-025) : ✅ cache disque des pages rendues (clé = XML affiché + toutes les options Verovio, 64 Mo, LRU, « Vider le cache de rendu » dans Paramètres → Stockage) ; ✅ XML affiché préparé en une passe (≈ 190 → 70 ms) ; ✅ Verovio démarré pendant la lecture des fichiers ; ✅ workers terminés en quittant la visualisation ou la setlist (e2e `performance.mjs`). Réouverture de Toccata ≈ 2,9 → 0,85 s, première ouverture ≈ 3,6 → 2,8 s (PC). ⬜ Compiler le WASM de Verovio une seule fois (≈ 1 s par worker), mesures sur un appareil modeste.
 - ⬜ Accessibilité (tailles des cibles tactiles, lecteurs d'écran pour la bibliothèque, les setlists et les paramètres).
 - ⬜ Tests de non-régression visuels sur le corpus.
-- 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône et **APK de release signé** à faire (clé de publication, GitHub Releases).
+- 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône ✅ (logo 4, `scripts/generate-icons.mjs`) ; **APK de release signé** à faire (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
 - ✅ **Décision iOS** (ADR-005, 2026-11-26) : **Android uniquement**, pas de version iOS.
 
