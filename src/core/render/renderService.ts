@@ -79,6 +79,8 @@ export class RenderService {
 
   async load(xml: string, viewport: ViewportOptions): Promise<LayoutInfo> {
     this.invalidate();
+    // A load means new content (parts, transposition…: options applied by loadData only), never a mere relayout.
+    this.worked = undefined;
     if (xml !== this.xml) {
       this.xml = xml;
       this.xmlHash = this.disk ? sha256Hex(xml) : undefined;
