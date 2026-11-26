@@ -91,7 +91,7 @@ Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ report
 - ✅ **Mode verrouillé** 🔒 : seuls le tournage de page (zones, balayage, défilement en mode Continu) et le pédalier restent actifs ; déverrouillage par appui long (0,8 s) ; valable pour la session.
 - ✅ **Thèmes de partition** : clair, sépia, sombre, contraste élevé (faits en phase 1).
 - ✅ **Profil « My instrument »** : noms libres + choix rapides, correspondance sans casse ni accents (nom de partie, identifiant MuseScore), présélection, transposition et mode d'affichage par défaut à la première ouverture.
-- 🟨 « Open with » sur Android (intent `VIEW` : import puis ouverture de la partition) — à vérifier sur téléphone.
+- ✅ « Open with » sur Android (intent `VIEW` : import puis ouverture de la partition) — validé sur téléphone le 2026-11-26.
 - ⏭️ Reportés en phase 3 : notation des notes (C D E / Do Ré Mi / C D E H), « Share to » (intent `SEND`), départ du défilement depuis une **mesure touchée**, le reste de l'écran Paramètres complet.
 
 ✅ **Phase 2 close le 2026-11-25** (fonctions faites et testées en e2e ; essais sur téléphone partiels, voir [TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)).
@@ -106,7 +106,8 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ✅ appuis longs (métronome seul, déverrouillage), son du métronome seul, demi-page, setlists (rapides, sans ralentissement) ;
 - ⚠️ **pas de pédalier Bluetooth** chez le porteur : pédalier non testé sur l'appareil (seuls les événements clavier ont été testés) ;
 - ✅ mode Continu testé le 2026-11-26 (« marche plutôt bien ») ;
-- ⬜ pas encore essayés sur l'appareil : « Ouvrir avec… », mémoire du worker de pré-chargement.
+- ✅ « Ouvrir avec… » et préférence ♯/♭ testés le 2026-11-26 ;
+- ⬜ pas encore essayé sur l'appareil : mémoire du worker de pré-chargement.
 
 ---
 
