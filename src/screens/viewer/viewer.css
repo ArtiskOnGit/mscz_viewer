@@ -148,3 +148,43 @@
 .continuous-placeholder {
   height: 800px; /* replaced from the DOM by the measured / estimated page height */
 }
+
+/* Bar numbers "none" (setting): Verovio still lays them out, they are only hidden. */
+.score-stage[data-bar-numbers='none'] g.mNum {
+  display: none;
+}
+
+/* Page-turn animation (setting), short so that it never delays reading. */
+.score-page.turn-slide.turn-next {
+  animation: pupitre-turn-next 140ms ease-out;
+}
+.score-page.turn-slide.turn-prev {
+  animation: pupitre-turn-prev 140ms ease-out;
+}
+.score-page.turn-fade {
+  animation: pupitre-turn-fade 140ms ease-out;
+}
+@keyframes pupitre-turn-next {
+  from {
+    transform: translateX(15%);
+    opacity: 0.3;
+  }
+}
+@keyframes pupitre-turn-prev {
+  from {
+    transform: translateX(-15%);
+    opacity: 0.3;
+  }
+}
+@keyframes pupitre-turn-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .score-page.turn-slide.turn-next,
+  .score-page.turn-slide.turn-prev,
+  .score-page.turn-fade {
+    animation: none;
+  }
+}

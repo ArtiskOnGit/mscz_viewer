@@ -3,6 +3,7 @@ import * as Comlink from 'comlink';
 import type { LayoutInfo, RenderApi } from './render.worker';
 import { targetFifths, transposeInterval, type AccidentalPreference } from '../music/keys';
 import { renderKey, sha256Hex, stableJson, type RenderCache } from './renderCache';
+import { engravingOptions, type EngravingSettings } from './engraving';
 
 export interface ViewportOptions {
   width: number;
@@ -14,6 +15,8 @@ export interface ViewportOptions {
   concertPitch: boolean;
   /** Continuous mode: pages fitted to their content (stacked vertically by the viewer). */
   continuous?: boolean;
+  /** Music font, bar numbers, title (settings). */
+  engraving?: EngravingSettings;
 }
 
 /** Comfortable default scale for the number of staves shown, relative to a 412 px wide phone. */
@@ -35,13 +38,13 @@ export function verovioOptions(v: ViewportOptions): Record<string, unknown> {
     breaks: 'auto', // ADR-002: always lay out for the screen
     // Continuous mode: no blank space at the bottom of the pages, which are stacked into one vertical scroll.
     adjustPageHeight: !!v.continuous,
-    header: 'none',
     footer: 'none',
     svgViewBox: true,
     // The "//" system separators only make sense on printed full scores.
     systemDivider: 'none',
     transpose: v.transpose,
     transposeToSoundingPitch: v.concertPitch,
+    ...engravingOptions(v.engraving), // font, mnumInterval, header
   };
 }
 

@@ -9,6 +9,7 @@ import { routes } from './routes';
 import { useEffect } from 'react';
 import { useSettings } from '../state/settingsStore';
 import { useAppTheme } from './useAppTheme';
+import { useOrientationLock } from './useOrientationLock';
 import { applyLanguage } from '../i18n';
 
 export function App() {
@@ -17,6 +18,7 @@ export function App() {
     if (!loaded) void load();
   }, [loaded, load]);
   useAppTheme(settings.appTheme);
+  useOrientationLock(settings.orientation, loaded);
   useEffect(() => {
     if (loaded) void applyLanguage(settings.language);
   }, [loaded, settings.language]);

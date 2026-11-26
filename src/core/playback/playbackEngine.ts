@@ -25,6 +25,8 @@ export interface PlayOptions {
   /** Count-in clicks are audible even when the metronome is off. */
   countInSound: boolean;
   volume: number;
+  /** Higher click on the first beat of each bar (default true). */
+  accent?: boolean;
 }
 
 export class PlaybackEngine {
@@ -129,7 +131,7 @@ export class PlaybackEngine {
       if (isCountIn) this.countIn.shift();
       else this.nextClick = this.clicks?.next().value ?? undefined;
       if (t < ctx.currentTime - 0.01) continue; // late (tab was frozen): skip, never play a burst
-      if (opts.metronome || (isCountIn && opts.countInSound)) this.playClick(t, click.accent, opts.volume);
+      if (opts.metronome || (isCountIn && opts.countInSound)) this.playClick(t, click.accent && opts.accent !== false, opts.volume);
       this.flashes.push({ t, accent: click.accent, countIn: isCountIn });
     }
   }

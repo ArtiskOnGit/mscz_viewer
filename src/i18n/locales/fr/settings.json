@@ -32,10 +32,10 @@
   },
   "multiRests": {
     "label": "Regrouper les mesures de silence",
-    "hint": "Affiche «\u00a011\u00a0» au lieu de onze mesures vides"
+    "hint": "Affiche « 11 » au lieu de onze mesures vides"
   },
   "defaultZoom": {
-    "label": "Zoom par défaut\u00a0: {{percent}}\u00a0%"
+    "label": "Zoom par défaut : {{percent}} %"
   },
   "tapZones": {
     "label": "Toucher les bords gauche / droit pour tourner les pages"
@@ -69,7 +69,7 @@
     "hint": "Audibles même quand le métronome est coupé"
   },
   "metronomeVolume": {
-    "label": "Volume du métronome\u00a0: {{percent}}\u00a0%"
+    "label": "Volume du métronome : {{percent}} %"
   },
   "highlightMeasure": {
     "label": "Surligner la mesure en cours"
@@ -79,7 +79,7 @@
   },
   "myInstrument": {
     "names": "Noms de l’instrument",
-    "placeholder": "ex.\u00a0: Trompette, Trumpet, Tpt",
+    "placeholder": "ex. : Trompette, Trumpet, Tpt",
     "hint": "Séparez les noms par des virgules. À la première ouverture d’une partition, les parties correspondantes sont affichées.",
     "quickPicks": "Instruments courants",
     "instruments": {
@@ -111,11 +111,11 @@
     "continuous": "Défilement continu"
   },
   "readingLine": {
-    "label": "Ligne de lecture (mode continu)\u00a0: {{percent}}\u00a0% du haut"
+    "label": "Ligne de lecture (mode continu) : {{percent}} % du haut"
   },
   "halfPageTurn": {
     "label": "Demi-tournes de page",
-    "hint": "«\u00a0Suivant\u00a0» montre d’abord le haut de la page suivante au-dessus de la fin de la page en cours"
+    "hint": "« Suivant » montre d’abord le haut de la page suivante au-dessus de la fin de la page en cours"
   },
   "pedal": {
     "next": "Page suivante",
@@ -127,9 +127,9 @@
     "none": "Aucune touche",
     "setKey": "Choisir la touche",
     "reset": "Rétablir les touches par défaut",
-    "captureTitle": "Touche\u00a0: {{action}}",
+    "captureTitle": "Touche : {{action}}",
     "capturePrompt": "Appuyez sur votre pédale…",
-    "captured": "Touche\u00a0: {{key}}",
+    "captured": "Touche : {{key}}",
     "add": "Ajouter",
     "replace": "Remplacer"
   },
@@ -152,5 +152,49 @@
     "renderCacheHint": "Pages déjà affichées, gardées sur l’appareil pour ouvrir les partitions plus vite.",
     "clearCache": "Vider le cache de rendu",
     "cleared": "Cache de rendu vidé"
+  },
+  "musicFont": {
+    "label": "Police musicale",
+    "default": "{{font}} (par défaut)"
+  },
+  "barNumbers": {
+    "label": "Numéros de mesure",
+    "none": "Aucun",
+    "system": "Début de chaque ligne",
+    "every": "Toutes les mesures",
+    "every5": "Toutes les 5 mesures"
+  },
+  "showHeader": {
+    "label": "Afficher le titre",
+    "hint": "Titre et compositeur au-dessus de la première page"
+  },
+  "tapZoneWidth": {
+    "label": "Largeur des zones de toucher : {{percent}} % de l’écran"
+  },
+  "pageTurnAnimation": {
+    "label": "Animation du tournage de page",
+    "none": "Aucune",
+    "slide": "Glissement",
+    "fade": "Fondu"
+  },
+  "turnLookahead": {
+    "label": "Défilement auto : tourner la page",
+    "half": "Au milieu de la dernière mesure",
+    "end": "À la fin de la page",
+    "bars_one": "{{count}} mesure avant la fin",
+    "bars_other": "{{count}} mesures avant la fin"
+  },
+  "metronomeDefault": {
+    "label": "Métronome actif pour les nouvelles partitions",
+    "hint": "Clics pendant le défilement à la première ouverture d’une partition"
+  },
+  "metronomeAccent": {
+    "label": "Accentuer le premier temps de chaque mesure"
+  },
+  "orientation": {
+    "label": "Orientation de l’écran",
+    "device": "Suivre l’appareil",
+    "portrait": "Portrait",
+    "landscape": "Paysage"
   }
 }

@@ -7,7 +7,9 @@ import {
 import { routes } from '../../app/routes';
 import { SOURCE_URL, THIRD_PARTY } from '../../app/thirdPartyLicenses';
 import { useSettings } from '../../state/settingsStore';
-import type { AppTheme, ScoreTheme } from '../../core/settings';
+import type { AppTheme, OrientationLock, ScoreTheme } from '../../core/settings';
+import { BAR_NUMBERS, MUSIC_FONTS, type BarNumbers, type MusicFont } from '../../core/render/engraving';
+import { PAGE_TURN_ANIMATIONS, TURN_LOOKAHEADS, type PageTurnAnimation, type TurnLookahead } from '../../core/navigation/pageTurn';
 import type { PartNamesMode } from '../../core/musicxml/prepareDisplay';
 import type { LayoutMode } from '../../core/model/types';
 import { COMMON_INSTRUMENTS, parseNames, type MyInstrumentProfile } from '../../core/profile/myInstrument';
@@ -23,6 +25,7 @@ const PART_NAMES: PartNamesMode[] = ['auto', 'full', 'hidden'];
 const LAYOUT_MODES: LayoutMode[] = ['pages', 'continuous'];
 const LANGUAGES: LanguageSetting[] = ['system', ...supportedLanguages];
 const NOTE_NAMINGS: NoteNamingSetting[] = ['auto', 'english', 'latin', 'german'];
+const ORIENTATIONS: OrientationLock[] = ['device', 'portrait', 'landscape'];
 
 export function SettingsScreen() {
   const { t } = useTranslation(['settings', 'common']);
@@ -68,6 +71,21 @@ export function SettingsScreen() {
             </IonSelect>
           </IonItem>
           <IonItem>
+            <IonSelect label={t('musicFont.label')} interface="popover" value={settings.musicFont} data-testid="music-font" onIonChange={(e) => set('musicFont', e.detail.value as MusicFont)}>
+              {MUSIC_FONTS.map((v) => <IonSelectOption key={v} value={v}>{v === 'Leipzig' ? t('musicFont.default', { font: v }) : v}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonSelect label={t('barNumbers.label')} interface="popover" value={settings.barNumbers} data-testid="bar-numbers" onIonChange={(e) => set('barNumbers', e.detail.value as BarNumbers)}>
+              {BAR_NUMBERS.map((v) => <IonSelectOption key={v} value={v}>{t(`barNumbers.${v}`)}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonToggle checked={settings.showHeader} onIonChange={(e) => set('showHeader', e.detail.checked)} data-testid="show-header">
+              <IonLabel>{t('showHeader.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('showHeader.hint')}</IonNote></IonLabel>
+            </IonToggle>
+          </IonItem>
+          <IonItem>
             <IonToggle checked={settings.multiRests} onIonChange={(e) => set('multiRests', e.detail.checked)}>
               <IonLabel>{t('multiRests.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('multiRests.hint')}</IonNote></IonLabel>
             </IonToggle>
@@ -99,11 +117,38 @@ export function SettingsScreen() {
             </IonSelect>
           </IonItem>
           <IonItem><IonToggle checked={settings.tapZones} onIonChange={(e) => set('tapZones', e.detail.checked)}>{t('tapZones.label')}</IonToggle></IonItem>
+          {settings.tapZones && (
+            <IonItem>
+              <IonRange
+                label={t('tapZoneWidth.label', { percent: Math.round(settings.tapZoneWidth * 100) })}
+                labelPlacement="stacked"
+                min={20}
+                max={45}
+                step={1}
+                pin
+                value={Math.round(settings.tapZoneWidth * 100)}
+                data-testid="tap-zone-width"
+                onIonChange={(e) => set('tapZoneWidth', Number(e.detail.value) / 100)}
+              />
+            </IonItem>
+          )}
           <IonItem><IonToggle checked={settings.swipe} onIonChange={(e) => set('swipe', e.detail.checked)}>{t('swipe.label')}</IonToggle></IonItem>
           <IonItem>
             <IonToggle checked={settings.halfPageTurn} onIonChange={(e) => set('halfPageTurn', e.detail.checked)} data-testid="half-page-toggle">
               <IonLabel>{t('halfPageTurn.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('halfPageTurn.hint')}</IonNote></IonLabel>
             </IonToggle>
+          </IonItem>
+
+          <IonItem>
+            <IonSelect
+              label={t('pageTurnAnimation.label')}
+              interface="popover"
+              value={settings.pageTurnAnimation}
+              data-testid="page-turn-animation"
+              onIonChange={(e) => set('pageTurnAnimation', e.detail.value as PageTurnAnimation)}
+            >
+              {PAGE_TURN_ANIMATIONS.map((v) => <IonSelectOption key={v} value={v}>{t(`pageTurnAnimation.${v}`)}</IonSelectOption>)}
+            </IonSelect>
           </IonItem>
 
           <PedalKeysSection keys={settings.pedalKeys} onChange={(keys) => set('pedalKeys', keys)} />
@@ -146,11 +191,35 @@ export function SettingsScreen() {
               onIonChange={(e) => set('readingLine', Number(e.detail.value) / 100)}
             />
           </IonItem>
+          <IonItem>
+            <IonSelect
+              label={t('turnLookahead.label')}
+              interface="popover"
+              value={settings.turnLookahead}
+              data-testid="turn-lookahead"
+              onIonChange={(e) => set('turnLookahead', e.detail.value as TurnLookahead)}
+            >
+              {TURN_LOOKAHEADS.map((v) => (
+                <IonSelectOption key={v} value={v}>{v === 'half' ? t('turnLookahead.half') : v === 0 ? t('turnLookahead.end') : t('turnLookahead.bars', { count: v })}</IonSelectOption>
+              ))}
+            </IonSelect>
+          </IonItem>
+          <IonItem>
+            <IonToggle checked={settings.metronomeDefault} onIonChange={(e) => set('metronomeDefault', e.detail.checked)} data-testid="metronome-default">
+              <IonLabel>{t('metronomeDefault.label')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('metronomeDefault.hint')}</IonNote></IonLabel>
+            </IonToggle>
+          </IonItem>
+          <IonItem><IonToggle checked={settings.metronomeAccent} onIonChange={(e) => set('metronomeAccent', e.detail.checked)} data-testid="metronome-accent">{t('metronomeAccent.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.highlightMeasure} onIonChange={(e) => set('highlightMeasure', e.detail.checked)}>{t('highlightMeasure.label')}</IonToggle></IonItem>
           <IonItem><IonToggle checked={settings.tapPauses} onIonChange={(e) => set('tapPauses', e.detail.checked)}>{t('tapPauses.label')}</IonToggle></IonItem>
 
           <IonListHeader>{t('sections.system')}</IonListHeader>
           <IonItem><IonToggle checked={settings.keepAwake} onIonChange={(e) => set('keepAwake', e.detail.checked)}>{t('keepAwake.label')}</IonToggle></IonItem>
+          <IonItem>
+            <IonSelect label={t('orientation.label')} interface="popover" value={settings.orientation} data-testid="orientation" onIonChange={(e) => set('orientation', e.detail.value as OrientationLock)}>
+              {ORIENTATIONS.map((v) => <IonSelectOption key={v} value={v}>{t(`orientation.${v}`)}</IonSelectOption>)}
+            </IonSelect>
+          </IonItem>
           <IonItem button detail={false} onClick={reset}><IonLabel color="danger">{t('reset')}</IonLabel></IonItem>
 
           <StorageSection />

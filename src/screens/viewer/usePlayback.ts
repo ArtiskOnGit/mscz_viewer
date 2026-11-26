@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { Timeline } from '../../core/model/types';
 import { PlaybackEngine } from '../../core/playback/playbackEngine';
 import { eventOfMeasureFrom, firstEventOfMeasure } from '../../core/navigation/navigation';
+import { autoScrollPage } from '../../core/navigation/pageTurn';
 import type { AppSettings } from '../../core/settings';
 import type { ContinuousHandle } from './ContinuousView';
 
@@ -81,12 +82,14 @@ export function usePlayback(a: Args) {
           return;
         }
         // --- end continuous mode ---
-        // Turn the page when half of the last measure of the page is played; jumps back for repeats.
-        let target = renderedPages[rendered] ?? page;
-        const nextRendered = renderedOfEvent(i + 1);
-        const nextPage = nextRendered !== undefined ? renderedPages[nextRendered] : undefined;
-        if (nextPage && nextPage !== target && progress > 0.5 && timeline) target = nextPage;
+        // --- page turn lookahead (setting): turn before the end of the page; jumps back for repeats ---
+        const pageOfEvent = (j: number) => {
+          const r = renderedOfEvent(j);
+          return r !== undefined ? renderedPages[r] : undefined;
+        };
+        const target = timeline ? autoScrollPage(pageOfEvent, i, progress, latest.current.settings.turnLookahead, renderedPages[rendered] ?? page) : page;
         if (target && target !== page) goTo(target);
+        // --- end page turn lookahead ---
       },
       onBeat(accent) {
         setBeat(accent ? 'accent' : 'beat');
@@ -154,6 +157,7 @@ export function usePlayback(a: Args) {
       tempoFactor,
       metronome,
       volume: settings.metronomeVolume,
+      accent: settings.metronomeAccent,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -189,6 +193,7 @@ export function usePlayback(a: Args) {
       tempoFactor,
       metronome: true,
       volume: settings.metronomeVolume,
+      accent: settings.metronomeAccent,
     });
   }, [pause]); // eslint-disable-line react-hooks/exhaustive-deps
 

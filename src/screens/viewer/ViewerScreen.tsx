@@ -27,6 +27,7 @@ import { boxAtPoint, halfPageSplit, measureNumbers, nextPosition, pageOfMeasure,
 import { GoToModal } from './GoToModal';
 import { useLongPress } from './useLongPress';
 import { ContinuousView, type ContinuousHandle } from './ContinuousView';
+import { usePageTurnAnimation } from './usePageTurnAnimation';
 import './viewer.css';
 
 const UNLOCK_PRESS_MS = 800;
@@ -240,6 +241,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     },
     onPinchEnd: (ratio) => v.setZoom(v.zoom * ratio),
     tapZones: settings.tapZones,
+    tapZoneWidth: settings.tapZoneWidth,
     swipe: settings.swipe,
     pinch: !locked,
     onLongPress: pickMeasureAt, // long press on a bar
@@ -273,6 +275,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   );
   // --- end lock mode & metronome only ---
 
+  const turnAnim = usePageTurnAnimation(v.svg, v.page, settings.pageTurnAnimation);
   const parts = v.score?.parts ?? [];
   // Transposition actually shown (setlists: the piece's override wins over the score's settings).
   const transpose = {
@@ -336,6 +339,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           className={continuous ? 'score-stage continuous' : 'score-stage'}
           data-testid="score-stage"
           data-score-theme={settings.scoreTheme}
+          data-bar-numbers={settings.barNumbers}
           data-layout={continuous ? 'continuous' : 'pages'}
           data-picked-measure={pickedId}
           onContextMenu={(e) => e.preventDefault()}
@@ -371,7 +375,9 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           )}
           {v.status === 'ready' && !continuous && v.svg && !topSvg && (
             <div
-              className="score-page"
+              key={turnAnim.key}
+              className={`score-page${turnAnim.className}`}
+              data-turn={turnAnim.dir}
               style={pinchScale !== 1 ? { transform: `scale(${pinchScale})` } : undefined}
               dangerouslySetInnerHTML={{ __html: v.svg }}
             />

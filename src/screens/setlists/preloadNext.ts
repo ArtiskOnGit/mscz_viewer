@@ -57,7 +57,7 @@ export async function preloadPiece(
   if (gen !== generation) return;
   const display = prepareDisplay(data.xml, partsKey, settings);
   entry.display = { xml: data.xml, key: displayKeyOf(partsKey, settings), value: display };
-  const viewport = viewportOf(display, shown, size, settings.defaultZoom);
+  const viewport = viewportOf(display, shown, size, settings);
   if (!viewport) return;
   const renderer = new RenderService(renderCache); // render cache: the next piece may not need Verovio at all
   try {

@@ -6,6 +6,7 @@ import { initialViewState, type ProfileSettings } from '../../core/profile/myIns
 import type { AppSettings } from '../../core/settings';
 import { baseKey } from '../../core/music/keys';
 import { autoScale, transposeOption, type ViewportOptions } from '../../core/render/renderService';
+import { engravingKey, engravingOf, type EngravingSettings } from '../../core/render/engraving';
 
 export interface PieceData {
   score?: Score;
@@ -43,10 +44,10 @@ export function viewportOf(
   display: DisplayXml,
   shown: ScoreViewState,
   size: { width: number; height: number } | undefined,
-  defaultZoom: number,
+  settings: Pick<AppSettings, 'defaultZoom'> & EngravingSettings,
 ): ViewportOptions | undefined {
   if (!size || size.width < 50 || size.height < 50) return undefined;
-  const factor = typeof shown.zoom === 'number' ? shown.zoom : defaultZoom;
+  const factor = typeof shown.zoom === 'number' ? shown.zoom : settings.defaultZoom;
   return {
     width: size.width,
     height: size.height,
@@ -54,12 +55,13 @@ export function viewportOf(
     transpose: transposeOption(shown.transposeSemitones, shown.transposeOctave, display.key && baseKey(display.key, shown.concertPitch), shown.accidentalPreference),
     concertPitch: shown.concertPitch,
     continuous: shown.layoutMode === 'continuous',
+    engraving: engravingOf(settings),
   };
 }
 
 /** What Verovio must reload for (as opposed to a relayout for a new geometry). */
 export function contentKeyOf(partsKey: string, viewport: ViewportOptions, s: DisplaySettings): string {
-  return `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${s.multiRests}|${s.partNames}`;
+  return `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${s.multiRests}|${s.partNames}|${engravingKey(viewport.engraving)}`;
 }
 
 export const sameViewport = (a: ViewportOptions | undefined, b: ViewportOptions) =>

@@ -103,8 +103,8 @@ export function useScoreViewer(
   }, [xml, partsKey, settings.multiRests, settings.partNames, pre]);
 
   const viewport = useMemo<ViewportOptions | undefined>(
-    () => (display && shown ? viewportOf(display, shown, size, settings.defaultZoom) : undefined),
-    [display, shown, size, settings.defaultZoom],
+    () => (display && shown ? viewportOf(display, shown, size, { defaultZoom: settings.defaultZoom, musicFont: settings.musicFont, barNumbers: settings.barNumbers, showHeader: settings.showHeader }) : undefined),
+    [display, shown, size, settings.defaultZoom, settings.musicFont, settings.barNumbers, settings.showHeader],
   );
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.

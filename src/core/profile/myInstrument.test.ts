@@ -102,6 +102,12 @@ describe('initialViewState', () => {
     expect(initialViewState(defaultViewState('s'), true, band, { ...settings, defaultLayoutMode: 'continuous' }).view.layoutMode).toBe('pages');
   });
 
+  it('turns the metronome on for new scores when the setting asks for it', () => {
+    expect(initialViewState(defaultViewState('s'), false, band, settings).view.metronomeEnabled).toBe(false);
+    expect(initialViewState(defaultViewState('s'), false, band, { ...settings, metronomeDefault: true }).view.metronomeEnabled).toBe(true);
+    expect(initialViewState(defaultViewState('s'), true, band, { ...settings, metronomeDefault: true }).view.metronomeEnabled).toBe(false);
+  });
+
   it('never overrides a saved view state', () => {
     const saved = { ...defaultViewState('s'), selectedParts: [] };
     const r = initialViewState(saved, true, band, settings);

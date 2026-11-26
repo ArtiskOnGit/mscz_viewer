@@ -152,5 +152,49 @@
     "renderCacheHint": "Pages already displayed, kept on the device to open scores faster.",
     "clearCache": "Clear render cache",
     "cleared": "Render cache cleared"
+  },
+  "musicFont": {
+    "label": "Music font",
+    "default": "{{font}} (default)"
+  },
+  "barNumbers": {
+    "label": "Bar numbers",
+    "none": "None",
+    "system": "Start of each line",
+    "every": "Every bar",
+    "every5": "Every 5 bars"
+  },
+  "showHeader": {
+    "label": "Show the title",
+    "hint": "Title and composer above the first page"
+  },
+  "tapZoneWidth": {
+    "label": "Width of the tap zones: {{percent}} % of the screen"
+  },
+  "pageTurnAnimation": {
+    "label": "Page turn animation",
+    "none": "None",
+    "slide": "Slide",
+    "fade": "Fade"
+  },
+  "turnLookahead": {
+    "label": "Auto-scroll: turn the page",
+    "half": "Halfway through the last bar",
+    "end": "At the end of the page",
+    "bars_one": "{{count}} bar before the end",
+    "bars_other": "{{count}} bars before the end"
+  },
+  "metronomeDefault": {
+    "label": "Metronome on for new scores",
+    "hint": "Clicks during auto-scroll on the first opening of a score"
+  },
+  "metronomeAccent": {
+    "label": "Accent the first beat of each bar"
+  },
+  "orientation": {
+    "label": "Screen orientation",
+    "device": "Follow the device",
+    "portrait": "Portrait",
+    "landscape": "Landscape"
   }
 }

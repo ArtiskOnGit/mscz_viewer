@@ -9,6 +9,8 @@ interface Handlers {
   onPinchEnd(ratio: number): void;
   /** Left/right thirds turn pages (otherwise any tap toggles the toolbars). */
   tapZones: boolean;
+  /** Width of each side tap zone, fraction of the stage width (setting, default 1/3). */
+  tapZoneWidth?: number;
   swipe: boolean;
   /** Pinch zoom (off in lock mode: a two-finger touch is then ignored). */
   pinch: boolean;
@@ -18,7 +20,7 @@ interface Handlers {
   // --- end long press ---
 }
 
-const TAP_ZONE = 1 / 3;
+const TAP_ZONE = 1 / 3; // default; see Handlers.tapZoneWidth
 const SWIPE_MIN_PX = 60;
 const TAP_MAX_MOVE_PX = 12;
 export const LONG_PRESS_MS = 500;
@@ -102,8 +104,9 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
       } else if (Math.abs(dx) < TAP_MAX_MOVE_PX && Math.abs(dy) < TAP_MAX_MOVE_PX) {
         const { left, width } = el.getBoundingClientRect();
         const x = (p.x - left) / width;
-        if (h.current.tapZones && x < TAP_ZONE) h.current.onPrev();
-        else if (h.current.tapZones && x > 1 - TAP_ZONE) h.current.onNext();
+        const zone = h.current.tapZoneWidth ?? TAP_ZONE;
+        if (h.current.tapZones && x < zone) h.current.onPrev();
+        else if (h.current.tapZones && x > 1 - zone) h.current.onNext();
         else h.current.onToggleChrome();
       }
     };

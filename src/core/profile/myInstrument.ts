@@ -86,6 +86,8 @@ export interface ProfileSettings {
   defaultTranspose: number;
   /** Layout (pages / continuous) of a score opened for the first time. */
   defaultLayoutMode?: LayoutMode;
+  /** Metronome on for a score opened for the first time. */
+  metronomeDefault?: boolean;
 }
 
 /**
@@ -102,6 +104,7 @@ export function initialViewState(
   const matchedParts = matchMyInstrument(parts, profile.myInstrument);
   const next = { ...view };
   if (profile.defaultLayoutMode) next.layoutMode = profile.defaultLayoutMode;
+  if (profile.metronomeDefault) next.metronomeEnabled = true;
   if (matchedParts.length) next.selectedParts = matchedParts;
   if (profile.defaultTranspose && !view.transposeSemitones && !view.transposeOctave) next.transposeSemitones = profile.defaultTranspose;
   return { view: next, matchedParts };

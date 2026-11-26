@@ -6,6 +6,10 @@ import { DEFAULT_PEDAL_KEYS, normalizePedalKeys, type PedalKeys } from './naviga
 import type { LayoutMode } from './model/types';
 import type { NoteNamingSetting } from './music/keys';
 import type { LanguageSetting } from '../i18n';
+import type { BarNumbers, MusicFont } from './render/engraving';
+import type { PageTurnAnimation, TurnLookahead } from './navigation/pageTurn';
+
+export type OrientationLock = 'device' | 'portrait' | 'landscape';
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type ScoreTheme = 'light' | 'sepia' | 'dark' | 'highContrast';
@@ -43,6 +47,22 @@ export interface AppSettings {
   language: LanguageSetting;
   /** Note and key names ("auto": Do Ré Mi in French, C D E otherwise). */
   noteNaming: NoteNamingSetting;
+  /** SMuFL music font (Verovio). */
+  musicFont: MusicFont;
+  barNumbers: BarNumbers;
+  /** Title and composer above the first page. */
+  showHeader: boolean;
+  /** Width of each side tap zone, as a fraction of the screen width (0.2–0.45). */
+  tapZoneWidth: number;
+  /** Page mode: animation of the page turns (none under "reduce motion"). */
+  pageTurnAnimation: PageTurnAnimation;
+  /** Page mode auto-scroll: bars before the end of the page at which it turns ("half": halfway through the last bar). */
+  turnLookahead: TurnLookahead;
+  orientation: OrientationLock;
+  /** Metronome on for scores opened for the first time. */
+  metronomeDefault: boolean;
+  /** Higher click on the first beat of each bar. */
+  metronomeAccent: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -68,6 +88,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
   readingLine: 0.33,
   language: 'system',
   noteNaming: 'auto',
+  musicFont: 'Leipzig',
+  barNumbers: 'system',
+  showHeader: true,
+  tapZoneWidth: 0.33,
+  pageTurnAnimation: 'slide',
+  turnLookahead: 'half',
+  orientation: 'device',
+  metronomeDefault: false,
+  metronomeAccent: true,
 };
 
 const KEY = 'settings';
