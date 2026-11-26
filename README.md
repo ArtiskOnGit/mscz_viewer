@@ -73,6 +73,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |
 | [Keep Awake](https://github.com/capacitor-community/keep-awake) | Écran toujours allumé | MIT |
 | [Capacitor Share Target](https://github.com/Cap-go/capacitor-share-target) (Capgo) | « Partager vers » Pupitre depuis une autre application | MPL-2.0 |
+| [Capacitor Screen Orientation](https://github.com/ionic-team/capacitor-screen-orientation) | Verrouillage de l'orientation | MIT |
 | [Capgo Share Target](https://github.com/Cap-go/capacitor-share-target) | « Partager vers » (réception de fichiers partagés) | MPL-2.0 |
 | [Ionic Framework](https://github.com/ionic-team/ionic-framework) (`@ionic/react`, `@ionic/react-router`) | Composants d'interface mobile | MIT |
 | [Ionicons](https://github.com/ionic-team/ionicons) | Icônes | MIT |
@@ -94,6 +95,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [axe-core](https://github.com/dequelabs/axe-core) | Contrôle d'accessibilité automatique (e2e `accessibility.mjs`) | MPL-2.0 |
 | [ESLint](https://github.com/eslint/eslint), [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint), [eslint-plugin-react-hooks](https://github.com/facebook/react), [eslint-plugin-i18next](https://github.com/edvardchen/eslint-plugin-i18next), [globals](https://github.com/sindresorhus/globals) | Analyse du code (dont la règle « pas de texte en dur ») | MIT / ISC |
 | [@xmldom/xmldom](https://github.com/xmldom/xmldom), [jsdom](https://github.com/jsdom/jsdom) | DOM XML/HTML pour les tests sous Node | MIT |
+| [axe-core](https://github.com/dequelabs/axe-core) | Tests d'accessibilité automatiques | MPL-2.0 |
 | [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) (`@types/*`) | Types TypeScript | MIT |
 
 ## Licence
