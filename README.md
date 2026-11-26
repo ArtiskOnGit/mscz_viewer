@@ -72,6 +72,7 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 | [Capacitor Filesystem](https://github.com/ionic-team/capacitor-filesystem) | Stockage des partitions sur l'appareil | MIT |
 | [Capawesome File Picker](https://github.com/capawesome-team/capacitor-plugins) | Sélecteur de fichiers natif | MIT |
 | [Keep Awake](https://github.com/capacitor-community/keep-awake) | Écran toujours allumé | MIT |
+| [Capacitor Share Target](https://github.com/Cap-go/capacitor-share-target) (Capgo) | « Partager vers » Pupitre depuis une autre application | MPL-2.0 |
 | [Capgo Share Target](https://github.com/Cap-go/capacitor-share-target) | « Partager vers » (réception de fichiers partagés) | MPL-2.0 |
 | [Ionic Framework](https://github.com/ionic-team/ionic-framework) (`@ionic/react`, `@ionic/react-router`) | Composants d'interface mobile | MIT |
 | [Ionicons](https://github.com/ionic-team/ionicons) | Icônes | MIT |
