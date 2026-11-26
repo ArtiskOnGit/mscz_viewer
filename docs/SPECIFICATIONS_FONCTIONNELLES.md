@@ -1,6 +1,6 @@
 # Spécifications fonctionnelles
 
-> Nom de travail de l'application : **Pupitre** (provisoire, voir [DECISIONS.md](DECISIONS.md)).
+> Nom de l'application : **Pupitre** (ADR-006, voir [DECISIONS.md](DECISIONS.md)).
 >
 > **Langue de l'interface : anglais d'abord**, internationalisation prévue dès le départ (ADR-009) ; **traduction française** depuis la phase 3. Les libellés de ce document sont en français pour la lisibilité ; dans l'application anglaise, ils sont en anglais (ex. « Importer » → *Import*).
 >

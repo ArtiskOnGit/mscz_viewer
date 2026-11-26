@@ -1,4 +1,4 @@
-# Pupitre *(nom de travail)*
+# Pupitre
 
 **Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur Android (d'abord) puis iOS, **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
 

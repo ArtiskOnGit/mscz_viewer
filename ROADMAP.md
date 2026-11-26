@@ -15,7 +15,7 @@ Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ report
 **Objectif** : lever les risques techniques **avant** d'écrire l'application. Chaque spike produit une courte note de résultats dans `docs/spikes/`.
 
 - ✅ Trancher les questions de cadrage (plateforme, licence, framework, langues, audio, setlists).
-- ⬜ Choisir le nom de l'application (ADR-006).
+- ✅ Choisir le nom de l'application : **Pupitre** (ADR-006, 2026-11-26).
 - ✅ **Corpus de test** : 4 fichiers réels (MuseScore **2.1, 3.6.2, 4.5.2, 4.6.2**) dans `test-scores/` (non versionné). À compléter au fil de l'eau : grilles d'accords, paroles, D.S. al Coda.
 - ✅ **S1 — webmscore** (PC + Chromium ; [résultats](docs/spikes/PHASE0_RESULTATS.md#s1--webmscore-121-musescore-40-en-wasm)) : charger le corpus dans une page web, puis dans une WebView Capacitor Android.
   - Les fichiers **3.x** sont-ils bien lus par le moteur 4.0 ? Les fichiers **4.1 et plus** se chargent-ils ? Quels éléments sont perdus ?
@@ -121,7 +121,7 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Optimisation des performances (cache disque SVG, gros conducteurs, appareils modestes).
 - ⬜ Accessibilité (tailles des cibles tactiles, lecteurs d'écran pour la bibliothèque, les setlists et les paramètres).
 - ⬜ Tests de non-régression visuels sur le corpus.
-- ⬜ Nom définitif de l'application (ADR-006), icône, **APK de release signé** (clé de publication, GitHub Releases).
+- ⬜ Identifiant Android définitif (ADR-006), icône, **APK de release signé** (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
 - ⬜ **Décision iOS** (ADR-005) : publier avec webmscore, demander une autorisation à Muse Group, ou variante sans webmscore.
 - ⬜ Build iOS (Capacitor), tests iPhone/iPad, ouverture de fichiers (UTI), dossier dans l'application Fichiers, métronome et bouton silencieux.
