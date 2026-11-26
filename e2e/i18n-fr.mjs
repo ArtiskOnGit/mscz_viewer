@@ -41,6 +41,7 @@ const overflows = () =>
     const canvas = document.createElement('canvas').getContext('2d');
     // Text clipped by its box (with or without an ellipsis), or a box leaving the screen.
     const inspect = (el, name) => {
+      if (el.closest('.sr-only')) return; // screen-reader text: clipped on purpose
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const style = getComputedStyle(el);

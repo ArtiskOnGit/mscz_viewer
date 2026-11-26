@@ -110,6 +110,9 @@ check('tap at 27 % does not turn the page with 20 % zones', (await pageNumber())
 await tapAt(0.27); // toolbars back
 await tapAt(0.1);
 check('tap at 10 % turns back', (await pageNumber()) === p2 - 1);
+// The previous page must be displayed (rendered) before the next turn, else nothing changes on screen.
+await page.waitForSelector('.score-page[data-turn=prev]', { timeout: 3000 }).catch(() => undefined);
+await page.waitForTimeout(200);
 
 // --- page-turn animation (slide by default), none under reduced motion ---
 await page.keyboard.press('ArrowRight');
