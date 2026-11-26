@@ -23,7 +23,7 @@ import { usePreloadNext } from '../setlists/preloadNext';
 import { transposeBadgeValue } from '../../core/setlists/effectiveView';
 import { useMyPartToast } from './useMyPartToast';
 import { pedalAction } from '../../core/navigation/pedalKeys';
-import { halfPageSplit, measureNumbers, nextPosition, pageOfMeasure, previousPosition } from '../../core/navigation/navigation';
+import { boxAtPoint, halfPageSplit, measureNumbers, nextPosition, pageOfMeasure, previousPosition, xmlMeasureOfId } from '../../core/navigation/navigation';
 import { GoToModal } from './GoToModal';
 import { useLongPress } from './useLongPress';
 import { ContinuousView, type ContinuousHandle } from './ContinuousView';
@@ -57,6 +57,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   };
   // Half-page turn: page for which the composite view (top of page + 1 over bottom of page) is shown.
   const [halfOf, setHalfOf] = useState<number>();
+  const [picked, setPicked] = useState<number>(); // bar picked by a long press (MusicXML measure rank)
   const [composite, setComposite] = useState<{ base: string; svg: string }>();
   const [toast] = useIonToast();
   const { settings } = useSettings();
@@ -165,6 +166,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   }, [topSvg, v.svg]);
   const togglePlay = () => {
     setHalfOf(undefined); // auto-scroll turns full pages
+    if (!pb.playing) setPicked(undefined); // the picked bar (long press) is used by this ▶
     pb.toggle();
   };
   // --- end page turns ---
@@ -192,6 +194,41 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     return () => window.removeEventListener('keydown', listener);
   }, []);
 
+  // --- long press on a bar: the next ▶ starts there (restarts there while playing) ---
+  /** SVG id of the measure under a point (on a drawn element, else in the bounding box of a measure). */
+  const measureIdAt = (x: number, y: number): string | undefined => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    const hit = document.elementsFromPoint(x, y).map((el) => el.closest('g.measure')).find((g) => g && stage.contains(g));
+    if (hit?.id) return hit.id;
+    let scope: ParentNode = stage;
+    const halfView = halfRef.current;
+    if (halfView) {
+      // Half page: only the layer shown at this height.
+      const split = parseFloat(halfView.style.getPropertyValue('--half-split'));
+      scope = halfView.querySelector(y - halfView.getBoundingClientRect().top < split ? '.half-top' : '.half-bottom') ?? stage;
+    }
+    const measures = [...scope.querySelectorAll<SVGGElement>('g.measure')];
+    return measures[boxAtPoint(measures.map((m) => m.getBoundingClientRect()), x, y)]?.id || undefined;
+  };
+  const pickMeasureAt = (x: number, y: number) => {
+    if (locked || !pb.available) return;
+    const id = measureIdAt(x, y);
+    const measure = id ? xmlMeasureOfId(id, v.measureIds, v.xmlToRendered) : undefined;
+    if (measure === undefined) return;
+    if (!pb.playing && measure === picked) {
+      pb.pickMeasure(undefined);
+      setPicked(undefined);
+      return void toast({ message: t('playback.startAtCleared'), duration: 1200, position: 'top' });
+    }
+    if (!pb.pickMeasure(measure) || pb.playing) return;
+    setPicked(measure);
+    const bar = (v.xml ? measureNumbers(v.xml)[measure] : undefined) ?? String(measure + 1);
+    void toast({ message: t('playback.startAt', { bar }), duration: 1500, position: 'top' }); // not over the score centre nor ▶
+  };
+  const pickedId = picked !== undefined ? v.measureIds[v.xmlToRendered[picked] ?? -1] : undefined;
+  // --- end long press on a bar ---
+
   const pinchScale = usePageGestures(stageRef, {
     // While playing, a tap pauses (setting) instead of turning the page; in lock mode, taps only turn pages.
     onNext: () => (pb.playing && settings.tapPauses && !locked ? pb.pause() : turnNext()),
@@ -205,12 +242,14 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     tapZones: settings.tapZones,
     swipe: settings.swipe,
     pinch: !locked,
+    onLongPress: pickMeasureAt, // long press on a bar
   });
 
   // --- go to bar / rehearsal mark ---
   const numbers = useMemo(() => (gotoOpen && v.xml ? measureNumbers(v.xml) : []), [gotoOpen, v.xml]);
   const goToMeasure = (measureIndex: number) => {
     setGotoOpen(false);
+    setPicked(undefined); // replaces a bar picked by a long press
     const target = pageOfMeasure(measureIndex, v.xmlToRendered, v.renderedPages);
     if (!target) return;
     setHalfOf(undefined);
@@ -298,7 +337,11 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           data-testid="score-stage"
           data-score-theme={settings.scoreTheme}
           data-layout={continuous ? 'continuous' : 'pages'}
+          data-picked-measure={pickedId}
+          onContextMenu={(e) => e.preventDefault()}
         >
+          {/* Bar picked by a long press (any page rendered later, continuous mode included, gets the mark too). */}
+          {pickedId && <style>{`.score-page g.measure[id="${CSS.escape(pickedId)}"] { color: var(--pupitre-picked-measure); }`}</style>}
           {v.status === 'ready' && continuous && v.pageCount > 0 && (
             <ContinuousView
               key={v.layoutVersion}

@@ -91,3 +91,60 @@ export function halfPageSplit(current: readonly Band[], next: readonly Band[], h
   }
   return best ?? middle;
 }
+
+// --- start the auto-scroll from a bar picked by a long press ---
+
+/**
+ * MusicXML measure rank of a rendered (Verovio) measure id: the first MusicXML measure drawn by it (a merged
+ * multi-measure rest stands for several). Undefined if the id is not a measure of the current layout.
+ */
+export function xmlMeasureOfId(id: string, measureIds: readonly string[], xmlToRendered: readonly number[]): number | undefined {
+  const rendered = measureIds.indexOf(id);
+  if (rendered < 0) return undefined;
+  const xml = xmlToRendered.indexOf(rendered);
+  return xml >= 0 ? xml : undefined;
+}
+
+/**
+ * Playing-order event to start a picked bar from: its first occurrence at or after `from` (the current position),
+ * otherwise its last occurrence before (e.g. second time through a repeat), otherwise the first event of a later
+ * measure (measure missing from the timeline). -1 if none.
+ */
+export function eventOfMeasureFrom(timeline: Timeline, measureIndex: number, from: number): number {
+  const events = timeline.events;
+  const start = Math.max(0, from);
+  for (let i = start; i < events.length; i++) if (events[i]!.measureIndex === measureIndex) return i;
+  for (let i = Math.min(start, events.length) - 1; i >= 0; i--) if (events[i]!.measureIndex === measureIndex) return i;
+  return firstEventOfMeasure(timeline, measureIndex);
+}
+
+export interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * Index of the box under a point (the smallest one containing it), else of the nearest box of the same row
+ * (a point in the margin of a system, or between two measures). -1 if none is close enough (`slack` px).
+ */
+export function boxAtPoint(boxes: readonly Box[], x: number, y: number, slack = 24): number {
+  let best = -1;
+  let bestArea = Infinity;
+  boxes.forEach((b, i) => {
+    if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
+      const area = (b.right - b.left) * (b.bottom - b.top);
+      if (area < bestArea) [best, bestArea] = [i, area];
+    }
+  });
+  if (best >= 0) return best;
+  let bestDistance = slack;
+  boxes.forEach((b, i) => {
+    if (y < b.top || y > b.bottom) return;
+    const d = x < b.left ? b.left - x : x - b.right;
+    if (d <= bestDistance) [best, bestDistance] = [i, d];
+  });
+  return best;
+}
+// --- end start from a picked bar ---

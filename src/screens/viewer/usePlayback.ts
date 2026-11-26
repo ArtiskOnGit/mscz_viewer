@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { Timeline } from '../../core/model/types';
 import { PlaybackEngine } from '../../core/playback/playbackEngine';
-import { firstEventOfMeasure } from '../../core/navigation/navigation';
+import { eventOfMeasureFrom, firstEventOfMeasure } from '../../core/navigation/navigation';
 import type { AppSettings } from '../../core/settings';
 import type { ContinuousHandle } from './ContinuousView';
 
@@ -33,6 +33,7 @@ export function usePlayback(a: Args) {
   const engine = useRef<PlaybackEngine>(undefined);
   const current = useRef<number>(-1); // rendered measure index currently highlighted
   const resume = useRef<number | undefined>(undefined); // timeline event to resume from
+  const armed = useRef<number | undefined>(undefined); // bar picked by a long press: the next ▶ starts there
   const latest = useRef(a);
   useEffect(() => {
     latest.current = a;
@@ -143,6 +144,9 @@ export function usePlayback(a: Args) {
     mode.current = 'scroll';
     setMetronomeOnly(false);
     setPlaying(true);
+    const picked = armed.current;
+    armed.current = undefined;
+    if (from === undefined && picked !== undefined) from = picked;
     await e.play({
       startEventIndex: from ?? startEvent(),
       countInMeasures: settings.countInMeasures,
@@ -194,6 +198,7 @@ export function usePlayback(a: Args) {
       const { timeline } = latest.current;
       const i = timeline ? firstEventOfMeasure(timeline, measureIndex) : -1;
       if (i < 0) return;
+      armed.current = undefined; // replaces a bar picked by a long press
       if (mode.current === 'scroll' && engine.current?.playing) {
         engine.current.pause();
         void play(i);
@@ -202,6 +207,32 @@ export function usePlayback(a: Args) {
       }
     },
     [play],
+  );
+
+  /**
+   * Long press on a bar: the next ▶ starts from it (its first occurrence at or after the current position); restarts
+   * from it right away while scrolling. Undefined clears the pick. Returns false if the bar is not in the timeline.
+   */
+  const pickMeasure = useCallback(
+    (measureIndex: number | undefined): boolean => {
+      const { timeline } = latest.current;
+      if (measureIndex === undefined || !timeline) {
+        armed.current = undefined;
+        return false;
+      }
+      const scrolling = mode.current === 'scroll' && !!engine.current?.playing;
+      const from = scrolling ? (resume.current ?? 0) : startEvent();
+      const i = eventOfMeasureFrom(timeline, measureIndex, from);
+      if (i < 0) return false;
+      if (scrolling) {
+        engine.current!.pause();
+        void play(i);
+      } else {
+        armed.current = i;
+      }
+      return true;
+    },
+    [play], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => engine.current?.setTempoFactor(a.tempoFactor), [a.tempoFactor]);
@@ -218,5 +249,5 @@ export function usePlayback(a: Args) {
     return () => document.removeEventListener('visibilitychange', onHide);
   }, [pause]);
 
-  return { playing, countingIn, beat, metronomeOnly, play, pause, toggle, toggleMetronomeOnly, startFrom, available: !!a.timeline?.events.length };
+  return { playing, countingIn, beat, metronomeOnly, play, pause, toggle, toggleMetronomeOnly, startFrom, pickMeasure, available: !!a.timeline?.events.length };
 }

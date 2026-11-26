@@ -12,11 +12,16 @@ interface Handlers {
   swipe: boolean;
   /** Pinch zoom (off in lock mode: a two-finger touch is then ignored). */
   pinch: boolean;
+  // --- long press on a bar (start the auto-scroll there) ---
+  /** One finger held still ≥ LONG_PRESS_MS (client coordinates); the tap is then not handled. */
+  onLongPress?(x: number, y: number): void;
+  // --- end long press ---
 }
 
 const TAP_ZONE = 1 / 3;
 const SWIPE_MIN_PX = 60;
 const TAP_MAX_MOVE_PX = 12;
+export const LONG_PRESS_MS = 500;
 
 export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Handlers): number {
   const [pinchScale, setPinchScale] = useState(1);
@@ -32,6 +37,11 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
     let pinchStart = 0;
     let pinching = false;
     let ratio = 1;
+    // --- long press ---
+    let longTimer: ReturnType<typeof setTimeout> | undefined;
+    let longFired = false;
+    const cancelLong = () => clearTimeout(longTimer);
+    // --- end long press ---
 
     const distance = () => {
       const [a, b] = [...pointers.values()];
@@ -40,6 +50,19 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
 
     const down = (e: PointerEvent) => {
       pointers.set(e.pointerId, { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY });
+      // --- long press ---
+      cancelLong();
+      if (pointers.size === 1) {
+        longFired = false;
+        const { clientX, clientY } = e;
+        if (h.current.onLongPress) {
+          longTimer = setTimeout(() => {
+            longFired = true;
+            h.current.onLongPress?.(clientX, clientY);
+          }, LONG_PRESS_MS);
+        }
+      }
+      // --- end long press ---
       if (pointers.size === 2) {
         pinching = true;
         pinchStart = distance();
@@ -51,6 +74,7 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
       if (!p) return;
       p.x = e.clientX;
       p.y = e.clientY;
+      if (Math.abs(p.x - p.x0) >= TAP_MAX_MOVE_PX || Math.abs(p.y - p.y0) >= TAP_MAX_MOVE_PX) cancelLong(); // long press
       if (pinching && h.current.pinch && pointers.size === 2 && pinchStart > 0) {
         ratio = Math.min(3, Math.max(0.33, distance() / pinchStart));
         setPinchScale(ratio);
@@ -59,7 +83,9 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
     const up = (e: PointerEvent) => {
       const p = pointers.get(e.pointerId);
       pointers.delete(e.pointerId);
+      cancelLong(); // long press
       if (!p) return;
+      if (longFired) return; // the long press already acted
       if (pinching) {
         if (pointers.size === 0) {
           pinching = false;
@@ -83,6 +109,7 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
     };
     const cancel = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
+      cancelLong(); // long press
       if (pointers.size === 0 && pinching) {
         pinching = false;
         setPinchScale(1);
@@ -98,6 +125,7 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', cancel);
+      cancelLong(); // long press
     };
   }, [ref]);
 

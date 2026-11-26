@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Timeline } from '../model/types';
-import { firstEventOfMeasure, halfPageSplit, measureIndexForBar, measureNumbers, nextPosition, pageOfMeasure, previousPosition } from './navigation';
+import { boxAtPoint, eventOfMeasureFrom, firstEventOfMeasure, halfPageSplit, measureIndexForBar, measureNumbers, nextPosition, pageOfMeasure, previousPosition, xmlMeasureOfId } from './navigation';
+import { xmlToRenderedMeasure } from '../playback/measureMap';
 import { DEFAULT_PEDAL_KEYS, assignPedalKey, normalizePedalKeys, pedalAction } from './pedalKeys';
 
 describe('measureNumbers / measureIndexForBar', () => {
@@ -115,5 +116,59 @@ describe('halfPageSplit', () => {
   it('falls back to the middle when no next system fits', () => {
     expect(halfPageSplit([band(10, 300), band(320, 600)], [band(10, 700)], 800)).toEqual({ topEnd: 400, bottomStart: 400 });
     expect(halfPageSplit([band(10, 700)], [band(10, 300)], 800)).toEqual({ topEnd: 400, bottomStart: 400 });
+  });
+});
+
+describe('start from a picked bar (long press)', () => {
+  // 8 measures; measures 3-5 (ranks 2..4) are one merged multi-measure rest.
+  const xmlToRendered = xmlToRenderedMeasure(8, [{ start: 2, length: 3 }]);
+  const measureIds = ['m0', 'm1', 'm2', 'm5', 'm6', 'm7'];
+
+  it('maps a rendered measure id to its (first) MusicXML measure', () => {
+    expect(xmlToRendered).toEqual([0, 1, 2, 2, 2, 3, 4, 5]);
+    expect(xmlMeasureOfId('m0', measureIds, xmlToRendered)).toBe(0);
+    expect(xmlMeasureOfId('m2', measureIds, xmlToRendered)).toBe(2); // the multi-rest starts at rank 2
+    expect(xmlMeasureOfId('m5', measureIds, xmlToRendered)).toBe(5);
+    expect(xmlMeasureOfId('m7', measureIds, xmlToRendered)).toBe(7);
+    expect(xmlMeasureOfId('nope', measureIds, xmlToRendered)).toBeUndefined();
+  });
+
+  // Measures 0-3 repeated, then 4-5: playing order 0 1 2 3 0 1 2 3 4 5.
+  const order = [0, 1, 2, 3, 0, 1, 2, 3, 4, 5];
+  const timeline: Timeline = {
+    source: 'webmscore',
+    totalMs: order.length * 1000,
+    events: order.map((measureIndex, i) => ({ measureIndex, startMs: i * 1000, durationMs: 1000, timeSig: { beats: 4, beatType: 4 } })),
+  };
+
+  it('picks the first occurrence at or after the current position', () => {
+    expect(eventOfMeasureFrom(timeline, 1, 0)).toBe(1);
+    expect(eventOfMeasureFrom(timeline, 1, 2)).toBe(5); // second time through the repeat
+    expect(eventOfMeasureFrom(timeline, 1, 5)).toBe(5);
+    expect(eventOfMeasureFrom(timeline, 5, 3)).toBe(9);
+  });
+
+  it('falls back to the last occurrence before, then to a later measure', () => {
+    expect(eventOfMeasureFrom(timeline, 1, 8)).toBe(5);
+    expect(eventOfMeasureFrom(timeline, 0, 99)).toBe(4);
+    const withGap: Timeline = { ...timeline, events: timeline.events.filter((e) => e.measureIndex !== 4) };
+    expect(eventOfMeasureFrom(withGap, 4, 0)).toBe(8); // measure 4 not played: next one
+    expect(eventOfMeasureFrom(withGap, 9, 0)).toBe(-1);
+  });
+
+  it('finds the measure box under a point', () => {
+    const boxes = [
+      { left: 0, top: 0, right: 100, bottom: 50 },
+      { left: 100, top: 0, right: 200, bottom: 50 },
+      { left: 0, top: 80, right: 200, bottom: 130 },
+      { left: 20, top: 85, right: 60, bottom: 120 }, // nested (smaller wins)
+    ];
+    expect(boxAtPoint(boxes, 50, 25)).toBe(0);
+    expect(boxAtPoint(boxes, 150, 25)).toBe(1);
+    expect(boxAtPoint(boxes, 150, 100)).toBe(2);
+    expect(boxAtPoint(boxes, 30, 100)).toBe(3);
+    expect(boxAtPoint(boxes, 210, 25)).toBe(1); // right margin of the system
+    expect(boxAtPoint(boxes, 300, 25)).toBe(-1);
+    expect(boxAtPoint(boxes, 50, 65)).toBe(-1); // between two systems
   });
 });

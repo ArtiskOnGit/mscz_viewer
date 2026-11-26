@@ -58,6 +58,14 @@
 .score-page g.measure.current {
   color: #e8590c;
 }
+/* Bar picked by a long press: the next ▶ starts there (rule injected by the viewer for the picked measure id). */
+.score-stage {
+  --pupitre-picked-measure: #1c7ed6;
+}
+.score-stage[data-score-theme='dark'],
+.score-stage[data-score-theme='highContrast'] {
+  --pupitre-picked-measure: #74c0fc;
+}
 .beat-dot {
   position: absolute;
   top: 10px;

@@ -29,7 +29,9 @@
     "countIn": "Count-in…",
     "noTimeline": "Auto-scroll is not available for this score.",
     "metronomeOnlyStop": "Stop the metronome",
-    "metronomeHint": "Tap: metronome with auto-scroll. Long press: metronome only, without scrolling."
+    "metronomeHint": "Tap: metronome with auto-scroll. Long press: metronome only, without scrolling.",
+    "startAt": "▶ will start at bar {{bar}}",
+    "startAtCleared": "Start bar cleared"
   },
   "transpose": {
     "button": "Transpose",

@@ -29,7 +29,9 @@
     "countIn": "Décompte…",
     "noTimeline": "Le défilement automatique n’est pas disponible pour cette partition.",
     "metronomeOnlyStop": "Arrêter le métronome",
-    "metronomeHint": "Toucher\u00a0: métronome avec défilement. Appui long\u00a0: métronome seul, sans défilement."
+    "metronomeHint": "Toucher\u00a0: métronome avec défilement. Appui long\u00a0: métronome seul, sans défilement.",
+    "startAt": "▶ partira de la mesure {{bar}}",
+    "startAtCleared": "Mesure de départ annulée"
   },
   "transpose": {
     "button": "Transposer",
