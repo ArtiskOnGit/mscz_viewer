@@ -181,6 +181,8 @@ node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clai
 node e2e/audio.mjs "$PWD" /tmp/shots        # son de la partition : chargement à la demande, mixeur, niveau de sortie, pause
 node e2e/pickbar.mjs "$PWD" /tmp/shots      # appui long sur une mesure
 node e2e/performance.mjs "$PWD" /tmp/shots  # temps d'ouverture, cache de rendu, workers
+node e2e/render-race.mjs "$PWD" /tmp/shots  # gros conducteur (test-scores/Motorcrypt.mscz, ignoré s'il manque) : zoom / rotation
+                                             # A → B → A, page 37 jamais blanche, erreur de dessin = message + Réessayer ; Chromium + WebKit iPhone
 node e2e/pwa.mjs "$PWD" /tmp/shots          # application web : build, manifeste, service worker, HORS LIGNE (import, rendu, son), mise à jour ;
                                              # Chromium + WebKit profil iPhone si installé (npx playwright install webkit)
 ```
