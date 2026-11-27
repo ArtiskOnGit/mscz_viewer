@@ -164,7 +164,8 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   useEffect(() => {
     if (!half || !pageSvgShown) return;
     let cancelled = false;
-    void pageSvg(pageShown + 1).then((svg) => !cancelled && setComposite({ base: pageSvgShown, svg }));
+    // Next page not drawn: the full page stays (the error, if any, shows once that page is turned to).
+    void pageSvg(pageShown + 1).then((svg) => !cancelled && setComposite({ base: pageSvgShown, svg }), () => undefined);
     return () => {
       cancelled = true;
     };
@@ -392,7 +393,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               onVisible={onVisible}
             />
           )}
-          {v.status === 'ready' && !continuous && v.svg && topSvg && (
+          {v.status === 'ready' && !continuous && v.svg && topSvg && !v.pageError && (
             <div
               ref={halfRef}
               className="score-page score-half"
@@ -404,7 +405,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
               <div className="half-separator" />
             </div>
           )}
-          {v.status === 'ready' && !continuous && v.svg && !topSvg && (
+          {v.status === 'ready' && !continuous && v.svg && !topSvg && !v.pageError && (
             <div
               key={turnAnim.key}
               className={`score-page${turnAnim.className}`}
@@ -415,11 +416,19 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
           )}
           <div className={`beat-dot ${pb.beat ?? ''}`} hidden={!pb.playing && !pb.metronomeOnly} />
           {pb.countingIn && <div className="count-in">{t('playback.countIn')}</div>}
-          {v.status === 'loading' && (
-            <div className="score-message"><IonSpinner /> {t('loading')}</div>
+          {(v.status === 'loading' || (v.status === 'ready' && !continuous && !v.svg && !v.pageError)) && (
+            <div className="score-message" data-testid="score-loading"><IonSpinner /> {t('loading')}</div>
           )}
           {v.status === 'notFound' && <div className="score-message">{t('notFound')}</div>}
-          {v.status === 'error' && <div className="score-message">{t('renderError')}</div>}
+          {/* Never a blank stage: a layout or a page that cannot be drawn says so, with Retry (new Verovio worker). */}
+          {(v.status === 'error' || (v.status === 'ready' && !continuous && v.pageError)) && (
+            <div className="score-message score-error" data-testid="render-error" data-reason={v.status === 'error' ? 'layout' : v.pageError}>
+              <p>{v.status === 'error' ? t('renderError') : v.pageError === 'timeout' ? t('pageSlow') : t('pageError')}</p>
+              {(v.status !== 'error' || v.xml) && (
+                <IonButton fill="outline" onClick={v.retry} data-testid="render-retry">{t('retry')}</IonButton>
+              )}
+            </div>
+          )}
         </div>
       </IonContent>
       <IonFooter>

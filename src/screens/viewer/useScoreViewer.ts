@@ -7,14 +7,16 @@ import { useSettings } from '../../state/settingsStore';
 import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
 import type { Timeline } from '../../core/model/types';
 import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
-import { RenderService, firstMeasureId, type ViewportOptions } from '../../core/render/renderService';
-import { contentKeyOf, loadPiece, partsKeyOf, prepareDisplay, sameViewport, viewportOf, type PieceData } from './pieceData';
+import { RenderService, StaleRenderError, firstMeasureId, type ViewportOptions } from '../../core/render/renderService';
+import { contentKeyOf, layoutStep, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData, type RequestedLayout } from './pieceData';
 import { adoptPreloaded, displayKeyOf } from '../setlists/preloadNext';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
 
 export const MIN_ZOOM = 0.4;
 export const MAX_ZOOM = 3;
+/** A page not drawn after this long (worker stopped by the system, e.g. iOS under memory pressure): message + Retry. */
+const PAGE_RENDER_TIMEOUT_MS = 30000;
 
 export function useScoreViewer(
   scoreId: string,
@@ -109,23 +111,22 @@ export function useScoreViewer(
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.
   const contentKey = viewport && display && partsKey !== undefined ? contentKeyOf(partsKey, viewport, settings) : undefined;
-  const loadedContent = useRef<string | undefined>(pre?.renderer ? pre.contentKey : undefined);
-  const loadedViewport = useRef<ViewportOptions | undefined>(pre?.renderer ? pre.viewport : undefined);
-  const laidOut = useRef(false);
+  // What the renderer was last asked for (setlists: a preloaded renderer already holds this piece).
+  const requested = useRef<RequestedLayout>({ content: pre?.renderer ? pre.contentKey : undefined, viewport: pre?.renderer ? pre.viewport : undefined, applied: false });
+  const [layoutRetry, setLayoutRetry] = useState(0);
   useEffect(() => {
     if (!viewport || !display || !contentKey) return;
     const r = renderer.current!;
-    const reload = loadedContent.current !== contentKey;
-    const same = !reload && sameViewport(loadedViewport.current, viewport);
+    const step = layoutStep(requested.current, contentKey, viewport);
     // Same content and geometry (e.g. only the tempo changed): nothing to lay out again.
-    if (same && laidOut.current) return;
-    laidOut.current = false;
+    if (step === 'none') return;
+    const reload = step === 'load';
+    // Recorded at once: the renderer switches to this layout now, even if this run is cancelled later.
+    requested.current = { content: contentKey, viewport, applied: false };
     let cancelled = false;
     void (async () => {
-      // `same` without a layout yet: the renderer was preloaded with this very piece (setlists).
-      const layout = reload ? await r.load(display.xml, viewport) : same ? r.layout : await r.relayout(viewport);
-      loadedContent.current = contentKey;
-      loadedViewport.current = viewport;
+      // 'wait': layout already asked for (a cancelled run, or the renderer preloaded with this very piece).
+      const layout = await (reload ? r.load(display.xml, viewport) : step === 'wait' ? r.current() : r.relayout(viewport));
       if (cancelled) return;
       setStaves(display.staves);
       setPageCount(layout.pageCount);
@@ -141,32 +142,63 @@ export function useScoreViewer(
       setPage(Math.min(Math.max(1, target), layout.pageCount));
       setLayoutVersion((n) => n + 1);
       setStatus('ready');
-      laidOut.current = true;
+      requested.current.applied = true;
     })().catch((e) => {
-      console.error(e);
-      if (!cancelled) setStatus('error');
+      console.error('Score layout failed', e);
+      if (cancelled) return;
+      requested.current = { content: undefined, viewport: undefined, applied: false }; // Retry loads again
+      setStatus('error');
     });
     return () => {
       cancelled = true;
     };
-  }, [viewport, display, contentKey]);
+  }, [viewport, display, contentKey, layoutRetry]);
 
   // 4. Render the current page, pre-render its neighbours (page mode; the continuous view renders its own pages).
+  // A page that cannot be drawn (or takes too long: worker stopped by the system) shows a message and Retry,
+  // never a blank stage.
   const continuous = viewport?.continuous ?? false;
+  const [pageError, setPageError] = useState<{ page: number; reason: 'failed' | 'timeout' }>();
+  const [pageRetry, setPageRetry] = useState(0);
   useEffect(() => {
     if (status !== 'ready' || pageCount === 0 || continuous) return;
     let cancelled = false;
     const r = renderer.current!;
-    void r.page(page).then((s) => {
-      if (cancelled) return;
-      setSvg(s);
-      anchor.current = firstMeasureId(s);
-      r.prefetch(page);
-    });
+    const gen = r.generation;
+    // A relayout started since this page number was chosen: the layout effect sets the page again when done.
+    const outdated = () => cancelled || r.generation !== gen;
+    const timer = setTimeout(() => !outdated() && setPageError({ page, reason: 'timeout' }), PAGE_RENDER_TIMEOUT_MS);
+    r.page(page).then(
+      (s) => {
+        clearTimeout(timer);
+        if (outdated()) return;
+        setPageError(undefined);
+        setSvg(s);
+        anchor.current = firstMeasureId(s);
+        r.prefetch(page);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        if (outdated() || e instanceof StaleRenderError) return;
+        console.error(`Page ${page}/${pageCount} could not be drawn`, e);
+        setPageError({ page, reason: 'failed' });
+      },
+    );
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [status, page, pageCount, layoutVersion, continuous]);
+  }, [status, page, pageCount, layoutVersion, continuous, pageRetry]);
+
+  /** Retry button: a new Verovio worker, then the layout or the page again. */
+  const retry = useCallback(() => {
+    renderer.current?.restart();
+    setPageError(undefined);
+    if (status === 'error') {
+      setStatus('loading');
+      setLayoutRetry((n) => n + 1);
+    } else setPageRetry((n) => n + 1);
+  }, [status]);
 
   // 5. Persist settings (debounced).
   useEffect(() => {
@@ -194,5 +226,7 @@ export function useScoreViewer(
   }, []);
   const getAnchor = useCallback(() => anchor.current, []);
   // --- end continuous mode ---
-  return { continuous, layoutVersion, setAnchor, getAnchor, xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  // Page error shown for the current page only (pages turned since: those are being drawn).
+  const shownPageError = pageError?.page === page ? pageError.reason : undefined;
+  return { pageError: shownPageError, retry, continuous, layoutVersion, setAnchor, getAnchor, xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }

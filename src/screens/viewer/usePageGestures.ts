@@ -51,6 +51,8 @@ export function usePageGestures(ref: RefObject<HTMLElement | null>, handlers: Ha
     };
 
     const down = (e: PointerEvent) => {
+      // A button shown over the score (Retry after a drawing error) is not a tap on the page.
+      if (e.target instanceof Element && e.target.closest('button, ion-button')) return;
       pointers.set(e.pointerId, { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY });
       // --- long press ---
       cancelLong();

@@ -66,3 +66,23 @@ export function contentKeyOf(partsKey: string, viewport: ViewportOptions, s: Dis
 
 export const sameViewport = (a: ViewportOptions | undefined, b: ViewportOptions) =>
   !!a && a.width === b.width && a.height === b.height && a.scale === b.scale && a.transpose === b.transpose && a.concertPitch === b.concertPitch && !!a.continuous === !!b.continuous;
+
+/** Content and geometry last ASKED of the renderer (it switches to them at once, before the layout is ready). */
+export interface RequestedLayout {
+  content: string | undefined;
+  viewport: ViewportOptions | undefined;
+  /** That layout was completed and applied to the view. */
+  applied: boolean;
+}
+
+/**
+ * What to ask the renderer for a content and geometry: nothing (already shown), wait for the layout already asked
+ * for, relayout or load. Compared with what was last asked, never with what was last shown: after A → B → A (Safari
+ * toolbar, rotation, zoom out and back) while B is being laid out, A must be laid out again — reusing A's layout
+ * while the renderer was at B drew pages of B under A's page numbers (blank page "37 / 52" on iPhone).
+ */
+export function layoutStep(last: RequestedLayout, content: string, viewport: ViewportOptions): 'none' | 'wait' | 'relayout' | 'load' {
+  if (last.content !== content) return 'load';
+  if (!sameViewport(last.viewport, viewport)) return 'relayout';
+  return last.applied ? 'none' : 'wait';
+}

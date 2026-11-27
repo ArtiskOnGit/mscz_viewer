@@ -27,8 +27,11 @@ interface Index {
 
 export const RENDER_CACHE_DIR = 'render-cache';
 export const DEFAULT_RENDER_CACHE_BYTES = 64 * 1024 * 1024;
-/** Bump when the worker's fixed options or the cached data change. */
-const FORMAT = 1;
+/**
+ * Bump when the worker's fixed options or the cached data change. 2: pages cached by 0.6.0 may have been drawn
+ * from another layout than their key's (A → B → A viewport race, blank page on iPhone): not reused.
+ */
+const FORMAT = 2;
 
 /** JSON with sorted keys, so the same options always give the same text. */
 export function stableJson(value: unknown): string {

@@ -3,7 +3,9 @@
 // (or estimated) height, and the scroll position is anchored so that a page rendered above the screen never moves
 // what is being read. The auto-scroll follows the current measure with a critically damped spring.
 import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from 'react';
+import { useTranslation } from 'react-i18next';
 import { followStep, lineTarget, renderWindow, SCREEN_SCROLL, type FollowState } from '../../core/navigation/continuous';
+import { StaleRenderError } from '../../core/render/renderService';
 
 export interface ContinuousHandle {
   /** Scrolls by about one screen (minus an overlap). */
@@ -48,6 +50,9 @@ export function ContinuousView({ ref, ...p }: Props) {
   const [center, setCenter] = useState(initial.page);
   // SVG of the pages rendered so far (the renderer caches them anyway); only those near `center` are in the DOM.
   const [svgs, setSvgs] = useState<Record<number, string>>({});
+  // Pages that could not be drawn: a message in their placeholder (asked again when the reading position moves).
+  const [failed, setFailed] = useState<Record<number, boolean>>({});
+  const { t } = useTranslation('viewer');
   const heights = useRef(new Map<number, number>());
   // Scroll anchor: page under the top of the screen and offset into it (kept when heights above it change).
   const anchor = useRef<{ page: number; offset: number }>({ page: initial.page, offset: 0 });
@@ -90,9 +95,15 @@ export function ContinuousView({ ref, ...p }: Props) {
       void latest.current
         .pageSvg(n)
         .then((svg) => {
-          if (!cancelled) setSvgs((s) => (s[n] === svg ? s : { ...s, [n]: svg }));
+          if (cancelled) return;
+          setSvgs((s) => (s[n] === svg ? s : { ...s, [n]: svg }));
+          setFailed((f) => (f[n] ? { ...f, [n]: false } : f));
         })
-        .catch(() => undefined);
+        .catch((e: unknown) => {
+          if (cancelled || e instanceof StaleRenderError) return;
+          console.error(`Page ${n} could not be drawn`, e);
+          setFailed((f) => ({ ...f, [n]: true }));
+        });
     }
     return () => {
       cancelled = true;
@@ -261,7 +272,9 @@ export function ContinuousView({ ref, ...p }: Props) {
             <div key={`p${n}`} data-page={n} data-rendered="true" className="score-page continuous-page" dangerouslySetInnerHTML={{ __html: svgs[n]! }} />
           ) : (
             // Placeholder: its height is set from the DOM (measured height of the page, or an estimate).
-            <div key={`e${n}`} data-page={n} data-rendered="false" className="continuous-placeholder" />
+            <div key={`e${n}`} data-page={n} data-rendered="false" className="continuous-placeholder">
+              {failed[n] && <div className="score-message" data-testid="render-error">{t('pageError')}</div>}
+            </div>
           ),
         )}
       </div>
