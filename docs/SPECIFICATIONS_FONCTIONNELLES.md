@@ -101,6 +101,7 @@ En mode setlist, un bandeau au-dessus : `◀ morceau précédent` · « 2/6 · N
 - ✅ **« My instrument »** : si l'utilisateur a défini son instrument dans les paramètres, la partie correspondante est **présélectionnée** à la première ouverture (message « Showing your part: … »).
 - ✅ L'ordre des portées suit l'ordre de la partition. Noms d'instruments masqués quand une seule partie est affichée (réglable).
 - ✅ La sélection est mémorisée pour chaque partition (ou dans l'entrée de setlist en mode setlist).
+- ✅ **Clé de chaque instrument** (ADR-028) : à droite de chaque partie à hauteurs déterminées, un menu **Originale (clé de la partition) / Clé de sol / Clé de sol 8 en bas / Clé de fa / Clé d'ut 3e ligne / Clé d'ut 4e ligne** (« Sol », « Fa »… affichés en abrégé, en couleur et en gras quand la clé est changée). Usage typique : trombone, euphonium, tuba lus en clé de sol, ou l'inverse. Seule la clé change : les notes écrites restent les mêmes et sont replacées sur la portée (la clé de sol 8 en bas garde la tessiture : un trombone y est lu à l'octave). Le choix vaut pour **toutes les portées** de la partie (piano : les deux) et pour tout le morceau (les changements de clé en cours de morceau sont retirés) ; les portées de **percussion et de tablature** ne sont jamais modifiées (pas de menu pour une batterie). Appliqué avec « Afficher » ; mémorisé pour chaque partition (ou dans l'entrée de setlist en mode setlist). Le bouton Instruments est aussi proposé pour une partition d'un seul instrument, pour sa clé.
 - ⬜ *(phase 4)* Combinaisons nommées (« Cuivres », « Section rythmique »).
 
 #### 3.2.2 Changement de page / défilement manuel
@@ -128,6 +129,7 @@ Options de navigation :
 - ✅ Affiche la tonalité résultante (« C major → D major », « Do majeur → Ré majeur »), selon la notation des notes choisie.
 - ✅ Bascule **« Concert pitch »** (hauteur réelle) pour les instruments transpositeurs.
 - ✅ **Préférence d'altérations** (*Spelling of the key*) : Auto / ♯ / ♭, proposée quand la tonalité d'arrivée a un équivalent enharmonique (ex. +1 depuis Do : Ré♭ ou Do♯ ; Sol♭/Fa♯ ; Si/Do♭). Auto = le moins d'altérations (♭ en cas d'égalité). La tonalité affichée est exactement celle du rendu (ADR-020).
+- ✅ Préréglage brass band **« Si♭ clé de sol »** (*B♭ treble clef*) : transposition +14 demi-tons (neuvième majeure : +2 demi-tons, +1 octave) **et** passage en clé de sol des parties affichées en clé de fa (ou ut 4e, sol 8vb) — la convention des trombones, euphoniums et barytons de brass band. Une note l'explique sous les préréglages ; toucher ensuite un autre réglage annule le changement de clé. Pas proposé dans le détail d'une setlist (la partition n'y est pas analysée).
 - 🟨 Les grilles d'accords sont transposées par Verovio (corpus sans grilles d'accords : non vérifié).
 - ✅ Bouton « Reset ». La transposition est mémorisée pour chaque partition (ou dans l'entrée de setlist). Une transposition par défaut peut être appliquée à la première ouverture (profil, §3.4).
 
@@ -169,7 +171,7 @@ Options de navigation :
 #### 3.2.7 Navigation dans une setlist
 - ✅ Quand la partition est ouverte depuis une setlist, un bandeau indique « 2/6 · Next: titre » avec les boutons morceau précédent / suivant.
 - ✅ Au pédalier, la touche « page suivante » sur la **dernière page** (ou en bas du rouleau en mode Continu) avertit d'abord (« Press again for the next piece ») ; un second appui dans les 3 s passe au morceau suivant. ✅ Touches dédiées « morceau suivant / précédent » (sans confirmation).
-- ✅ Les réglages propres à l'entrée de setlist (instruments, transposition, préférence ♯/♭) s'appliquent s'ils existent. Sinon, on reprend ceux de la partition. Les changements d'instruments ou de transposition faits en mode setlist sont enregistrés dans l'entrée.
+- ✅ Les réglages propres à l'entrée de setlist (instruments, clés, transposition, préférence ♯/♭) s'appliquent s'ils existent. Sinon, on reprend ceux de la partition. Les changements d'instruments, de clé ou de transposition faits en mode setlist sont enregistrés dans l'entrée.
 - ✅ Le morceau suivant est **pré-chargé** en arrière-plan : il s'ouvre presque instantanément.
 - ⬜ Liste rapide des morceaux pour sauter directement à l'un d'eux (phase 4).
 

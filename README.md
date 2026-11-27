@@ -12,12 +12,13 @@
 - 📄 **Deux modes d'affichage** : **Pages** (balayage, zones de tap, boutons, clavier/pédalier, option **demi-page**) ou **Continu** (un seul rouleau vertical).
 - 🔍 **Zoomer** (pincement ou boutons, nouvelle mise en page). Le zoom est mémorisé pour chaque partition.
 - ♯♭ **Transposer** (demi-tons, octave, préréglages Si♭/Mi♭/Fa, hauteur réelle, choix ♯/♭ pour les tonalités enharmoniques).
+- 𝄢 **Changer la clé** d'un instrument : clé de sol, de sol 8 en bas, de fa, d'ut 3e ou 4e ligne (ex. trombone ou tuba lu en clé de sol), avec le préréglage brass band **« Si♭ clé de sol »** (clé de sol + neuvième majeure).
 - ▶️ **Faire défiler automatiquement** au tempo de la partition, avec les changements de tempo et les **reprises**, un facteur de tempo (50–150 %), un décompte et le surlignage de la mesure en cours ; départ depuis la page affichée, une mesure choisie (« aller à ») ou **touchée** (appui long).
 - 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul »).
 - 🔊 **Entendre la partition** pendant le défilement (instruments General MIDI synthétisés, hors ligne), parfaitement calée sur le défilement (tempo 50–150 %, reprises, décompte, départ depuis une mesure), avec un **mixeur** : volume, muet et solo par partie, volume général, raccourcis « Tous / Moi seul / Sans moi » (profil « My instrument ») ; mémorisé par partition et par morceau de setlist.
 - 🧭 **Aller à une mesure** ou à une **marque de répétition** ; **mode verrouillé** contre les touchers accidentels.
 - 🦶 **Pédalier Bluetooth / clavier** : touches configurables pour page suivante/précédente, lecture/pause, métronome, morceau suivant/précédent.
-- 📋 **Setlists** : préparer le programme d'une répétition ou d'un concert (instruments et transposition par morceau), puis enchaîner les morceaux ; le morceau suivant est pré-chargé.
+- 📋 **Setlists** : préparer le programme d'une répétition ou d'un concert (instruments, clés et transposition par morceau), puis enchaîner les morceaux ; le morceau suivant est pré-chargé.
 - 🌙 Thèmes de l'application (système/clair/sombre) et de la partition (clair, sépia, sombre, contraste élevé) ; écran toujours allumé.
 
 ## Écrans
@@ -172,6 +173,7 @@ node e2e/continuous.mjs "$PWD" /tmp/shots    # mode Continu : rouleau, pédalier
 node e2e/navigation.mjs "$PWD" /tmp/shots    # aller à, verrouillage, touches du pédalier, demi-page, métronome seul
 node e2e/playback.mjs "$PWD" /tmp/shots      # défilement automatique + métronome
 node e2e/transpose.mjs "$PWD" /tmp/shots     # transposition, préférence ♯/♭
+node e2e/clefs.mjs "$PWD" /tmp/shots [--webkit]  # clé du trombone : sol, sol 8vb, retour, rechargement, préréglage Si♭ clé de sol
 node e2e/setlists.mjs "$PWD" /tmp/shots      # setlists, morceau suivant, pré-chargement
 node e2e/profile.mjs "$PWD" /tmp/shots       # profil « My instrument »
 node e2e/settings.mjs "$PWD" /tmp/shots      # couleurs de partition

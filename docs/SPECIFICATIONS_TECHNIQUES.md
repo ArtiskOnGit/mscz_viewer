@@ -99,7 +99,7 @@ mscz_viewer/
 │   │   ├── model/               # types : Score, Part, Timeline, ScoreViewState, Setlist
 │   │   ├── storage/             # FileStore, LibraryRepository, ViewStateRepository, SetlistRepository
 │   │   ├── import/              # importScore (+ réimport), formats, webmscoreEngine, unhideParts, openWith
-│   │   ├── musicxml/            # filterParts (ADR-012), multiRests, prepareDisplay
+│   │   ├── musicxml/            # filterParts (ADR-012), clefs (ADR-028), multiRests, prepareDisplay
 │   │   ├── render/              # RenderService, render.worker.ts, options Verovio, transposeOption, cache disque (renderCache)
 │   │   ├── timeline/            # timeline depuis les positions webmscore, métriques
 │   │   ├── playback/            # PlaybackClock, clics du métronome, PlaybackEngine, table des mesures
@@ -174,7 +174,7 @@ interface SetlistItem {
   scoreId: ScoreId;
   note?: string;
   override?: Partial<Pick<ScoreViewState,
-    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'mixer'>>;
+    'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'clefOverrides' | 'mixer'>>;
 }
 
 /** Réglages mémorisés pour chaque partition (viewstates.json). */
@@ -185,6 +185,7 @@ interface ScoreViewState {
   transposeOctave: number;
   concertPitch: boolean;
   accidentalPreference: 'auto' | 'sharps' | 'flats';
+  clefOverrides?: Record<string, 'treble' | 'treble8vb' | 'bass' | 'alto' | 'tenor'>; // clé par partie ; absent = clés de la partition (ADR-028)
   zoom: number | 'auto';    // facteur relatif au zoom automatique
   layoutMode: 'pages' | 'continuous';
   lastPage: number;
@@ -251,12 +252,13 @@ Exécuté dans `render.worker.ts` (Verovio WASM, via Comlink). Une instance par 
 
 1. **XML affiché** (`prepareDisplay`, thread principal, **une seule analyse DOM** et au plus une sérialisation pour toutes les étapes, ADR-025) :
    - **filtrage des parties** : on retire les `<score-part>` / `<part>` non sélectionnés et les groupes vides, en **recopiant les indications système** (tempo, métronome, repères, sauts) vers la première partie conservée (ADR-012) ;
+   - **clés choisies** (`clefs.ts`, ADR-028 ; `clefOverrides` de la vue : `musicXmlId → 'treble' | 'treble8vb' | 'bass' | 'alto' | 'tenor'`) : dans chaque partie concernée, la **première** `<clef>` de chaque portée à hauteurs (signe G, F ou C) est réécrite (`sign`, `line`, `clef-octave-change` −1 pour la clé de sol 8vb ; attribut `number` gardé), les **suivantes sont retirées** (avec un `<attributes>` devenu vide), une clé est ajoutée aux portées qui n'en ont pas ; percussion, TAB et portées sans hauteur intactes. Les notes ne changent pas : Verovio les place selon la clé. Fait avant les silences multi-mesures (une clé retirée ne coupe plus un regroupement). Les clés d'origine de toutes les parties (`originalClefs`) sont relevées avant le filtrage, pour le menu ;
    - **silences multi-mesures** regroupés (`<multiple-rest>`), coupés aux repères, changements d'armure/métrique/tempo, reprises, voltas et doubles barres ; la table « mesure MusicXML → mesure rendue » en tient compte ;
    - **noms d'instruments** masqués pour une partie seule (option) ;
    - **tonalité** de la première partie affichée (et `<transpose><chromatic>` pour la hauteur réelle).
 2. **Options Verovio** (`verovioOptions`) : `scale` (zoom automatique selon le nombre de portées × zoom de la partition), `pageWidth` / `pageHeight` = zone d'affichage en unités Verovio, marges 40, `breaks: 'auto'` (ADR-002), `adjustPageHeight` **vrai en mode Continu** (ADR-019), `header` / `footer: 'none'`, `systemDivider: 'none'`, `svgViewBox`, `transpose`, `transposeToSoundingPitch` (hauteur réelle).
 3. **Transposition** (ADR-020) : quand la tonalité est connue, `transpose` reçoit un **intervalle** (`m2`, `-A1`, `M9`, `-d2`…) calculé à partir de la tonalité d'arrivée choisie (préférence auto/♯/♭) ; sinon un nombre de demi-tons. Comportement vérifié contre Verovio 6.4 dans les tests unitaires.
-4. `loadData(xml)` quand le contenu change (parties, transposition, options d'affichage) ; `redoLayout()` quand seule la géométrie change (taille, rotation, zoom, mode Pages/Continu). Après chaque mise en page : nombre de pages, identifiants des mesures (`getMEI()`), page de chaque mesure (`getPageWithElement`), en un seul aller-retour. Identifiants **déterministes** (`xmlIdSeed`) : une partition rechargée garde les mêmes.
+4. `loadData(xml)` quand le contenu change (parties, clés, transposition, options d'affichage ; la clé de contenu `contentKeyOf` contient les clés choisies triées, `P1=treble,P3=bass`, comme celle de l'XML pré-chargé d'une setlist) ; `redoLayout()` quand seule la géométrie change (taille, rotation, zoom, mode Pages/Continu). Après chaque mise en page : nombre de pages, identifiants des mesures (`getMEI()`), page de chaque mesure (`getPageWithElement`), en un seul aller-retour. Identifiants **déterministes** (`xmlIdSeed`) : une partition rechargée garde les mêmes.
    - **Cache disque** (ADR-025) : avant Verovio, `RenderService` calcule la clé (SHA-256 du XML affiché, de l'objet d'options Verovio entier à clés triées, des versions de Verovio et de l'application) ; si la mise en page est en cache, elle et les pages en cache sont servies **sans charger la partition dans Verovio** ; le worker n'est mis à jour (chargement ou nouvelle mise en page) que pour une page absente ou un élément inconnu. Chaque page rendue est écrite en arrière-plan. 64 Mo au plus, éviction LRU ; Paramètres → Stockage montre l'espace utilisé et vide le cache. Les opérations du worker sont **sérialisées** et chaque page est dessinée depuis la mise en page de sa demande (jamais celle d'une autre géométrie arrivée entre-temps) ; page hors mise en page ou vide = erreur (message + « Réessayer » dans la visualisation, délai de 30 s), jamais de page blanche.
    - Le worker et Verovio (WASM, ≈ 1 s) **démarrent dès l'ouverture** de la visualisation, pendant la lecture des fichiers.
 5. **Rendu paresseux** :
