@@ -151,7 +151,23 @@
     "renderCache": "Render cache",
     "renderCacheHint": "Pages already displayed, kept on the device to open scores faster.",
     "clearCache": "Clear render cache",
-    "cleared": "Render cache cleared"
+    "cleared": "Render cache cleared",
+    "offline": {
+      "label": "Offline use",
+      "checking": "Checking…",
+      "downloading": "Downloading what the app needs offline: {{done}} of {{total}}. Keep the app open.",
+      "ready": "Ready: the app works without network ({{size}} on this device).",
+      "error": "Not fully downloaded yet: the app needs the network for now.",
+      "unsupported": "Not available in this browser.",
+      "update": "Downloading a new version: {{done}} of {{total}}",
+      "retry": "Download for offline use"
+    },
+    "persistent": {
+      "label": "Protected storage",
+      "granted": "Your scores and offline files will not be deleted by the browser.",
+      "denied": "The browser may delete your scores and offline files when the device runs low on space or after weeks without use. Install the app (Add to Home Screen) to protect them.",
+      "request": "Ask for protected storage"
+    }
   },
   "musicFont": {
     "label": "Music font",

@@ -11,6 +11,10 @@ import { useSettings } from '../state/settingsStore';
 import { useAppTheme } from './useAppTheme';
 import { useOrientationLock } from './useOrientationLock';
 import { applyLanguage } from '../i18n';
+import { UpdatePrompt } from './UpdatePrompt';
+
+/** The PWA is served under /mscz_viewer/ (GitHub Pages, ADR-027); the Android app and the dev server under /. */
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
 export function App() {
   const { settings, loaded, load } = useSettings();
@@ -25,7 +29,7 @@ export function App() {
 
   return (
     <IonApp>
-      <IonReactRouter>
+      <IonReactRouter basename={basename}>
         <IonRouterOutlet>
           <Routes>
             <Route path={routes.library} element={<LibraryScreen />} />
@@ -36,6 +40,7 @@ export function App() {
           </Routes>
         </IonRouterOutlet>
       </IonReactRouter>
+      <UpdatePrompt />
     </IonApp>
   );
 }

@@ -151,7 +151,23 @@
     "renderCache": "Cache de rendu",
     "renderCacheHint": "Pages déjà affichées, gardées sur l’appareil pour ouvrir les partitions plus vite.",
     "clearCache": "Vider le cache de rendu",
-    "cleared": "Cache de rendu vidé"
+    "cleared": "Cache de rendu vidé",
+    "offline": {
+      "label": "Utilisation hors ligne",
+      "checking": "Vérification…",
+      "downloading": "Téléchargement de ce qu’il faut pour fonctionner hors ligne : {{done}} sur {{total}}. Gardez l’application ouverte.",
+      "ready": "Prêt : l’application fonctionne sans réseau ({{size}} sur cet appareil).",
+      "error": "Pas encore entièrement téléchargé : l’application a besoin du réseau pour l’instant.",
+      "unsupported": "Non disponible dans ce navigateur.",
+      "update": "Téléchargement d’une nouvelle version : {{done}} sur {{total}}",
+      "retry": "Télécharger pour l’utilisation hors ligne"
+    },
+    "persistent": {
+      "label": "Stockage protégé",
+      "granted": "Vos partitions et les fichiers hors ligne ne seront pas supprimés par le navigateur.",
+      "denied": "Le navigateur peut supprimer vos partitions et les fichiers hors ligne si l’appareil manque de place ou après des semaines sans utilisation. Installez l’application (« Sur l’écran d’accueil ») pour les protéger.",
+      "request": "Demander le stockage protégé"
+    }
   },
   "musicFont": {
     "label": "Police musicale",

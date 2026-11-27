@@ -13,5 +13,9 @@
   "duration": {
     "minutes": "{{m}} min {{s}} s",
     "hours": "{{h}} h {{m}} min"
+  },
+  "pwa": {
+    "updateAvailable": "New version available",
+    "reload": "Reload"
   }
 }

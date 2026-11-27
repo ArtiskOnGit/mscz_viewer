@@ -10,6 +10,7 @@
 # Dépendances / builds
 node_modules/
 dist/
+dist-pwa/
 build/
 .vite/
 coverage/
@@ -38,6 +39,7 @@ ios/DerivedData/
 # Spikes : fichiers copiés depuis node_modules et build du banc de test
 spikes/device-test/public/webmscore.*
 spikes/device-test-dist/
+dist-pwa/
 
 # Application : fichiers webmscore copiés depuis node_modules (scripts/copy-webmscore.mjs)
 /public/webmscore.*
