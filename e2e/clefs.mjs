@@ -67,8 +67,14 @@ const trombone = parts.find((p) => /trombone/i.test(p.name ?? ''));
 check('trombone found with a clef menu', !!trombone && trombone.clef === 'original');
 const drums = parts.filter((p) => /drum|percussion|batterie|snare|cymbal/i.test(p.name ?? ''));
 check('no clef menu on percussion', drums.every((p) => p.clef === null), drums.map((p) => p.name).join(', ') || 'none in score');
-await page.locator('ion-modal ion-checkbox').first().click(); // all → none (or all)
-if ((await page.locator('ion-modal ion-checkbox').first().getAttribute('aria-checked')) === 'true') await page.locator('ion-modal ion-checkbox').first().click();
+// "All" → none (two clicks if the first one checked every part).
+const allChecked = () => page.locator('ion-modal ion-checkbox').first().evaluate((el) => el.checked);
+await page.locator('ion-modal ion-checkbox').first().click();
+await page.waitForTimeout(300);
+if (await allChecked()) {
+  await page.locator('ion-modal ion-checkbox').first().click();
+  await page.waitForTimeout(300);
+}
 await page.getByTestId(`part-${trombone.id}`).locator('ion-checkbox').click();
 await page.screenshot({ path: `${shots}/clefs-modal.png` });
 await applyParts();
