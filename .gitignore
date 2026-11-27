@@ -1,5 +1,7 @@
 # Partitions de test personnelles : jamais dans le dépôt
 /test-scores/
+# Also when test-scores is a symbolic link (agent worktrees): a link is a file, not a directory.
+/test-scores
 *.mscz
 *.mscx
 *.mscz,
