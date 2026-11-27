@@ -6,7 +6,7 @@ Les estimations sont indicatives, pour un développeur seul sur son temps libre.
 
 Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ reporté
 
-**État au 2026-11-25** : phases 0, 1 et 2 closes ; prochaine étape : phase 3. Retours de test sur téléphone : [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md).
+**État au 2026-11-25** : phases 0, 1 et 2 closes ; prochaine étape : phase 3. **2026-11-27** : application web installable pour l'iPhone (ADR-027). Retours de test sur téléphone : [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md).
 
 ---
 
@@ -127,7 +127,8 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 - ⬜ Tests de non-régression visuels sur le corpus.
 - 🟨 Identifiant Android définitif ✅ (`io.github.artiskongit.pupitre`, ADR-006) ; icône ✅ (logo 4, `scripts/generate-icons.mjs`) ; **APK de release signé** à faire (clé de publication, GitHub Releases).
 - ⬜ **Publication Android** : Google Play (fiche en anglais, politique de confidentialité « aucune donnée collectée ») + **F-Droid** (build reproductible, métadonnées).
-- ✅ **Décision iOS** (ADR-005, 2026-11-26) : **Android uniquement**, pas de version iOS.
+- ✅ **Décision iOS** (ADR-005, 2026-11-26) : pas d'application iOS native ni d'App Store.
+- ✅ **iPhone par une application web installable** (2026-11-27, ADR-027) : build PWA (`npm run build:pwa`, base `/mscz_viewer/`), publié sur **GitHub Pages** à chaque tag `v*` ; service worker qui **pré-cache tout** (≈ 44 Mo : import, rendu et son hors ligne), reprise et vérification des téléchargements, progression dans Paramètres → Stockage, « Nouvelle version disponible — Recharger », stockage persistant ; manifeste et icônes (192, 512, maskable, apple-touch-icon) ; liens profonds (`404.html`) ; iPhone : import sans filtre de type, session audio « playback », Wake Lock, zones sûres (encoche) ; réglages propres à Android masqués. e2e `pwa.mjs` hors ligne dans Chromium et WebKit (profil iPhone). ⬜ À essayer sur un vrai iPhone ([liste](docs/TESTS_APPAREIL.md)) ; ⬜ activer GitHub Pages (source « GitHub Actions »).
 
 **Livrable** : **v1.0** sur Google Play et F-Droid. *(environ 6 à 8 semaines)*
 
@@ -163,5 +164,6 @@ Résumé (détail dans [docs/TESTS_APPAREIL.md](docs/TESTS_APPAREIL.md)) — sur
 | Métronome irrégulier dans la WebView | Faible | Moyen | Ordonnanceur Web Audio avec anticipation ; son vérifié sur téléphone (régularité non mesurée) ; plan B : plugin natif |
 | Pédaliers Bluetooth non reçus par la WebView | Faible–moyenne | Moyen | Touches configurables, testées au clavier ; à essayer avec un vrai pédalier |
 | Mémoire (worker de pré-chargement, gros conducteurs, mode Continu) | Moyenne | Moyen | Un seul morceau pré-chargé ; rendu paresseux des pages en mode Continu ; à mesurer sur téléphone |
-| Problème GPL / App Store | — | — | Sans objet : Android uniquement (ADR-005) |
+| Problème GPL / App Store | — | — | Sans objet : pas d'App Store, l'iPhone passe par l'application web (ADR-005, ADR-027) |
+| iOS efface les données de l'application web, ou la tue (mémoire) | Moyenne | Moyen | Application installée sur l'écran d'accueil, stockage persistant demandé, fichiers d'origine conservés ; à vérifier sur iPhone (ADR-027) |
 | webmscore abandonné | Élevée | Moyen | Fichier d'origine conservé (réimport possible) ; import isolé derrière `ScoreImporter` |

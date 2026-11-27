@@ -1,6 +1,6 @@
 # Pupitre
 
-**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur **Android**, **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
+**Lecteur de partitions MuseScore pour musiciens en répétition et en concert**, sur **Android** et sur **iPhone** (application web installable, aussi utilisable dans tout navigateur), **100 % hors ligne**. Interface en anglais et en français (selon la langue de l'appareil, ou au choix dans les paramètres).
 
 > 🟢 **Statut : phase 2 terminée (2026-11-25).** L'application Android fonctionne (APK de debug produit par la CI) et a été essayée sur un vrai téléphone ([retours](docs/TESTS_APPAREIL.md)). Prochaine étape : phase 3 (traduction française, finitions, publication). Voir la [roadmap](ROADMAP.md).
 
@@ -112,6 +112,19 @@ Merci aux projets open source sur lesquels Pupitre repose. Les licences sont aus
 
 *MuseScore est une marque de ses propriétaires respectifs. Ce projet n'est ni affilié à MuseScore ni approuvé par MuseScore.*
 
+## Installer sur iPhone (application web)
+
+Pupitre est aussi publié comme **application web installable** (PWA, [ADR-027](docs/DECISIONS.md)) : **https://artiskongit.github.io/mscz_viewer/**. Elle fonctionne **hors ligne** une fois installée, et dans tout navigateur récent (ordinateur, tablette, Android).
+
+1. Sur l'iPhone, ouvrir **https://artiskongit.github.io/mscz_viewer/** dans **Safari** (iOS 16.4 ou plus récent conseillé).
+2. Toucher **Partager** (carré avec une flèche), puis **« Sur l'écran d'accueil »**, puis **Ajouter**.
+3. Ouvrir **Pupitre depuis l'écran d'accueil**, **en ligne** (Wi-Fi conseillé) : l'application télécharge tout ce qu'il lui faut pour fonctionner sans réseau (≈ 44 Mo : moteur d'import, rendu, banque de sons). Suivi dans **Paramètres → Stockage → Utilisation hors ligne** : attendre **« Prêt »** avant de partir en répétition.
+4. Importer les partitions avec le bouton **+** (application **Fichiers** : iCloud Drive, « Sur mon iPhone », pièces jointes enregistrées…).
+
+À savoir : l'application installée a **son propre stockage**, séparé de Safari (importer les partitions depuis l'application de l'écran d'accueil). « Ouvrir avec » / « Partager vers » et le verrouillage de l'orientation n'existent que dans l'application Android. Les nouvelles versions se téléchargent toutes seules ; un message **« Nouvelle version disponible — Recharger »** les applique.
+
+Sur un ordinateur ou un téléphone Android, Chrome et Edge proposent aussi d'**installer** l'application (icône dans la barre d'adresse ou menu « Installer l'application »).
+
 ## Installer l'APK sur un téléphone
 
 **Le plus simple :** télécharger le fichier `pupitre-vX.Y.Z.apk` de la dernière version dans les [**Releases**](https://github.com/ArtiskOnGit/mscz_viewer/releases/latest), directement depuis le téléphone, puis l'ouvrir (autoriser l'installation d'applications depuis cette source).
@@ -125,7 +138,7 @@ npm version 0.3.0 --no-git-tag-version   # met à jour package.json
 git commit -am "Release 0.3.0" && git tag v0.3.0 && git push && git push --tags
 ```
 
-Le workflow `.github/workflows/release.yml` (déclenché par un tag `v*`) lance lint et tests, compile l'APK (versionName = tag, versionCode = numéro de build) et crée la release GitHub avec `pupitre-v0.3.0.apk` en pièce jointe.
+Le workflow `.github/workflows/release.yml` (déclenché par un tag `v*`) lance lint et tests, compile l'APK (versionName = tag, versionCode = numéro de build) et crée la release GitHub avec `pupitre-v0.3.0.apk` en pièce jointe. Le même tag publie l'application web sur GitHub Pages (`.github/workflows/pages.yml`, aussi lançable à la main depuis l'onglet Actions ; prérequis : Settings → Pages → Source « GitHub Actions »).
 
 ### APK de développement
 
@@ -143,7 +156,9 @@ npm run dev            # application dans le navigateur (http://localhost:5173)
 npm test               # tests unitaires (Vitest)
 npm run lint           # ESLint (dont la règle « pas de texte en dur », ADR-009)
 npm run typecheck      # tsc -b
-npm run build          # build web dans dist/
+npm run build          # build web dans dist/ (application Android, base /)
+npm run build:pwa      # application web installable dans dist-pwa/ (base /mscz_viewer/, service worker, manifeste)
+npm run preview:pwa    # la servir en local : http://localhost:4173/mscz_viewer/
 npm run android        # build + synchronisation Capacitor + ouverture dans Android Studio
 ```
 
@@ -166,6 +181,8 @@ node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clai
 node e2e/audio.mjs "$PWD" /tmp/shots        # son de la partition : chargement à la demande, mixeur, niveau de sortie, pause
 node e2e/pickbar.mjs "$PWD" /tmp/shots      # appui long sur une mesure
 node e2e/performance.mjs "$PWD" /tmp/shots  # temps d'ouverture, cache de rendu, workers
+node e2e/pwa.mjs "$PWD" /tmp/shots          # application web : build, manifeste, service worker, HORS LIGNE (import, rendu, son), mise à jour ;
+                                             # Chromium + WebKit profil iPhone si installé (npx playwright install webkit)
 ```
 
 | Dossier | Contenu |

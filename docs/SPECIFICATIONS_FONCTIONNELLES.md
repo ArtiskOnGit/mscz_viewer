@@ -8,7 +8,7 @@
 
 ## 1. Vision
 
-Un **lecteur de partitions MuseScore pour musiciens en répétition**. Il ne sert pas à éditer : il sert à **lire vite et bien** sur téléphone ou tablette posée sur un pupitre. On choisit son instrument, on transpose si besoin, on fait défiler à la main, au pédalier ou automatiquement au tempo. Tout fonctionne **sans connexion**.
+Un **lecteur de partitions MuseScore pour musiciens en répétition**. Il ne sert pas à éditer : il sert à **lire vite et bien** sur téléphone ou tablette posée sur un pupitre. On choisit son instrument, on transpose si besoin, on fait défiler à la main, au pédalier ou automatiquement au tempo. Tout fonctionne **sans connexion**. Plateformes : **application Android** (APK) et **application web installable** pour l'**iPhone** et les navigateurs (ADR-027 : même interface ; « Ouvrir avec », « Partager vers » et verrouillage de l'orientation seulement sur Android).
 
 ### Utilisateurs cibles
 
@@ -227,11 +227,12 @@ Une **setlist** est une liste ordonnée de partitions pour une répétition ou u
 | | Activé pour les nouvelles partitions | oui / non | non | ✅ |
 | | Accent sur le premier temps | oui / non | oui | ✅ |
 | | Son coupé (visuel seul) | | | ⬜ |
-| **Système** | Écran toujours allumé | oui / non | oui | ✅ |
-| | Orientation de l'écran | suivre l'appareil / portrait / paysage | suivre l'appareil | ✅ (Android) |
+| **Système** | Écran toujours allumé | oui / non | oui | ✅ (application web : API Wake Lock, masqué si absente) |
+| | Orientation de l'écran | suivre l'appareil / portrait / paysage | suivre l'appareil | ✅ (Android ; masqué dans l'application web) |
 | | Langue | système / English / Français… | système | ✅ |
 | | Réinitialiser les paramètres | | | ✅ |
 | **Stockage** | Espace utilisé (partitions, cache de rendu), vider le cache de rendu | | | ✅ |
+| | *Application web* : **Utilisation hors ligne** (téléchargement de tout ce qu'il faut sans réseau : progression, « Prêt », bouton « Télécharger pour l'utilisation hors ligne » si interrompu) et **Stockage protégé** (stockage persistant accordé ou non, bouton pour le demander) | | | ✅ (ADR-027) |
 | | Export/import de la bibliothèque | | | ⬜ (phase 4) |
 | **À propos** | Version, **licences open source** (GPL, Verovio, webmscore…), lien vers les sources, crédits, mention de marque MuseScore | | | ✅ |
 
@@ -248,6 +249,9 @@ Les paramètres globaux servent de **valeurs par défaut** pour les partitions o
 7. ✅ *En tant qu'*utilisateur, *je veux* retrouver mon zoom et mon instrument à la réouverture *afin de* ne pas tout régler à chaque fois.
 8. ✅ *En tant que* musicien, *je veux* préparer la setlist du concert et passer d'un morceau à l'autre au pédalier *afin d'*enchaîner sans manipuler mon téléphone.
 9. ✅ *En tant que* musicien, *je veux* un métronome optionnel calé sur le tempo de la partition *afin de* travailler seul ou de caler un départ.
+10. 🟨 *En tant que* musicien équipé d'un iPhone, *je veux* installer Pupitre depuis Safari et l'utiliser hors ligne en répétition (import, partition, son) *afin de* ne pas dépendre d'un téléphone Android. *(Application web, ADR-027 ; testée dans WebKit émulé, à essayer sur un vrai iPhone.)*
+
+Dans l'application web, une nouvelle version publiée est téléchargée en arrière-plan puis proposée par un message **« Nouvelle version disponible — Recharger »**.
 
 ## 5. Hors périmètre (pour l'instant)
 

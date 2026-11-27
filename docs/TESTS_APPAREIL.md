@@ -1,6 +1,6 @@
 # Tests sur appareil
 
-Retours du porteur du projet sur un vrai téléphone Android, avec l'APK de debug produit par la CI (voir [README](../README.md#installer-lapk-sur-un-téléphone)). Les tests automatiques (Vitest, scripts `e2e/` dans Chromium headless en émulation Pixel 7) ne remplacent pas ces essais : WebView Android, Bluetooth, sélecteur de fichiers et mémoire réelle ne s'y voient pas.
+Retours du porteur du projet sur un vrai téléphone Android, avec l'APK de debug produit par la CI, et (depuis le 2026-11-27) sur iPhone avec l'application web (section en fin de document) (voir [README](../README.md#installer-lapk-sur-un-téléphone)). Les tests automatiques (Vitest, scripts `e2e/` dans Chromium headless en émulation Pixel 7) ne remplacent pas ces essais : WebView Android, Bluetooth, sélecteur de fichiers et mémoire réelle ne s'y voient pas.
 
 ## Retours de test sur appareil (2026-11-25)
 
@@ -30,3 +30,19 @@ Version testée : APK de debug de la phase 2, avant l'ajout du mode Continu.
 5. Mesures : temps d'import et d'ouverture (première fois et réouverture), mémoire (Android Studio → Profiler, ou `adb shell dumpsys meminfo`) avec et sans pré-chargement.
 6. **Son de la partition** (ADR-026) : au premier lancement de la nouvelle version, les partitions sont réimportées (bandeau de mise à jour) ; ouvrir une partition, bouton haut-parleur → activer le son (temps de chargement ?), ▶ : le son commence après le décompte, **aligné** avec le surlignage (latence de sortie compensée : le surlignage paraît-il en avance ou en retard ?) ; tempo 50 % et 150 % ; reprises ; « aller à » et appui long pendant la lecture ; pause qui coupe net ; mixeur (muet, solo, volume, « Moi seul » / « Sans moi ») pendant la lecture ; métronome en même temps ; craquements sur un gros conducteur (Toccata) ; mémoire avec le son ; écran éteint / application en arrière-plan (la lecture se met en pause) ; casque Bluetooth (latence plus grande).
 7. **Tempo** : sur téléphone en portrait, toucher la valeur du tempo ouvre la petite fenêtre (−/+, curseur, retour à 100 %).
+
+## iPhone : application web (ADR-027) — à tester
+
+Installation : README, « Installer sur iPhone ». Les tests automatiques passent dans **WebKit de Playwright avec le profil iPhone 14** (`e2e/pwa.mjs` : hors ligne, import, rendu, son), mais ce n'est **pas Safari iOS** : bouton silencieux, sélecteur de fichiers, mémoire, stockage et écran de l'iPhone ne s'y voient pas. Noter le modèle d'iPhone et la version d'iOS.
+
+1. **Installation** : Safari → Partager → « Sur l'écran d'accueil » : icône (logo sur fond crème, coins arrondis par iOS), nom « Pupitre ». Ouverture depuis l'écran d'accueil **en plein écran**, sans barre de Safari.
+2. **Téléchargement hors ligne** : Paramètres → Stockage → « Utilisation hors ligne » : la progression avance jusqu'à **« Prêt »** (≈ 42 Mo ; durée en Wi-Fi ?). Fermer l'application pendant le téléchargement puis la rouvrir : il reprend. « Stockage protégé » : accordé ou non ?
+3. **Mode Avion** (après « Prêt ») : fermer complètement l'application (balayer), la rouvrir → la bibliothèque s'affiche ; **importer** une partition (bouton + → Fichiers : les `.mscz` sont-ils sélectionnables, pas grisés ? `.mscx`, `.mxl`, `.musicxml` aussi), l'**ouvrir**, activer le **son**, ▶ : on entend la partition et le métronome.
+4. **Bouton silencieux** (sur le côté) en position silencieux : le son et le métronome doivent **rester audibles** (session audio « playback », iOS ≥ 16.4). Casque filaire / Bluetooth : latence et alignement du surlignage.
+5. **Écran toujours allumé** pendant la lecture d'une partition (Wake Lock ; dans l'application installée, iOS 18.4 ou plus). Si le réglage n'apparaît pas dans Paramètres → Appareil, l'API manque sur cette version.
+6. **Encoche et indicateur d'accueil** : en portrait et en **paysage**, les barres d'outils et la partition ne passent pas sous l'encoche / Dynamic Island ni sous la barre d'accueil ; idem en masquant les barres (tap au centre). Thème sombre : barre d'état lisible.
+7. **Gestes** : tap gauche/droite, balayage, pincement pour zoomer, appui long sur une mesure (pas de loupe ni de menu iOS ?), mode Continu (défilement inertiel).
+8. **Mémoire** : import puis ouverture d'un gros conducteur (Toccata), mode Continu, setlist avec pré-chargement : l'application se recharge-t-elle toute seule (page tuée par iOS) ?
+9. **Persistance** : après plusieurs jours sans ouvrir l'application, les partitions et le mode hors ligne sont-ils toujours là ?
+10. **Mise à jour** : après la publication d'une nouvelle version (tag `v*`), rouvrir l'application en ligne : message **« Nouvelle version disponible — Recharger »** ; après « Recharger », Paramètres → À propos affiche la nouvelle version et « Utilisation hors ligne » repasse à « Prêt ».
+11. **Arrière-plan** : passer à une autre application pendant la lecture puis revenir (la lecture s'arrête-t-elle proprement ? le son revient-il ?).

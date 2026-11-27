@@ -341,13 +341,16 @@ Le défilement, le métronome et le son de la partition lisent la **même horlog
 
 ## 8. Intégration native
 
-| Besoin | Android (fait) | iOS (phase 3) |
+| Besoin | Android (fait) | iPhone : application web (ADR-027) |
 |---|---|---|
-| Ouvrir avec | ✅ `intent-filter` `ACTION_VIEW` (`content`/`file`, MIME `application/x-musescore`, MusicXML, `octet-stream`, `zip`, `xml`…) ; le contenu est vérifié avant l'import. Validé sur téléphone (2026-11-26) | `CFBundleDocumentTypes` + UTI |
-| Partager vers | ✅ `intent-filter` `ACTION_SEND` / `ACTION_SEND_MULTIPLE` (mêmes MIME) + `@capgo/capacitor-share-target` : fichiers copiés dans le cache, lus, importés puis effacés ; démarrage à froid et à chaud (ADR-024). ⚠️ Non essayé sur téléphone | Extension de partage |
-| Écran allumé | ✅ plugin keep-awake | plugin |
-| Réseau | ✏️ La permission `INTERNET` est encore déclarée (défaut de Capacitor) ; l'application ne fait aucun appel réseau. ⬜ La retirer avant publication | Pas de réseau |
-| Stockage | Stockage interne de l'application | `Library/` ou `Documents/` |
+| Ouvrir avec | ✅ `intent-filter` `ACTION_VIEW` (`content`/`file`, MIME `application/x-musescore`, MusicXML, `octet-stream`, `zip`, `xml`…) ; le contenu est vérifié avant l'import. Validé sur téléphone (2026-11-26) | Impossible (une PWA ne reçoit pas de fichiers sur iOS) : import par le bouton **+** (`<input type=file>` **sans filtre `accept`** sur iPhone/iPad, sinon iOS grise les `.mscz` ; format vérifié après le choix) |
+| Partager vers | ✅ `intent-filter` `ACTION_SEND` / `ACTION_SEND_MULTIPLE` (mêmes MIME) + `@capgo/capacitor-share-target` : fichiers copiés dans le cache, lus, importés puis effacés ; démarrage à froid et à chaud (ADR-024). ⚠️ Non essayé sur téléphone | Impossible (pas de Web Share Target sur iOS) |
+| Écran allumé | ✅ plugin keep-awake | API Screen Wake Lock (implémentation web du même plugin ; réglage masqué si absente) |
+| Orientation | ✅ `@capacitor/screen-orientation` | Impossible : réglage masqué |
+| Son | ✅ Web Audio (WebView) | `navigator.audioSession.type = 'playback'` (Safari ≥ 16.4 : pas coupé par le bouton silencieux), `AudioContext` créée et débloquée dans le geste |
+| Réseau | ✏️ La permission `INTERNET` est encore déclarée (défaut de Capacitor) ; l'application ne fait aucun appel réseau. ⬜ La retirer avant publication | Seulement pour télécharger l'application et ses mises à jour (service worker) |
+| Stockage | Stockage interne de l'application | IndexedDB (partitions, via Capacitor Filesystem web) + Cache Storage (fichiers de l'application) ; stockage persistant demandé |
+| Zones sûres | Barres Ionic | `viewport-fit=cover` : barres Ionic + scène de la partition décalée de `--ion-safe-area-*` |
 
 ## 9. Setlists
 
@@ -360,7 +363,10 @@ Le défilement, le métronome et le son de la partition lisent la **même horlog
 ## 10. Fonctionnement hors ligne
 
 - Tous les fichiers (JS, WASM webmscore/Verovio, polices) sont **embarqués dans l'application**. Aucun CDN, pas de télémétrie, aucun appel réseau.
-- ⬜ Version PWA (service worker) : non prévue pour l'instant.
+- ✅ **Application web installable** (ADR-027, 2026-11-27) : `npm run build:pwa` (`vite build --mode pwa`) → `dist-pwa/`, `base: '/mscz_viewer/'`, constante `__PWA__`. Le plugin `scripts/pwaPlugin.ts` ajoute à `index.html` le manifeste et les balises iOS, et écrit `manifest.webmanifest`, `404.html` (copie d'`index.html` pour les liens profonds sur GitHub Pages) et `sw.js` = `src/pwa/sw.js` précédé de la liste de **tous** les fichiers du build (chemin, empreinte SHA-256 tronquée, taille).
+  - **Service worker** : à l'installation, pré-cache de tout (≈ 44 Mo) dans le cache `pupitre-precache`, clés `<url>?__rev=<empreinte>` (reprise d'un téléchargement interrompu, seuls les fichiers modifiés sont retéléchargés à la mise à jour), 3 téléchargements en parallèle, `cache: 'reload'`, empreinte vérifiée ; progression envoyée aux pages (`postMessage`). `activate` : suppression des fichiers des anciennes versions, `clients.claim()`. `fetch` : navigations → `index.html` du cache ; fichiers du build → cache d'abord ; le reste → réseau. Messages : `STATUS` (octets en cache / total), `SKIP_WAITING`.
+  - **Page** (`src/pwa/pwa.ts`, store zustand `usePwa`) : enregistrement (`updateViaCache: 'none'`), suivi de l'installation et de la progression, recherche de mise à jour au retour dans l'application (≤ 1 fois / 30 min), toast « New version available — Reload » (`src/app/UpdatePrompt.tsx`), `navigator.storage.persist()`. Affichage dans Paramètres → Stockage (`StorageSection`).
+  - **Routage** : `IonReactRouter basename` = `BASE_URL` sans la barre finale.
 
 ## 11. Internationalisation (ADR-009)
 
@@ -382,6 +388,7 @@ Le défilement, le métronome et le son de la partition lisent la **même horlog
 | Application (JS/CSS) | moins de 2 Mo |
 | Son : banque FluidR3Mono_GM.sf3 + AudioWorklet spessasynth (ADR-026) | **~16,3 Mo** (banque 14,6 + AudioWorklet 0,84 + module chargé à la demande 0,86, 0,27 gzip) |
 | **Total de l'application installée** | **environ 46 Mo** |
+| Application web (ADR-027) : tout le build pré-caché par le service worker | **≈ 44 Mo** (42 Mio) |
 
 Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, terminé ensuite). Verovio : une instance par partition ouverte, plus une pour le morceau suivant en setlist. En mode Continu, le nombre de pages dans le DOM est borné. Son (ADR-026) : rien tant qu'il n'est pas activé ; ensuite la banque compressée (14,6 Mo) et les échantillons décodés de la partition (plafond 96 Mo) dans l'AudioWorklet, libérés 60 s après la dernière visualisation. À surveiller sur téléphone : gros conducteurs (30 parties et plus), appareils modestes, et Android qui tue une application gourmande quand le sélecteur de fichiers passe au premier plan.
 
@@ -389,7 +396,7 @@ Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, termin
 
 - **Corpus** (`test-scores/`, non versionné, fichiers du porteur) : MuseScore 2.1, 3.6.2, 4.5.2, 4.6.2 ; reprises et voltas, nombreux changements de tempo et de métrique, marques de répétition, instruments transpositeurs, batterie, parties masquées. ⬜ À compléter : grilles d'accords, paroles, D.S. al Coda, piano, tablature.
 - **Tests unitaires** (Vitest, `src/**/*.test.ts`, 227 tests) : filtrage MusicXML, silences multi-mesures, préparation du XML affiché en une passe, parties masquées, formats et import, « Ouvrir avec » et « Partager vers », timeline, clics du métronome et horloge, navigation (aller à, demi-page, touches du pédalier, mesure touchée : identifiant SVG → mesure MusicXML → événement de départ, mesure sous le doigt), mode Continu (fenêtre de rendu, lissage), tonalités et préférence ♯/♭ (dont **Verovio réel**), options Verovio, cache disque des pages (clé, LRU, effacement), réglages effectifs des setlists, dépôt des setlists, profil « My instrument », complétude i18n (clés, pluriels par langue, placeholders, typographie française), notation des notes ; son (ADR-026) : lecture des fichiers MIDI (carte des tempos, statut courant, ports), pistes → parties, rétablissement de l'état des canaux, ordonnancement sur l'horloge (facteur de tempo, notes en retard, silence), mixeur (volume, muet, solo, raccourcis), import avec MIDI.
-- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français), `pickbar` (appui long sur une mesure, pages venant du cache disque), `performance` (temps d'ouverture des gros conducteurs, préparation du XML, Verovio, workers restants, Paramètres → Stockage ; affiche un résumé JSON), `audio` (son activé à la demande, banque non chargée avant, mixeur muet/solo/raccourcis, niveau de sortie pendant la lecture, silence quand tout est muet, en pause ou son coupé, tempo 150 % avec métronome, mixeur mémorisé). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
+- **Tests de bout en bout** (`e2e/*.mjs`, Playwright, Chromium headless, émulation Pixel 7 ; chaque script lance son serveur Vite) : `smoke`, `library`, `viewer`, `continuous`, `navigation`, `playback`, `transpose`, `setlists`, `profile`, `settings`, `i18n-fr` (navigateur en français), `pickbar` (appui long sur une mesure, pages venant du cache disque), `performance` (temps d'ouverture des gros conducteurs, préparation du XML, Verovio, workers restants, Paramètres → Stockage ; affiche un résumé JSON), `audio` (son activé à la demande, banque non chargée avant, mixeur muet/solo/raccourcis, niveau de sortie pendant la lecture, silence quand tout est muet, en pause ou son coupé, tempo 150 % avec métronome, mixeur mémorisé), `pwa` (ADR-027 : build PWA servi comme GitHub Pages sous `/mscz_viewer/`, manifeste, lien profond par `404.html`, service worker et téléchargement complet, puis **serveur arrêté et navigateur hors ligne** : rechargement, liens profonds, import, rendu, son ; nouvelle version → toast → rechargement ; Chromium Pixel 7 et **WebKit profil iPhone 14** si `npx playwright install webkit` a été fait). Usage : `node e2e/<script>.mjs "$PWD" /tmp/dossier-captures`. Les scripts récents sortent avec le code 1 si une vérification échoue. Ils ne tournent pas encore dans la CI (corpus non versionné).
 - ⬜ **Tests de non-régression visuels** (phase 3).
 - **Tests sur appareil** (manuels) : voir [TESTS_APPAREIL.md](TESTS_APPAREIL.md).
 
@@ -405,6 +412,8 @@ Mémoire : webmscore n'est chargé qu'à l'import (un worker par fichier, termin
 - **CI** (`.github/workflows/ci.yml`, dépôt public `ArtiskOnGit/mscz_viewer` ; releases : `.github/workflows/release.yml`, ADR-023), à chaque push sur `main` et à chaque pull request :
   1. job *web* : `npm ci`, lint, typecheck, tests unitaires, build web (artefact `web-dist`) ;
   2. job *android* : build web, `npx cap sync android`, `./gradlew assembleDebug` (JDK 21) → artefact **`pupitre-debug-apk`** (14 jours).
+  Le job *web* construit aussi l'application web (`npm run build:pwa`).
+- **Application web** (`.github/workflows/pages.yml`, ADR-027) : à chaque tag `v*` et à la demande, lint, tests, `npm run build:pwa`, puis `actions/upload-pages-artifact` + `actions/deploy-pages` → **https://artiskongit.github.io/mscz_viewer/** (Pages à activer avec la source « GitHub Actions »).
 - **Signature** : clé de debug fixe restaurée depuis le secret `ANDROID_DEBUG_KEYSTORE_B64` (ADR-016), pour que chaque APK s'installe par-dessus le précédent.
 - **Installation** : `gh run download --name pupitre-debug-apk`, copie de `app-debug.apk` sur le téléphone (voir README).
-- ⬜ Phase 3 : APK/AAB de release signé avec une clé de publication, GitHub Releases, F-Droid, Google Play ; build iOS sur runner macOS.
+- ⬜ Phase 3 : APK/AAB de release signé avec une clé de publication, F-Droid, Google Play. Pas de build iOS natif : l'iPhone utilise l'application web (ADR-005, ADR-027).
