@@ -4,9 +4,43 @@ let shared: AudioContext | undefined;
 let users = 0;
 
 export function acquireAudioContext(): AudioContext {
-  shared ??= new AudioContext({ latencyHint: 'interactive' });
+  if (!shared) {
+    setPlaybackAudioSession();
+    shared = new AudioContext({ latencyHint: 'interactive' });
+    unlock(shared);
+  }
   users++;
   return shared;
+}
+
+/**
+ * iOS (Safari ≥ 16.4, ADR-027): web audio follows the ring/silent switch unless the page declares a "playback"
+ * audio session, like a music player. Set before the AudioContext starts. No-op elsewhere.
+ */
+function setPlaybackAudioSession(): void {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (!session) return;
+  try {
+    session.type = 'playback';
+  } catch {
+    // read-only or unsupported value: keep the default
+  }
+}
+
+/**
+ * WebKit starts an AudioContext only from a user gesture: the context is created in one (play, sound on), and a
+ * silent sample played right away unlocks the output for good, even if later sounds start outside a gesture.
+ */
+function unlock(ctx: AudioContext): void {
+  try {
+    const source = ctx.createBufferSource();
+    source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    source.connect(ctx.destination);
+    source.start();
+    void ctx.resume().catch(() => undefined);
+  } catch {
+    // nothing to unlock (tests, old browsers)
+  }
 }
 
 export function releaseAudioContext(): void {

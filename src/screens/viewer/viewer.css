@@ -36,6 +36,16 @@
 .score-chrome-hidden ion-footer {
   display: none;
 }
+/* Notch, rounded corners and home indicator (iPhone with viewport-fit=cover, ADR-027; 0 elsewhere): the toolbars
+   keep clear of them, the score too (sides in landscape; top and bottom once the toolbars are hidden). */
+.score-stage {
+  left: var(--ion-safe-area-left, 0px);
+  right: var(--ion-safe-area-right, 0px);
+}
+.score-chrome-hidden .score-stage {
+  top: var(--ion-safe-area-top, 0px);
+  bottom: var(--ion-safe-area-bottom, 0px);
+}
 
 .playback-bar {
   display: flex;

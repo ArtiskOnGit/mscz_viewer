@@ -18,6 +18,7 @@ import { supportedLanguages, type LanguageSetting } from '../../i18n';
 import { useNoteNaming } from '../../state/useNoteNaming';
 import { PedalKeysSection } from './PedalKeysSection';
 import { StorageSection } from './StorageSection';
+import { canKeepAwake, canLockOrientation } from '../../core/platform';
 
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 const SCORE_THEMES: ScoreTheme[] = ['light', 'sepia', 'dark', 'highContrast'];
@@ -234,12 +235,17 @@ export function SettingsScreen() {
           <IonItem><IonToggle checked={settings.tapPauses} onIonChange={(e) => set('tapPauses', e.detail.checked)}>{t('tapPauses.label')}</IonToggle></IonItem>
 
           <IonListHeader>{t('sections.system')}</IonListHeader>
-          <IonItem><IonToggle checked={settings.keepAwake} onIonChange={(e) => set('keepAwake', e.detail.checked)}>{t('keepAwake.label')}</IonToggle></IonItem>
-          <IonItem>
-            <IonSelect label={t('orientation.label')} interface="popover" value={settings.orientation} data-testid="orientation" onIonChange={(e) => set('orientation', e.detail.value as OrientationLock)}>
-              {ORIENTATIONS.map((v) => <IonSelectOption key={v} value={v}>{t(`orientation.${v}`)}</IonSelectOption>)}
-            </IonSelect>
-          </IonItem>
+          {/* Web app (ADR-027): no orientation lock in a browser; keep-awake needs the Screen Wake Lock API. */}
+          {canKeepAwake() && (
+            <IonItem><IonToggle checked={settings.keepAwake} onIonChange={(e) => set('keepAwake', e.detail.checked)}>{t('keepAwake.label')}</IonToggle></IonItem>
+          )}
+          {canLockOrientation() && (
+            <IonItem>
+              <IonSelect label={t('orientation.label')} interface="popover" value={settings.orientation} data-testid="orientation" onIonChange={(e) => set('orientation', e.detail.value as OrientationLock)}>
+                {ORIENTATIONS.map((v) => <IonSelectOption key={v} value={v}>{t(`orientation.${v}`)}</IonSelectOption>)}
+              </IonSelect>
+            </IonItem>
+          )}
           <IonItem button detail={false} onClick={reset}><IonLabel color="danger">{t('reset')}</IonLabel></IonItem>
 
           <StorageSection />

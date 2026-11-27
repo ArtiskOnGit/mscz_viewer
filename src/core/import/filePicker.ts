@@ -7,6 +7,7 @@ import { App } from '@capacitor/app';
 import { FilePicker, type PickedFile } from '@capawesome/capacitor-file-picker';
 import { base64ToBytes } from '../util/base64';
 import { ACCEPTED_EXTENSIONS } from './formats';
+import { isAppleMobile } from '../platform';
 import type { ImportInput } from './importScore';
 
 export async function pickScoreFiles(): Promise<ImportInput[]> {
@@ -41,12 +42,21 @@ function pickWithInput(): Promise<ImportInput[]> {
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = ACCEPTED_EXTENSIONS.join(',');
+    // iOS greys out the files whose type it does not know when `accept` lists extensions only (.mscz has no registered
+    // type there): no filter on iPhone/iPad, the format is checked after picking (detectFormat → "unsupported format").
+    if (!isAppleMobile()) input.accept = ACCEPTED_EXTENSIONS.join(',');
+    // Safari may never fire "change" on a detached input: keep it in the document (hidden) while the picker is open.
+    input.hidden = true;
+    document.body.append(input);
     input.onchange = async () => {
       const files = Array.from(input.files ?? []);
+      input.remove();
       resolve(await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))));
     };
-    input.oncancel = () => resolve([]);
+    input.oncancel = () => {
+      input.remove();
+      resolve([]);
+    };
     input.click();
   });
 }
