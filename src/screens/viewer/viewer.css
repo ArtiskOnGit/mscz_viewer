@@ -338,3 +338,20 @@ ion-footer .page-indicator {
 .score-error p {
   margin: 0;
 }
+
+/* Instruments dialog: the checkbox takes the free width, the clef menu sits at the end (48 px touch target). */
+.parts-checkbox {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.clef-select {
+  flex: 0 0 auto;
+  max-width: 45%;
+  min-height: 48px;
+  margin-inline-start: 8px;
+  color: var(--ion-color-medium);
+}
+.clef-select.clef-overridden {
+  color: var(--ion-color-primary);
+  font-weight: 600;
+}

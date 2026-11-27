@@ -2,6 +2,7 @@
 import { defaultPartIds, type Score, type ScoreViewState, type Timeline } from '../../core/model/types';
 import { libraryRepository, viewStateRepository } from '../../core/services';
 import { prepareDisplayXml, type DisplayXml } from '../../core/musicxml/prepareDisplay';
+import { clefsKeyOf as clefsKeyOfOverrides, parseClefsKey } from '../../core/musicxml/clefs';
 import { initialViewState, type ProfileSettings } from '../../core/profile/myInstrument';
 import type { AppSettings } from '../../core/settings';
 import { baseKey } from '../../core/music/keys';
@@ -34,10 +35,13 @@ export function partsKeyOf(shown: ScoreViewState, score: Score): string {
   return (shown.selectedParts.length ? shown.selectedParts : defaultPartIds(score.parts)).join(',');
 }
 
+/** Clefs chosen by the user, as a key ("P1=treble,P3=bass"); "" = the clefs of the score. */
+export const clefsKeyOf = (shown: ScoreViewState): string => clefsKeyOfOverrides(shown.clefOverrides);
+
 export type DisplaySettings = Pick<AppSettings, 'multiRests' | 'partNames'>;
 
-export function prepareDisplay(xml: string, partsKey: string, s: DisplaySettings): DisplayXml {
-  return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], multiRests: s.multiRests, partNames: s.partNames });
+export function prepareDisplay(xml: string, partsKey: string, clefsKey: string, s: DisplaySettings): DisplayXml {
+  return prepareDisplayXml(xml, { selectedParts: partsKey ? partsKey.split(',') : [], clefs: parseClefsKey(clefsKey), multiRests: s.multiRests, partNames: s.partNames });
 }
 
 export function viewportOf(
@@ -60,8 +64,8 @@ export function viewportOf(
 }
 
 /** What Verovio must reload for (as opposed to a relayout for a new geometry). */
-export function contentKeyOf(partsKey: string, viewport: ViewportOptions, s: DisplaySettings): string {
-  return `${partsKey}|${viewport.transpose}|${viewport.concertPitch}|${s.multiRests}|${s.partNames}|${engravingKey(viewport.engraving)}`;
+export function contentKeyOf(partsKey: string, clefsKey: string, viewport: ViewportOptions, s: DisplaySettings): string {
+  return `${partsKey}|${clefsKey}|${viewport.transpose}|${viewport.concertPitch}|${s.multiRests}|${s.partNames}|${engravingKey(viewport.engraving)}`;
 }
 
 export const sameViewport = (a: ViewportOptions | undefined, b: ViewportOptions) =>

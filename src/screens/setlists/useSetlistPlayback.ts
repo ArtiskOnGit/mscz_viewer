@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useIonToast } from '@ionic/react';
 import { routes } from '../../app/routes';
-import type { MixerState, SetlistItem } from '../../core/model/types';
+import type { ClefChoice, MixerState, ScoreViewState, SetlistItem } from '../../core/model/types';
 import { useLibrary } from '../../state/libraryStore';
 import { useSetlists } from '../../state/setlistStore';
-import { transposeOverride, type TransposeSettings } from '../../core/setlists/effectiveView';
+import { clefOverride, transposeOverride, type TransposeSettings } from '../../core/setlists/effectiveView';
 
 const CONFIRM_WINDOW_MS = 3000;
 
@@ -32,6 +32,8 @@ export interface SetlistPlayback {
   setParts(selectedParts: string[]): void;
   /** Transposition in setlist mode is stored in the item override (cleared when equal to the score's own `base`). */
   setTranspose(value: TransposeSettings, base: TransposeSettings): void;
+  /** Clefs in setlist mode are stored in the item override (cleared when equal to the score's own `base`). */
+  setClefs(clefs: Record<string, ClefChoice>, base: ScoreViewState['clefOverrides']): void;
   /** Mixer in setlist mode is stored in the item override. */
   setMixer(mixer: MixerState): void;
 }
@@ -99,6 +101,9 @@ export function useSetlistPlayback(): SetlistPlayback {
     },
     setTranspose: (value, base) => {
       if (setlist && current) void setOverride(setlist.id, current.id, transposeOverride(value, base));
+    },
+    setClefs: (clefs, base) => {
+      if (setlist && current) void setOverride(setlist.id, current.id, clefOverride(clefs, base));
     },
     setMixer: (mixer) => {
       if (setlist && current) void setOverride(setlist.id, current.id, { mixer });

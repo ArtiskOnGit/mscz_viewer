@@ -22,15 +22,27 @@ interface Props {
   value: TransposeValue;
   /** Written key of the score (undefined when unknown, e.g. from a setlist: the ♯/♭ choice is then always offered). */
   keySig: KeySig | undefined;
-  onApply(v: TransposeValue): void;
+  /** Offer the brass-band "B♭ treble clef" preset (+ a major 9th; the caller switches low-clef parts to treble clef). */
+  brassPreset?: boolean;
+  /** `trebleClef`: the brass-band preset was chosen (and kept as is). */
+  onApply(v: TransposeValue, trebleClef: boolean): void;
   onDismiss(): void;
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
-export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Props) {
+/** Brass band: trombone, euphonium, baritone read a treble clef written a major 9th above the sounding pitch. */
+export const BRASS_TREBLE = { transposeSemitones: 2, transposeOctave: 1 } as const;
+
+export function TransposeModal({ isOpen, value, keySig, brassPreset, onApply, onDismiss }: Props) {
   const { t } = useTranslation(['viewer', 'common']);
-  const [draft, setDraft] = useState<TransposeValue>(value);
+  const [draft, setDraftValue] = useState<TransposeValue>(value);
+  const [brass, setBrass] = useState(false);
+  // Any other change of the transposition cancels the brass-band preset (its clef change goes with it).
+  const setDraft = (v: TransposeValue) => {
+    setDraftValue(v);
+    setBrass(false);
+  };
   const naming = useNoteNaming();
 
   const key = keySig && baseKey(keySig, draft.concertPitch);
@@ -85,11 +97,24 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
           <IonItem lines="none"><IonLabel>{t('transpose.presets')}</IonLabel></IonItem>
           <div className="ion-padding-horizontal">
             {TRANSPOSE_PRESETS.map((p) => (
-              <IonChip key={p.id} outline={draft.transposeSemitones !== p.semitones} onClick={() => setDraft({ ...draft, transposeSemitones: p.semitones })}>
+              <IonChip key={p.id} outline={brass || draft.transposeSemitones !== p.semitones} onClick={() => setDraft({ ...draft, transposeSemitones: p.semitones })}>
                 {t(`transpose.preset.${p.id}`, { note: noteName(p.note, naming) })}
               </IonChip>
             ))}
+            {brassPreset && (
+              <IonChip
+                outline={!brass}
+                data-testid="preset-bb-treble"
+                onClick={() => {
+                  setDraftValue({ ...draft, ...BRASS_TREBLE });
+                  setBrass(true);
+                }}
+              >
+                {t('transpose.preset.bbTreble', { note: noteName('B♭', naming) })}
+              </IonChip>
+            )}
           </div>
+          {brass && <IonNote className="ion-padding-horizontal ion-text-wrap" style={{ display: 'block' }} data-testid="bb-treble-hint">{t('transpose.bbTrebleHint')}</IonNote>}
           <IonItem>
             <IonToggle checked={draft.concertPitch} onIonChange={(e) => setDraft({ ...draft, concertPitch: e.detail.checked })}>
               <IonLabel>{t('transpose.concertPitch')}<IonNote className="ion-text-wrap" style={{ display: 'block' }}>{t('transpose.concertPitchHint')}</IonNote></IonLabel>
@@ -103,7 +128,7 @@ export function TransposeModal({ isOpen, value, keySig, onApply, onDismiss }: Pr
             <IonButton onClick={() => setDraft({ transposeSemitones: 0, transposeOctave: 0, concertPitch: false, accidentalPreference: 'auto' })}>{t('transpose.reset')}</IonButton>
           </IonButtons>
           <IonButtons slot="end">
-            <IonButton strong onClick={() => onApply(draft)}>{t('transpose.apply')}</IonButton>
+            <IonButton strong onClick={() => onApply(draft, brass)}>{t('transpose.apply')}</IonButton>
           </IonButtons>
         </IonToolbar>
       </IonFooter>

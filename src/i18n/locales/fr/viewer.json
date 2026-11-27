@@ -20,7 +20,29 @@
     "staves_other": "{{count}} portées",
     "apply": "Afficher",
     "hiddenInSource": "masqué dans MuseScore",
-    "buttonCount": "Instruments {{selected}}/{{total}}"
+    "buttonCount": "Instruments {{selected}}/{{total}}",
+    "clef": {
+      "label": "Clé de {{name}} : {{clef}}",
+      "title": "Clé de {{name}}",
+      "original": "Originale",
+      "originalOf": "Originale ({{clef}})",
+      "treble": "Clé de sol",
+      "treble8vb": "Clé de sol 8 en bas",
+      "bass": "Clé de fa",
+      "alto": "Clé d’ut 3e ligne",
+      "tenor": "Clé d’ut 4e ligne",
+      "other": "autre clé",
+      "short": {
+        "original": "Originale",
+        "treble": "Sol",
+        "treble8vb": "Sol 8vb",
+        "bass": "Fa",
+        "alto": "Ut 3",
+        "tenor": "Ut 4"
+      },
+      "changed": "clé changée"
+    },
+    "clefSetlistNote": "Dans cette setlist, les clés sont gardées pour ce morceau seulement."
   },
   "playback": {
     "play": "Lecture (défilement au tempo de la partition)",
@@ -54,7 +76,8 @@
       "c": "{{note}} (aucune)",
       "bb": "Instrument en {{note}}",
       "eb": "Instrument en {{note}}",
-      "f": "Instrument en {{note}}"
+      "f": "Instrument en {{note}}",
+      "bbTreble": "{{note}} clé de sol (brass band)"
     },
     "concertPitch": "Son réel (ut)",
     "concertPitchHint": "Afficher les instruments transpositeurs en sons réels",
@@ -68,7 +91,8 @@
       "flats": "Bémols"
     },
     "decrease": "{{label}} : moins 1",
-    "increase": "{{label}} : plus 1"
+    "increase": "{{label}} : plus 1",
+    "bbTrebleHint": "Clé de sol + une neuvième majeure au-dessus (trombone, euphonium, baryton) : les parties affichées en clé de fa passent en clé de sol."
   },
   "myPart": "Votre partie : {{names}}",
   "pageHalf": "{{page}}½ / {{count}}",

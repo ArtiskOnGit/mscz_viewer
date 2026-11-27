@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveViewState, hasTransposeOverride, transposeBadgeValue, transposeOverride } from './effectiveView';
+import { clefOverride, effectiveViewState, hasTransposeOverride, transposeBadgeValue, transposeOverride } from './effectiveView';
 import { defaultViewState } from '../storage/viewStateRepository';
 
 describe('effectiveViewState', () => {
@@ -43,5 +43,17 @@ describe('transposeOverride', () => {
     expect(transposeBadgeValue({ ...base, transposeSemitones: -3, transposeOctave: -1 })).toBe(' -15');
     expect(transposeBadgeValue({ ...base, concertPitch: true })).toBe(' C');
     expect(transposeBadgeValue(base)).toBe('');
+  });
+});
+
+describe('clefOverride', () => {
+  it('stores clefs different from the score, clears them when equal', () => {
+    expect(clefOverride({ P1: 'treble' }, undefined)).toEqual({ clefOverrides: { P1: 'treble' } });
+    expect(clefOverride({ P1: 'treble' }, { P1: 'treble' })).toEqual({ clefOverrides: undefined });
+    expect(clefOverride({}, undefined)).toEqual({ clefOverrides: undefined });
+    // Back to the clefs of the score while the score itself has a choice: an empty map wins over it.
+    expect(clefOverride({}, { P1: 'bass' })).toEqual({ clefOverrides: {} });
+    const view = { ...defaultViewState('s1'), clefOverrides: { P1: 'bass' as const } };
+    expect(effectiveViewState(view, { clefOverrides: {} }).clefOverrides).toEqual({});
   });
 });

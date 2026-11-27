@@ -11,7 +11,8 @@ import {
 } from 'ionicons/icons';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { routes } from '../../app/routes';
-import { defaultPartIds, type MixerState } from '../../core/model/types';
+import { defaultPartIds, type ClefChoice, type MixerState } from '../../core/model/types';
+import { clefsKeyOf } from '../../core/musicxml/clefs';
 import { useScoreViewer } from './useScoreViewer';
 import { PartsModal } from './PartsModal';
 import { usePageGestures } from './usePageGestures';
@@ -318,6 +319,28 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
   };
   const transposeBadge = transposeBadgeValue(transpose);
   const selectedCount = v.selectedParts.length;
+  // --- clefs (ADR-028) ---
+  const clefs = v.shown?.clefOverrides ?? {};
+  // A single pitched part still gets the Instruments button: its clef can be changed there.
+  const hasPitchedPart = Object.values(v.originalClefs ?? {}).some((c) => c !== 'unpitched');
+  const applyClefs = (next: Record<string, ClefChoice>) => {
+    if (clefsKeyOf(next) === clefsKeyOf(clefs)) return;
+    if (sp.active) sp.setClefs(next, v.view?.clefOverrides); // setlists: stored in the item override
+    else v.update({ clefOverrides: next });
+  };
+  /** "B♭ treble clef" brass-band preset: the low-clef parts shown switch to treble clef (the transposition is set by the dialog). */
+  const brassTrebleClefs = () => {
+    const next = { ...clefs };
+    for (const id of v.selectedParts) {
+      const original = v.originalClefs?.[id];
+      const current = next[id] ?? original;
+      if (current !== 'bass' && current !== 'tenor' && current !== 'treble8vb') continue;
+      if (original === 'treble') delete next[id];
+      else next[id] = 'treble';
+    }
+    return next;
+  };
+  // --- end clefs ---
   const pageLabel = (
     <span className="page-indicator" data-testid="page-indicator">
       {v.pageCount > 0 ? (half ? t('pageHalf', { page: v.page, next: v.page + 1, count: v.pageCount }) : t('page', { page: v.page, count: v.pageCount })) : ''}
@@ -340,7 +363,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
             >
               <IonIcon slot="icon-only" icon={locked ? lockClosed : lockOpenOutline} aria-hidden="true" />
             </IonButton>
-            {!locked && parts.length > 1 && (
+            {!locked && (parts.length > 1 || (parts.length === 1 && hasPitchedPart)) && (
               <IonButton onClick={() => setPartsOpen(true)} aria-label={t('parts.buttonCount', { selected: selectedCount, total: parts.length })} data-testid="parts-button">
                 <IonIcon slot="start" icon={peopleOutline} aria-hidden="true" />
                 {selectedCount}/{parts.length}
@@ -524,11 +547,13 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         isOpen={transposeOpen}
         keySig={v.key}
         value={transpose}
+        brassPreset={hasPitchedPart}
         onDismiss={() => setTransposeOpen(false)}
-        onApply={(value) => {
+        onApply={(value, trebleClef) => {
           setTransposeOpen(false);
           if (sp.active && v.view) sp.setTranspose(value, v.view); // setlists: stored in the item override
           else v.update(value);
+          if (trebleClef) applyClefs(brassTrebleClefs());
         }}
       />
       <TempoPopover isOpen={tempoOpen} value={tempoFactor} onChange={setTempo} onDismiss={() => setTempoOpen(false)} />
@@ -552,11 +577,15 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         parts={parts}
         selected={v.selectedParts}
         defaults={defaultPartIds(parts)}
+        originalClefs={v.originalClefs}
+        clefs={clefs}
+        inSetlist={sp.active}
         onDismiss={() => setPartsOpen(false)}
-        onApply={(selectedParts) => {
+        onApply={(selectedParts, chosenClefs) => {
           setPartsOpen(false);
           if (sp.active) sp.setParts(selectedParts); // setlists: stored in the item override
           else v.update({ selectedParts });
+          applyClefs(chosenClefs);
         }}
       />
     </IonPage>

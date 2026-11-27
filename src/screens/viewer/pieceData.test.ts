@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { layoutStep, type RequestedLayout } from './pieceData';
+import { clefsKeyOf, contentKeyOf, layoutStep, type RequestedLayout } from './pieceData';
+import { defaultViewState } from '../../core/storage/viewStateRepository';
 import type { ViewportOptions } from '../../core/render/renderService';
 
 const A: ViewportOptions = { width: 393, height: 600, scale: 24, transpose: '', concertPitch: false };
@@ -20,5 +21,14 @@ describe('layoutStep', () => {
     expect(layoutStep(last, 'c', B)).toBe('relayout');
     last = { content: 'c', viewport: B, applied: false }; // asked, cancelled before done
     expect(layoutStep(last, 'c', A)).toBe('relayout');
+  });
+});
+
+describe('contentKeyOf', () => {
+  it('changes with the clefs chosen (Verovio reloads; the display XML, hence the render cache key, differs too)', () => {
+    const s = { multiRests: true, partNames: 'auto' as const };
+    expect(contentKeyOf('P1', 'P1=treble', A, s)).not.toBe(contentKeyOf('P1', '', A, s));
+    expect(clefsKeyOf({ ...defaultViewState('s'), clefOverrides: { P2: 'bass', P1: 'treble' } })).toBe('P1=treble,P2=bass');
+    expect(clefsKeyOf(defaultViewState('s'))).toBe('');
   });
 });

@@ -6,7 +6,7 @@ import { RenderService, type ViewportOptions } from '../../core/render/renderSer
 import { renderCache } from '../../core/services';
 import type { AppSettings } from '../../core/settings';
 import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
-import { contentKeyOf, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData } from '../viewer/pieceData';
+import { clefsKeyOf, contentKeyOf, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData } from '../viewer/pieceData';
 
 export interface Preloaded {
   scoreId: string;
@@ -23,7 +23,7 @@ export interface Preloaded {
 let slot: Preloaded | undefined;
 let generation = 0;
 
-export const displayKeyOf = (partsKey: string, s: Pick<AppSettings, 'multiRests' | 'partNames'>) => `${partsKey}|${s.multiRests}|${s.partNames}`;
+export const displayKeyOf = (partsKey: string, clefsKey: string, s: Pick<AppSettings, 'multiRests' | 'partNames'>) => `${partsKey}|${clefsKey}|${s.multiRests}|${s.partNames}`;
 
 /** The preloaded piece for this score, if any; the caller takes ownership (idempotent, StrictMode-safe). */
 export function adoptPreloaded(scoreId: string): Preloaded | undefined {
@@ -53,10 +53,11 @@ export async function preloadPiece(
   slot = entry;
   const shown = effectiveViewState(data.view, override);
   const partsKey = partsKeyOf(shown, data.score);
+  const clefsKey = clefsKeyOf(shown);
   await idle();
   if (gen !== generation) return;
-  const display = prepareDisplay(data.xml, partsKey, settings);
-  entry.display = { xml: data.xml, key: displayKeyOf(partsKey, settings), value: display };
+  const display = prepareDisplay(data.xml, partsKey, clefsKey, settings);
+  entry.display = { xml: data.xml, key: displayKeyOf(partsKey, clefsKey, settings), value: display };
   const viewport = viewportOf(display, shown, size, settings);
   if (!viewport) return;
   const renderer = new RenderService(renderCache); // render cache: the next piece may not need Verovio at all
@@ -71,7 +72,7 @@ export async function preloadPiece(
   // Superseded, or the viewer already opened the piece with its own renderer.
   if (gen !== generation || entry.adopted) return renderer.dispose();
   entry.renderer = renderer;
-  entry.contentKey = contentKeyOf(partsKey, viewport, settings);
+  entry.contentKey = contentKeyOf(partsKey, clefsKey, viewport, settings);
   entry.viewport = viewport;
 }
 

@@ -1,8 +1,9 @@
-// Turn the stored MusicXML into the XML actually rendered: selected parts, multi-measure rests,
-// instrument names. See SPECIFICATIONS_TECHNIQUES §5.
+// Turn the stored MusicXML into the XML actually rendered: selected parts, clefs chosen by the user,
+// multi-measure rests, instrument names. See SPECIFICATIONS_TECHNIQUES §5.
 import { filterPartsInDocument, type XmlEnv } from './filterParts';
 import { groupMultiRestsInDocument, type MultiRestGroup } from './multiRests';
 import { firstKeyFifths } from '../music/keys';
+import { applyClefsInDocument, originalClefs, type ClefChoice, type OriginalClef } from './clefs';
 
 export type PartNamesMode = 'auto' | 'full' | 'hidden';
 
@@ -12,6 +13,8 @@ export interface DisplayOptions {
   multiRests: boolean;
   /** auto = hidden when a single part is displayed (the name is repeated on every system). */
   partNames: PartNamesMode;
+  /** Clef chosen per part (musicXmlId); parts not listed keep the clefs of the score. */
+  clefs?: Readonly<Record<string, ClefChoice>>;
 }
 
 export interface DisplayXml {
@@ -21,12 +24,15 @@ export interface DisplayXml {
   multiRestGroups: MultiRestGroup[];
   /** First key signature of the first displayed part (written pitch). */
   key: ReturnType<typeof firstKeyFifths>;
+  /** Clef of every part of the score (displayed or not) before any choice of the user (clef menu). */
+  originalClefs: Record<string, OriginalClef>;
 }
 
 export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv = globalThis): DisplayXml {
   // One parse and (at most) one serialization for all the steps: big full scores are several MB of XML.
   const doc = new env.DOMParser().parseFromString(xml, 'application/xml');
   const allIds = scorePartIds(doc);
+  const clefsOfScore = originalClefs(doc);
   const keep = opts.selectedParts.filter((id) => allIds.includes(id));
   let changed = false;
   if (keep.length > 0 && keep.length < allIds.length) {
@@ -34,6 +40,9 @@ export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv
     changed = true;
   }
   const shownParts = keep.length > 0 ? keep.length : allIds.length;
+
+  // Before the multi-measure rests: removed clef changes no longer break a run of empty measures.
+  if (opts.clefs && applyClefsInDocument(doc, opts.clefs)) changed = true;
 
   let multiRestGroups: MultiRestGroup[] = [];
   if (opts.multiRests) {
@@ -57,7 +66,7 @@ export function prepareDisplayXml(xml: string, opts: DisplayOptions, env: XmlEnv
     changed = true;
   }
   const out = changed ? new env.XMLSerializer().serializeToString(doc) : xml;
-  return { xml: out, staves: countStaves(doc), multiRestGroups, key: firstKeyFifths(doc) };
+  return { xml: out, staves: countStaves(doc), multiRestGroups, key: firstKeyFifths(doc), originalClefs: clefsOfScore };
 }
 
 const scorePartIds = (doc: Document) => Array.from(doc.getElementsByTagName('score-part')).map((sp) => sp.getAttribute('id') ?? '');

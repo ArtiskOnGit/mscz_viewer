@@ -87,6 +87,12 @@ export interface MixerState {
   parts: Record<string, PartMix>;
 }
 
+/**
+ * Clef chosen for a part instead of the score's (only the clef changes, not the notes). treble8vb = treble clef
+ * with an 8 below, read an octave lower (tenor voice, trombone in treble clef at pitch). See ADR-028.
+ */
+export type ClefChoice = 'treble' | 'treble8vb' | 'bass' | 'alto' | 'tenor';
+
 /** Display settings remembered per score. */
 export interface ScoreViewState {
   scoreId: ScoreId;
@@ -97,6 +103,8 @@ export interface ScoreViewState {
   concertPitch: boolean;
   /** Spelling of the transposed key when it has an enharmonic alternative (D♭/C♯…). */
   accidentalPreference: 'auto' | 'sharps' | 'flats';
+  /** Clef chosen per part (musicXmlId); parts not listed (or no map) keep the clefs of the score. */
+  clefOverrides?: Record<string, ClefChoice>;
   zoom: number | 'auto';
   layoutMode: LayoutMode;
   lastPage: number;
@@ -112,7 +120,7 @@ export interface SetlistItem {
   id: string;
   scoreId: ScoreId;
   note?: string;
-  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'mixer'>>;
+  override?: Partial<Pick<ScoreViewState, 'selectedParts' | 'transposeSemitones' | 'transposeOctave' | 'concertPitch' | 'accidentalPreference' | 'clefOverrides' | 'mixer'>>;
 }
 
 export interface Setlist {

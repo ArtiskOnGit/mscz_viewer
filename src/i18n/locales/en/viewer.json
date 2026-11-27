@@ -20,7 +20,29 @@
     "staves_other": "{{count}} staves",
     "apply": "Show",
     "hiddenInSource": "hidden in MuseScore",
-    "buttonCount": "Instruments {{selected}}/{{total}}"
+    "buttonCount": "Instruments {{selected}}/{{total}}",
+    "clef": {
+      "label": "Clef of {{name}}: {{clef}}",
+      "title": "Clef of {{name}}",
+      "original": "Original",
+      "originalOf": "Original ({{clef}})",
+      "treble": "Treble clef",
+      "treble8vb": "Treble clef 8vb",
+      "bass": "Bass clef",
+      "alto": "Alto clef",
+      "tenor": "Tenor clef",
+      "other": "other clef",
+      "short": {
+        "original": "Original",
+        "treble": "Treble",
+        "treble8vb": "Treble 8vb",
+        "bass": "Bass",
+        "alto": "Alto",
+        "tenor": "Tenor"
+      },
+      "changed": "clef changed"
+    },
+    "clefSetlistNote": "In this setlist, the clefs are kept for this piece only."
   },
   "playback": {
     "play": "Play (auto-scroll at the score tempo)",
@@ -54,7 +76,8 @@
       "c": "{{note}} (none)",
       "bb": "{{note}} instrument",
       "eb": "{{note}} instrument",
-      "f": "{{note}} instrument"
+      "f": "{{note}} instrument",
+      "bbTreble": "{{note}} treble clef (brass band)"
     },
     "concertPitch": "Concert pitch",
     "concertPitchHint": "Show transposing instruments at sounding pitch",
@@ -68,7 +91,8 @@
       "flats": "Flats"
     },
     "decrease": "{{label}}: minus 1",
-    "increase": "{{label}}: plus 1"
+    "increase": "{{label}}: plus 1",
+    "bbTrebleHint": "Treble clef + a major 9th up (trombone, euphonium, baritone): the bass-clef parts shown switch to treble clef."
   },
   "myPart": "Showing your part: {{names}}",
   "pageHalf": "{{page}}½ / {{count}}",

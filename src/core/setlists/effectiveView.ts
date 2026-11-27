@@ -1,5 +1,6 @@
 // Settings actually used to display a score: per-score view state, overridden by the setlist item (ADR-011).
-import type { ScoreViewState, SetlistItem } from '../model/types';
+import type { ClefChoice, ScoreViewState, SetlistItem } from '../model/types';
+import { clefsKeyOf } from '../musicxml/clefs';
 
 export type SetlistOverride = NonNullable<SetlistItem['override']>;
 
@@ -38,4 +39,12 @@ export function hasTransposeOverride(o: SetlistOverride | undefined): boolean {
 export function transposeBadgeValue(t: TransposeSettings): string {
   const total = t.transposeSemitones + 12 * t.transposeOctave;
   return total ? ` ${total > 0 ? '+' : ''}${total}` : t.concertPitch ? ' C' : '';
+}
+
+/**
+ * Override patch for the clefs chosen for a setlist piece: none when they are the score's own (`base`); otherwise
+ * the whole map, even empty (= the clefs of the score, while the score itself has other choices).
+ */
+export function clefOverride(value: Record<string, ClefChoice>, base: ScoreViewState['clefOverrides']): SetlistOverride {
+  return { clefOverrides: clefsKeyOf(value) === clefsKeyOf(base) ? undefined : value };
 }

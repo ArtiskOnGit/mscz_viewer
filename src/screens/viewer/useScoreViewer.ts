@@ -8,7 +8,7 @@ import { xmlToRenderedMeasure } from '../../core/playback/measureMap';
 import type { Timeline } from '../../core/model/types';
 import { effectiveViewState, type SetlistOverride } from '../../core/setlists/effectiveView';
 import { RenderService, StaleRenderError, firstMeasureId, type ViewportOptions } from '../../core/render/renderService';
-import { contentKeyOf, layoutStep, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData, type RequestedLayout } from './pieceData';
+import { clefsKeyOf, contentKeyOf, layoutStep, loadPiece, partsKeyOf, prepareDisplay, viewportOf, type PieceData, type RequestedLayout } from './pieceData';
 import { adoptPreloaded, displayKeyOf } from '../setlists/preloadNext';
 
 export type ViewerStatus = 'loading' | 'ready' | 'notFound' | 'error';
@@ -97,12 +97,13 @@ export function useScoreViewer(
 
   // 2. XML to display (parts, multi-rests, names): recomputed when the selection changes.
   const partsKey = shown && score ? partsKeyOf(shown, score) : undefined;
+  const clefsKey = shown ? clefsKeyOf(shown) : '';
   const display = useMemo(() => {
     if (!xml || partsKey === undefined) return undefined;
     const ds = { multiRests: settings.multiRests, partNames: settings.partNames };
-    if (pre?.display && pre.display.xml === xml && pre.display.key === displayKeyOf(partsKey, ds)) return pre.display.value; // setlists: preloaded
-    return prepareDisplay(xml, partsKey, ds);
-  }, [xml, partsKey, settings.multiRests, settings.partNames, pre]);
+    if (pre?.display && pre.display.xml === xml && pre.display.key === displayKeyOf(partsKey, clefsKey, ds)) return pre.display.value; // setlists: preloaded
+    return prepareDisplay(xml, partsKey, clefsKey, ds);
+  }, [xml, partsKey, clefsKey, settings.multiRests, settings.partNames, pre]);
 
   const viewport = useMemo<ViewportOptions | undefined>(
     () => (display && shown ? viewportOf(display, shown, size, { defaultZoom: settings.defaultZoom, musicFont: settings.musicFont, barNumbers: settings.barNumbers, showHeader: settings.showHeader }) : undefined),
@@ -110,7 +111,7 @@ export function useScoreViewer(
   );
 
   // 3. Load into Verovio when the content changes, relayout when only the geometry changes.
-  const contentKey = viewport && display && partsKey !== undefined ? contentKeyOf(partsKey, viewport, settings) : undefined;
+  const contentKey = viewport && display && partsKey !== undefined ? contentKeyOf(partsKey, clefsKey, viewport, settings) : undefined;
   // What the renderer was last asked for (setlists: a preloaded renderer already holds this piece).
   const requested = useRef<RequestedLayout>({ content: pre?.renderer ? pre.contentKey : undefined, viewport: pre?.renderer ? pre.viewport : undefined, applied: false });
   const [layoutRetry, setLayoutRetry] = useState(0);
@@ -218,6 +219,7 @@ export function useScoreViewer(
   // MusicXML measure rank → rendered (Verovio) measure index, accounting for merged multi-measure rests.
   const xmlToRendered = useMemo(() => (score && display ? xmlToRenderedMeasure(score.measures, display.multiRestGroups) : []), [score, display]);
   const key = display?.key;
+  const originalClefs = display?.originalClefs;
   // Half-page turns: SVG of another page (cached by the renderer).
   const pageSvg = useCallback((n: number) => renderer.current!.page(n), []);
   // --- continuous mode: the view reports the first measure on screen, kept across relayouts (zoom, rotation…) ---
@@ -228,5 +230,5 @@ export function useScoreViewer(
   // --- end continuous mode ---
   // Page error shown for the current page only (pages turned since: those are being drawn).
   const shownPageError = pageError?.page === page ? pageError.reason : undefined;
-  return { pageError: shownPageError, retry, continuous, layoutVersion, setAnchor, getAnchor, xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
+  return { originalClefs, pageError: shownPageError, retry, continuous, layoutVersion, setAnchor, getAnchor, xml, pageSvg, status, score, view, shown, matchedParts, selectedParts, key, timeline, measureIds, renderedPages, xmlToRendered, svg, page, pageCount, staves, zoom, goTo, next, prev, update, setZoom };
 }
