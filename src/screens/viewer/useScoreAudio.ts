@@ -100,9 +100,12 @@ async function readMidi(scoreId: string): Promise<{ bytes: Uint8Array; file: Mid
   return bytes ? { bytes, file: parseMidi(bytes) } : undefined;
 }
 
-/** e2e hook (dev server only): level of the synth output and voices, to check that sound is produced. */
+/**
+ * e2e hook (dev server, or a page where the test set `window.__pupitreE2E`, e.g. the PWA build in e2e/pwa.mjs): level
+ * of the synth output and voices, to check that sound is produced.
+ */
 function exposeForTests(synth: SynthHandle, midi: MidiFile) {
-  if (!import.meta.env.DEV) return;
+  if (!import.meta.env.DEV && !(window as { __pupitreE2E?: boolean }).__pupitreE2E) return;
   const analyser = synth.ctx.createAnalyser();
   analyser.fftSize = 2048;
   synth.output.connect(analyser);

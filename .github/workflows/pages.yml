@@ -1,0 +1,49 @@
+name: Web app (GitHub Pages)
+
+# Publishes the installable offline web app (PWA, ADR-027) to https://artiskongit.github.io/mscz_viewer/
+# on each release tag "vX.Y.Z" (same tags as the APK release), or by hand (Actions → Run workflow).
+# The repository's Pages source must be "GitHub Actions" (Settings → Pages).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer run does not cancel one in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the web app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # postinstall: webmscore files + SoundFont (fails in CI if it cannot be downloaded).
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build:pwa
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist-pwa
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
