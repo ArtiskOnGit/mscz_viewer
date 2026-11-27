@@ -103,6 +103,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - **Décision** : un `debug.keystore` fixe, encodé en base64 dans le secret `ANDROID_DEBUG_KEYSTORE_B64`, est restauré dans `~/.android/` avant la compilation. Ce n'est **pas** une clé de publication : la release (phase 3) aura sa propre clé.
 - **Si le secret est perdu** : en générer un nouveau ; une seule désinstallation sera nécessaire.
 
+- **Correctif (2026-11-27, v0.7.1)** : jusqu'à la v0.7.0, la clé restaurée dans `~/.android/debug.keystore` n'était **pas utilisée** par le plugin Android Gradle sur le runner : chaque APK avait un certificat différent (vérifié sur les APK v0.6.1 et v0.7.0), d'où l'obligation de désinstaller pour mettre à jour. Désormais `app/build.gradle` déclare explicitement la clé (`signingConfigs.pupitre`, fichier `$PUPITRE_KEYSTORE`, PKCS12) ; les workflows décodent le secret dans `$RUNNER_TEMP`, la release échoue si le secret manque, et l'empreinte SHA-256 du certificat est affichée dans le journal (`439dc7dd…`). Une **dernière désinstallation** est nécessaire en passant à la v0.7.1.
+
 ### ADR-017 — webmscore pour tous les imports, MusicXML compris — *Acceptée* (écart avec la spécification initiale)
 - **Spécification initiale** : analyser le MusicXML directement et calculer sa timeline avec la timemap de Verovio à la première ouverture.
 - **Décision** : les `.mxl` / `.musicxml` passent aussi par webmscore (`WebMscore.load('mxl' | 'musicxml', …)`). On obtient le même MusicXML normalisé, les mêmes métadonnées et la même timeline (positions MuseScore, reprises dépliées) pour tous les formats : un seul chemin de code, testé.

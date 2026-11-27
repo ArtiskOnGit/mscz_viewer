@@ -130,7 +130,7 @@ Sur un ordinateur ou un téléphone Android, Chrome et Edge proposent aussi d'**
 
 **Le plus simple :** télécharger le fichier `pupitre-vX.Y.Z.apk` de la dernière version dans les [**Releases**](https://github.com/ArtiskOnGit/mscz_viewer/releases/latest), directement depuis le téléphone, puis l'ouvrir (autoriser l'installation d'applications depuis cette source).
 
-Les APK sont signés avec une **clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`, ADR-016) : une nouvelle version s'installe par-dessus la précédente sans perdre les partitions. Ce sont encore des versions de test (signature « debug ») ; la signature de publication pour les stores viendra en phase 3.
+Les APK sont signés avec une **clé fixe** (secret `ANDROID_DEBUG_KEYSTORE_B64`, ADR-016) : une nouvelle version s'installe par-dessus la précédente sans perdre les partitions. Depuis la **v0.7.1** la signature est réellement fixe (empreinte `439dc7dd…`, affichée dans le journal de la CI) : en venant d'une version antérieure, il faut désinstaller **une dernière fois**. Ce sont encore des versions de test (signature « debug ») ; la signature de publication pour les stores viendra en phase 3.
 
 ### Publier une nouvelle version
 
