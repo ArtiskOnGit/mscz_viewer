@@ -44,15 +44,19 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Restore fixed debug keystore
+      - name: Restore the fixed signing key
         if: env.DEBUG_KEYSTORE_B64 != ''
-        run: mkdir -p ~/.android && echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+        run: |
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/pupitre.keystore"
+          echo "PUPITRE_KEYSTORE=$RUNNER_TEMP/pupitre.keystore" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run build
       - run: npx cap sync android
       - name: Assemble debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleDebug --no-daemon
+          "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" 
       - uses: actions/upload-artifact@v7
         with:
           name: pupitre-debug-apk

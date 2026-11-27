@@ -25,9 +25,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Restore fixed debug keystore
-        if: env.DEBUG_KEYSTORE_B64 != ''
-        run: mkdir -p ~/.android && echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+      - name: Restore the fixed signing key (required for releases)
+        run: |
+          if [ -z "$DEBUG_KEYSTORE_B64" ]; then echo "::error::secret ANDROID_DEBUG_KEYSTORE_B64 missing: refusing to publish an APK with a random signature"; exit 1; fi
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/pupitre.keystore"
+          echo "PUPITRE_KEYSTORE=$RUNNER_TEMP/pupitre.keystore" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run lint
       - run: npm test
@@ -40,7 +42,9 @@ jobs:
           grep -E "versionCode|versionName" android/app/build.gradle
       - name: Assemble APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleDebug --no-daemon
+          "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
