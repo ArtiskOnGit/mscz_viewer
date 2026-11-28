@@ -93,7 +93,7 @@ const notesOf = (log) => {
 
 // 1. Import, open, sound on.
 await page.goto(`http://127.0.0.1:${PORT}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(FILE);
 await page.waitForSelector('ion-item-sliding', { timeout: 180000 });
 await page.waitForTimeout(500);

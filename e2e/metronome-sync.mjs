@@ -46,7 +46,7 @@ const closeMixer = async () => {
 
 // 1. Import the medley (2 tenor saxes, 2 sousaphones, drums), open it, sound on.
 await page.goto(`http://127.0.0.1:${PORT}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(`${root}/test-scores/onlyfuhnbrass_-_medley_Russ.mscz`);
 await page.waitForSelector('ion-item-sliding', { timeout: 120000 });
 await page.waitForTimeout(500);

@@ -25,7 +25,7 @@ const visible = '.ion-page:not(.ion-page-hidden)';
 const stage = `${visible} [data-testid=score-stage]`;
 
 await page.goto(`http://127.0.0.1:${port}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(file);
 await page.waitForSelector('ion-item-sliding', { timeout: 60000 });
 const openScore = async () => {

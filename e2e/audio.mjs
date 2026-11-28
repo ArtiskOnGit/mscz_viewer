@@ -38,7 +38,7 @@ await page.waitForSelector('[data-testid=pick-tenorSax]');
 await page.locator('[data-testid=pick-tenorSax]').click();
 await page.waitForTimeout(300);
 await page.goto(`http://127.0.0.1:${PORT}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(`${root}/test-scores/onlyfuhnbrass_-_medley_Russ.mscz`);
 await page.waitForSelector('ion-item-sliding', { timeout: 120000 });
 await page.waitForTimeout(500);

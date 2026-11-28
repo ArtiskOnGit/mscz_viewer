@@ -152,7 +152,7 @@ const screens = async (theme) => {
 
 // One score in the library and a setlist containing it.
 await page.goto(`${base}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(`${root}/test-scores/Toccata_v2.mscz`);
 await page.waitForSelector('ion-item-sliding', { timeout: 60000 });
 for (let i = 0; i < 10 && !(await page.locator('[data-testid=new-setlist]').count()); i++) {

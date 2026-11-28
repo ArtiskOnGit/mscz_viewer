@@ -15,10 +15,10 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 await page.goto('http://127.0.0.1:5197/library');
-await page.waitForSelector('ion-fab-button');
+await page.waitForSelector('[data-testid=fab-add]');
 
 const t0 = Date.now();
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(files);
 await page.waitForFunction((n) => document.querySelectorAll('ion-item-sliding').length >= n, files.length, { timeout: 180000 });
 console.log(`imported ${files.length} files in ${Date.now() - t0} ms`);
@@ -27,7 +27,7 @@ await page.waitForTimeout(500);
 await page.screenshot({ path: `${shots}/library-list.png` });
 
 // Re-import the same files: all duplicates.
-const [chooser2] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser2] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser2.setFiles(files.slice(0, 1));
 await page.waitForSelector('ion-toast', { timeout: 30000 });
 console.log('toast:', await page.locator('ion-toast').evaluate((el) => el.message));

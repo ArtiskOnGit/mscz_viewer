@@ -76,5 +76,37 @@
     "resetView": "Reset display settings",
     "resetDone": "Display settings reset"
   },
-  "moreActions": "More actions: {{title}}"
+  "moreActions": "More actions: {{title}}",
+  "add": "Add",
+  "folders": {
+    "new": "New folder",
+    "namePlaceholder": "Folder name",
+    "create": "Create",
+    "root": "Library",
+    "rootEntry": "Library (root)",
+    "breadcrumb": "Folder path",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "empty": "This folder is empty. Import scores here with the + button, or move scores into it.",
+    "notFound": "This folder no longer exists.",
+    "rename": "Rename folder",
+    "move": "Move to…",
+    "moveTitle": "Move to",
+    "current": "current folder",
+    "moved_one": "{{count}} item moved to “{{name}}”",
+    "moved_other": "{{count}} items moved to “{{name}}”",
+    "cycle": "A folder cannot be moved into one of its own sub-folders.",
+    "deleteTitle": "Delete folder?",
+    "deleteMessage": "“{{name}}” will be deleted. Its scores and sub-folders are kept and move to “{{parent}}”.",
+    "moreActions": "More actions: folder {{name}}",
+    "inFolder": "In {{path}}"
+  },
+  "select": {
+    "action": "Select",
+    "count_one": "{{count}} selected",
+    "count_other": "{{count}} selected",
+    "move": "Move",
+    "done": "Done",
+    "toggle": "Select {{title}}"
+  }
 }

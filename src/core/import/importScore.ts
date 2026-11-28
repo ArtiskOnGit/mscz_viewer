@@ -46,6 +46,8 @@ export interface ImportDeps {
   xml?: XmlEnv;
   now?: () => Date;
   newId?: () => string;
+  /** Folder of the library to import into (undefined = the root). A duplicate stays where it is. */
+  folderId?: string;
 }
 
 // Placeholder texts of MuseScore's new-score wizard, not real metadata.
@@ -75,6 +77,7 @@ export async function importScore(input: ImportInput, deps: ImportDeps): Promise
     sourceHash,
     importedAt: (deps.now?.() ?? new Date()).toISOString(),
     tags: [],
+    ...(deps.folderId ? { folderId: deps.folderId } : {}),
   };
 
   await repo.add(score, {

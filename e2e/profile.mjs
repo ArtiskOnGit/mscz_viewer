@@ -42,7 +42,7 @@ check(!(await page.locator('[data-testid=pick-cornet]').getAttribute('class')).i
 
 // 2. Import Toccata (7 parts, "Trompette en Si♭") and open it: only the trumpet, +2.
 await page.goto('http://127.0.0.1:5189/library');
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(`${root}/test-scores/Toccata_v2.mscz`);
 await page.waitForSelector('ion-item-sliding', { timeout: 120000 });
 await page.waitForTimeout(500);

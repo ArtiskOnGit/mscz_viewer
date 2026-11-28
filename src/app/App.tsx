@@ -12,6 +12,8 @@ import { useAppTheme } from './useAppTheme';
 import { useOrientationLock } from './useOrientationLock';
 import { applyLanguage } from '../i18n';
 import { UpdatePrompt } from './UpdatePrompt';
+import { ExternalImports } from '../screens/library/ExternalImports';
+import { LibraryProgress } from '../screens/library/LibraryProgress';
 
 /** The PWA is served under /mscz_viewer/ (GitHub Pages, ADR-027); the Android app and the dev server under /. */
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
@@ -33,13 +35,16 @@ export function App() {
         <IonRouterOutlet>
           <Routes>
             <Route path={routes.library} element={<LibraryScreen />} />
+            <Route path={routes.libraryFolderPattern} element={<LibraryScreen />} />
             <Route path={routes.viewerPattern} element={<ViewerScreen />} />
             <Route path={routes.settings} element={<SettingsScreen />} />
             <Route path={routes.setlistPattern} element={<SetlistDetailScreen />} />
             <Route path="*" element={<Navigate to={routes.library} replace />} />
           </Routes>
         </IonRouterOutlet>
+        <ExternalImports />
       </IonReactRouter>
+      <LibraryProgress />
       <UpdatePrompt />
     </IonApp>
   );

@@ -15,3 +15,45 @@
   font-size: 28px;
   color: var(--ion-color-medium);
 }
+
+/* Folders (ADR-029). */
+.folder-thumb {
+  --size: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.folder-thumb ion-icon {
+  font-size: 40px;
+  color: var(--ion-color-primary);
+}
+.item-path {
+  font-size: 0.8em;
+}
+.folder-breadcrumb {
+  padding: 8px 16px 0;
+  font-size: 0.85em;
+  color: var(--ion-color-medium-shade, #666);
+  overflow-wrap: anywhere;
+}
+/* The buttons of the "+" menu: 48 px touch targets (Ionic makes them 40 px). */
+.library-fab ion-fab-list ion-fab-button {
+  width: 48px;
+  height: 48px;
+}
+.library-fab ion-fab-list ion-fab-button ion-icon {
+  font-size: 24px;
+}
+/* Long press selects: no text selection or system menu on the item. */
+.score-item button.item-open {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.select-mark {
+  font-size: 28px;
+  flex: none;
+}
+.score-selected {
+  --background: rgba(var(--ion-color-primary-rgb), 0.12);
+}

@@ -76,5 +76,37 @@
     "resetView": "Réinitialiser l’affichage",
     "resetDone": "Réglages d’affichage réinitialisés"
   },
-  "moreActions": "Plus d’actions : {{title}}"
+  "moreActions": "Plus d’actions : {{title}}",
+  "add": "Ajouter",
+  "folders": {
+    "new": "Nouveau dossier",
+    "namePlaceholder": "Nom du dossier",
+    "create": "Créer",
+    "root": "Bibliothèque",
+    "rootEntry": "Bibliothèque (racine)",
+    "breadcrumb": "Chemin du dossier",
+    "items_one": "{{count}} élément",
+    "items_other": "{{count}} éléments",
+    "empty": "Ce dossier est vide. Importez-y des partitions avec le bouton +, ou déplacez-en ici.",
+    "notFound": "Ce dossier n’existe plus.",
+    "rename": "Renommer le dossier",
+    "move": "Déplacer vers…",
+    "moveTitle": "Déplacer vers",
+    "current": "dossier actuel",
+    "moved_one": "{{count}} élément déplacé vers « {{name}} »",
+    "moved_other": "{{count}} éléments déplacés vers « {{name}} »",
+    "cycle": "Un dossier ne peut pas être déplacé dans l’un de ses sous-dossiers.",
+    "deleteTitle": "Supprimer le dossier ?",
+    "deleteMessage": "« {{name}} » sera supprimé. Ses partitions et sous-dossiers sont conservés et vont dans « {{parent}} ».",
+    "moreActions": "Plus d’actions : dossier {{name}}",
+    "inFolder": "Dans {{path}}"
+  },
+  "select": {
+    "action": "Sélectionner",
+    "count_one": "{{count}} sélectionnée",
+    "count_other": "{{count}} sélectionnées",
+    "move": "Déplacer",
+    "done": "Terminé",
+    "toggle": "Sélectionner {{title}}"
+  }
 }

@@ -1,25 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonLabel, IonList, IonLoading,
-  IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonText, IonTitle, IonToolbar,
-  useIonAlert, useIonToast,
+  IonBackButton, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonFabList, IonFooter, IonHeader, IonIcon, IonLabel, IonList,
+  IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonText, IonTitle, IonToolbar, useIonAlert, useIonToast,
 } from '@ionic/react';
-import { add, settingsOutline } from 'ionicons/icons';
+import { add, documentAttachOutline, folderOutline, settingsOutline } from 'ionicons/icons';
 import { routes } from '../../app/routes';
-import type { Score } from '../../core/model/types';
-import { onRestoredPick, pickScoreFiles } from '../../core/import/filePicker';
-import { onOpenWith, onShareReceived } from '../../core/import/openWith';
+import type { Folder, FolderId, Score, ScoreId } from '../../core/model/types';
+import { childFolders, folderPath, isInside, itemCount } from '../../core/model/folders';
+import { FolderCycleError } from '../../core/storage/libraryRepository';
+import { pickScoreFiles } from '../../core/import/filePicker';
 import type { ImportInput } from '../../core/import/importScore';
-import { useLibrary, type ImportReport } from '../../state/libraryStore';
+import { useLibrary } from '../../state/libraryStore';
 import { ScoreItem } from './ScoreItem';
+import { FolderItem } from './FolderItem';
+import { FolderPickerModal } from './FolderPickerModal';
 import { SetlistsTab } from '../setlists/SetlistsTab';
 import { useSetlists } from '../../state/setlistStore';
 import { ScoreInfoModal } from './ScoreInfoModal';
+import { useImportReport } from './useImportReport';
 
 type Tab = 'scores' | 'setlists';
 type SortKey = 'recent' | 'title' | 'composer' | 'imported';
+/** What "Move to…" moves: scores (one or a selection) or a folder. */
+type Moving = { kind: 'scores'; ids: ScoreId[] } | { kind: 'folder'; folder: Folder };
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 const SORTERS: Record<SortKey, (a: Score, b: Score) => number> = {
@@ -29,69 +34,91 @@ const SORTERS: Record<SortKey, (a: Score, b: Score) => number> = {
   imported: (a, b) => b.importedAt.localeCompare(a.importedAt),
 };
 
+/**
+ * The library: /library is the root, /library/folder/:folderId a folder (ADR-029). Each folder is its own page in the
+ * Ionic stack, so the header back button and the Android back button go up one level.
+ */
 export function LibraryScreen() {
   const { t } = useTranslation(['library', 'common', 'setlists']);
   const navigate = useNavigate();
-  const { scores, loaded, importing, upgrading, load, importFiles, rename, remove, markOpened } = useLibrary();
+  const { folderId } = useParams<{ folderId?: string }>();
+  const inFolder = folderId !== undefined;
+  const {
+    scores, folders, loaded, importing, load, importFiles, rename, remove, markOpened, createFolder, renameFolder, deleteFolder, moveScores, moveFolder,
+  } = useLibrary();
   const [tab, setTab] = useState<Tab>('scores');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('recent');
   const [info, setInfo] = useState<Score>();
+  const [moving, setMoving] = useState<Moving>();
+  const [selected, setSelected] = useState<ScoreId[]>();
   const [presentAlert] = useIonAlert();
-  const setlists = useSetlists((s) => s.setlists);
   const [presentToast] = useIonToast();
+  const setlists = useSetlists((s) => s.setlists);
+  const reportImport = useImportReport();
 
   useEffect(() => {
     if (!loaded) void load();
   }, [loaded, load]);
 
-  const reportImport = (report: ImportReport) => {
-    const parts = [
-      report.imported.length && t('import.result.imported', { count: report.imported.length }),
-      report.duplicates.length && t('import.result.duplicates', { count: report.duplicates.length }),
-      report.failed.length && t('import.result.failed', { count: report.failed.length }),
-    ].filter(Boolean);
-    const errors = report.failed.map((f) => t(`import.errors.${f.code}`, { name: f.name }));
-    if (errors.length) {
-      void presentAlert({ header: parts.join(' · '), message: errors.join('\n\n'), buttons: [t('common:actions.ok')] });
-    } else if (parts.length) {
-      void presentToast({ message: parts.join(' · '), duration: 2500, position: 'bottom' });
-    }
-  };
+  const folder = folders.find((f) => f.id === folderId);
+  const missing = inFolder && loaded && !folder;
+  const path = useMemo(() => folderPath(folders, folderId), [folders, folderId]);
+  const parentHref = routes.libraryFolder(path.at(-2)?.id);
+  const pathText = (id: FolderId | undefined) => [t('folders.root'), ...folderPath(folders, id).map((f) => f.name)].join(' › ');
+  const nameOf = (id: FolderId | undefined) => (id ? (folders.find((f) => f.id === id)?.name ?? '') : t('folders.root'));
+  const showScores = !inFolder ? tab === 'scores' : !missing;
+
+  const q = query.trim().toLocaleLowerCase();
+  const searching = q.length > 0;
+  const visibleFolders = useMemo(() => {
+    const list = searching ? folders.filter((f) => f.name.toLocaleLowerCase().includes(q)) : childFolders(folders, folderId);
+    return [...list].sort((a, b) => collator.compare(a.name, b.name));
+  }, [folders, folderId, q, searching]);
+  // Sorting applies within the folder; a search covers the whole library.
+  const visibleScores = useMemo(() => {
+    const list = searching
+      ? scores.filter((s) => `${s.title} ${s.composer ?? ''}`.toLocaleLowerCase().includes(q))
+      : scores.filter((s) => s.folderId === folderId);
+    return [...list].sort(SORTERS[sort]);
+  }, [scores, folderId, q, searching, sort]);
+
+  // Selection mode: the Android back button leaves it first.
+  useEffect(() => {
+    if (!selected) return;
+    const onBack = (e: Event) =>
+      (e as CustomEvent<{ register(priority: number, handler: () => void): void }>).detail.register(150, () => setSelected(undefined));
+    document.addEventListener('ionBackButton', onBack);
+    return () => document.removeEventListener('ionBackButton', onBack);
+  }, [selected]);
 
   const runImport = async (inputs: ImportInput[]) => {
-    if (inputs.length) reportImport(await importFiles(inputs));
+    if (inputs.length) reportImport(await importFiles(inputs, folder?.id));
   };
-
-  // Files picked right before Android restarted the app (see filePicker.ts).
-  useEffect(() => onRestoredPick((inputs) => void runImport(inputs)), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // "Open with…" / "Share to" from another app: import, then open the score (a single file) or report (several).
-  useEffect(() => {
-    const importAndOpen = (inputs: ImportInput[]) =>
-      void importFiles(inputs).then((report) => {
-        const score = inputs.length === 1 ? (report.imported[0] ?? report.duplicates[0]) : undefined;
-        if (score) navigate(routes.viewer(score.id));
-        else reportImport(report);
-      });
-    const offOpen = onOpenWith((input) => importAndOpen([input]));
-    const offShare = onShareReceived(importAndOpen);
-    return () => {
-      offOpen();
-      offShare();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const visible = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase();
-    const filtered = q ? scores.filter((s) => `${s.title} ${s.composer ?? ''}`.toLocaleLowerCase().includes(q)) : scores;
-    return [...filtered].sort(SORTERS[sort]);
-  }, [scores, query, sort]);
 
   const open = (score: Score) => {
     void markOpened(score.id);
     navigate(routes.viewer(score.id));
   };
+
+  const toggleSelect = (id: ScoreId) =>
+    setSelected((cur) => {
+      if (!cur) return [id];
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+      return next.length ? next : undefined;
+    });
+
+  const askName = (header: string, value: string, confirm: string, then: (name: string) => void) =>
+    void presentAlert({
+      header,
+      inputs: [{ name: 'name', value, placeholder: t('folders.namePlaceholder'), attributes: { 'data-testid': 'folder-name-input' } }],
+      buttons: [
+        { text: t('common:actions.cancel'), role: 'cancel' },
+        { text: confirm, handler: (v: { name: string }) => void (v.name.trim() && then(v.name)) },
+      ],
+    });
+
+  const askNewFolder = () => askName(t('folders.new'), '', t('folders.create'), (name) => void createFolder(name, folder?.id));
 
   const askRename = (score: Score) =>
     void presentAlert({
@@ -119,24 +146,102 @@ export function LibraryScreen() {
     });
   };
 
+  const askRenameFolder = (f: Folder) => askName(t('folders.rename'), f.name, t('common:actions.rename'), (name) => void renameFolder(f.id, name));
+
+  const askDeleteFolder = (f: Folder) =>
+    void presentAlert({
+      header: t('folders.deleteTitle'),
+      message: t('folders.deleteMessage', { name: f.name, parent: nameOf(f.parentId) }),
+      buttons: [
+        { text: t('common:actions.cancel'), role: 'cancel' },
+        { text: t('common:actions.delete'), role: 'destructive', handler: () => void deleteFolder(f.id) },
+      ],
+    });
+
+  // --- Move to… ---
+  const movingFrom = (m: Moving): FolderId | null | undefined => {
+    if (m.kind === 'folder') return m.folder.parentId;
+    const places = new Set(m.ids.map((id) => scores.find((s) => s.id === id)?.folderId));
+    return places.size === 1 ? [...places][0] : null;
+  };
+  const excluded = useMemo(
+    () => (moving?.kind === 'folder' ? new Set(folders.filter((f) => isInside(folders, f.id, moving.folder.id)).map((f) => f.id)) : undefined),
+    [moving, folders],
+  );
+  const moveTo = async (target: FolderId | undefined) => {
+    const m = moving;
+    setMoving(undefined);
+    if (!m) return;
+    try {
+      if (m.kind === 'folder') await moveFolder(m.folder.id, target);
+      else await moveScores(m.ids, target);
+    } catch (e) {
+      if (e instanceof FolderCycleError) void presentToast({ message: t('folders.cycle'), duration: 2500 });
+      else throw e;
+      return;
+    }
+    setSelected(undefined);
+    const count = m.kind === 'folder' ? 1 : m.ids.length;
+    // Read the folders from the store: the target may have just been created ("New folder" in the picker).
+    const name = target ? (useLibrary.getState().folders.find((f) => f.id === target)?.name ?? '') : t('folders.root');
+    void presentToast({ message: t('folders.moved', { count, name }), duration: 2000, position: 'bottom' });
+  };
+  // "New folder" in the picker: created in the folder shown here, then the items move into it.
+  const createAndMove = () =>
+    askName(t('folders.new'), '', t('folders.create'), (name) => void createFolder(name, folder?.id).then((f) => moveTo(f.id)));
+
+  const scoreItems = visibleScores.map((s) => (
+    <ScoreItem
+      key={s.id}
+      score={s}
+      path={searching ? pathText(s.folderId) : undefined}
+      onOpen={() => open(s)}
+      onRename={() => askRename(s)}
+      onInfo={() => setInfo(s)}
+      onMove={() => setMoving({ kind: 'scores', ids: [s.id] })}
+      onDelete={() => askDelete(s)}
+      onSelect={() => toggleSelect(s.id)}
+      selecting={!!selected}
+      selected={selected?.includes(s.id)}
+    />
+  ));
+  const folderItems = visibleFolders.map((f) => (
+    <FolderItem
+      key={f.id}
+      folder={f}
+      count={itemCount(folders, scores, f.id)}
+      path={searching ? pathText(f.parentId) : undefined}
+      onOpen={() => navigate(routes.libraryFolder(f.id))}
+      onRename={() => askRenameFolder(f)}
+      onMove={() => setMoving({ kind: 'folder', folder: f })}
+      onDelete={() => askDeleteFolder(f)}
+    />
+  ));
+  const libraryEmpty = scores.length === 0 && folders.length === 0;
+
   return (
-    <IonPage>
+    <IonPage data-testid={inFolder ? 'library-folder-page' : 'library-page'}>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>{t('title')}</IonTitle>
+          {inFolder && (
+            <IonButtons slot="start"><IonBackButton defaultHref={parentHref} data-testid="folder-back" /></IonButtons>
+          )}
+          <IonTitle>{inFolder ? (folder?.name ?? '') : t('title')}</IonTitle>
           <IonButtons slot="end">
             <IonButton routerLink={routes.settings} aria-label={t('settings')}>
               <IonIcon slot="icon-only" icon={settingsOutline} aria-hidden="true" />
             </IonButton>
           </IonButtons>
         </IonToolbar>
-        <IonToolbar>
-          <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as Tab)}>
-            <IonSegmentButton value="scores"><IonLabel>{t('tabs.scores')}</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="setlists"><IonLabel>{t('tabs.setlists')}</IonLabel></IonSegmentButton>
-          </IonSegment>
-        </IonToolbar>
-        {tab === 'scores' && scores.length > 0 && (
+        {!inFolder && (
+          <IonToolbar>
+            <IonSegment value={tab} onIonChange={(e) => setTab(e.detail.value as Tab)}>
+              <IonSegmentButton value="scores"><IonLabel>{t('tabs.scores')}</IonLabel></IonSegmentButton>
+              <IonSegmentButton value="setlists"><IonLabel>{t('tabs.setlists')}</IonLabel></IonSegmentButton>
+            </IonSegment>
+          </IonToolbar>
+        )}
+        {showScores && !libraryEmpty && (
           <IonToolbar>
             <IonSearchbar value={query} placeholder={t('search')} onIonInput={(e) => setQuery(e.detail.value ?? '')} />
             <IonButtons slot="end">
@@ -150,40 +255,71 @@ export function LibraryScreen() {
         )}
       </IonHeader>
       <IonContent>
-        {tab === 'scores' ? (
-          scores.length === 0 ? (
-            loaded && (
-              <IonText color="medium" className="ion-padding" style={{ display: 'block' }}>
-                <h2>{t('empty.title')}</h2>
-                <p>{t('empty.body')}</p>
-              </IonText>
-            )
-          ) : visible.length === 0 ? (
-            <IonText color="medium" className="ion-padding" style={{ display: 'block' }}><p>{t('noMatch', { query })}</p></IonText>
-          ) : (
-            <IonList>
-              {visible.map((s) => (
-                <ScoreItem key={s.id} score={s} onOpen={() => open(s)} onRename={() => askRename(s)} onInfo={() => setInfo(s)} onDelete={() => askDelete(s)} />
-              ))}
-            </IonList>
-          )
-        ) : (
-          <SetlistsTab />
+        {inFolder && folder && !searching && (
+          <nav className="folder-breadcrumb" aria-label={t('folders.breadcrumb')} data-testid="folder-breadcrumb">
+            {[t('folders.root'), ...path.map((f) => f.name)].join(' › ')}
+          </nav>
         )}
-        {tab === 'scores' && (
-          <IonFab slot="fixed" vertical="bottom" horizontal="end">
-            <IonFabButton aria-label={t('import.button')} disabled={!!importing} onClick={() => void pickScoreFiles().then(runImport)}>
+        {missing ? (
+          <IonText color="medium" className="ion-padding" style={{ display: 'block' }}><p>{t('folders.notFound')}</p></IonText>
+        ) : !showScores ? (
+          <SetlistsTab />
+        ) : libraryEmpty ? (
+          loaded && (
+            <IonText color="medium" className="ion-padding" style={{ display: 'block' }}>
+              <h2>{t('empty.title')}</h2>
+              <p>{t('empty.body')}</p>
+            </IonText>
+          )
+        ) : searching && !folderItems.length && !scoreItems.length ? (
+          <IonText color="medium" className="ion-padding" style={{ display: 'block' }}><p>{t('noMatch', { query })}</p></IonText>
+        ) : !folderItems.length && !scoreItems.length ? (
+          <IonText color="medium" className="ion-padding" style={{ display: 'block' }} data-testid="folder-empty"><p>{t('folders.empty')}</p></IonText>
+        ) : (
+          <IonList>
+            {folderItems}
+            {scoreItems}
+          </IonList>
+        )}
+        {showScores && !selected && (
+          <IonFab slot="fixed" vertical="bottom" horizontal="end" className="library-fab">
+            <IonFabButton aria-label={t('add')} disabled={!!importing} data-testid="fab-add">
               <IonIcon icon={add} aria-hidden="true" />
             </IonFabButton>
+            <IonFabList side="top">
+              <IonFabButton aria-label={t('import.button')} title={t('import.button')} data-testid="fab-import" onClick={() => void pickScoreFiles().then(runImport)}>
+                <IonIcon icon={documentAttachOutline} aria-hidden="true" />
+              </IonFabButton>
+              <IonFabButton aria-label={t('folders.new')} title={t('folders.new')} data-testid="fab-new-folder" onClick={askNewFolder}>
+                <IonIcon icon={folderOutline} aria-hidden="true" />
+              </IonFabButton>
+            </IonFabList>
           </IonFab>
         )}
         <ScoreInfoModal score={info} onDismiss={() => setInfo(undefined)} />
-        <IonLoading isOpen={!!upgrading && !importing} message={upgrading ? t('upgrade', { done: upgrading.done + 1, total: upgrading.total }) : ''} />
-        <IonLoading
-          isOpen={!!importing}
-          message={importing ? t('import.progress', { current: importing.current ?? '', done: importing.done + 1, total: importing.total }) : ''}
+        <FolderPickerModal
+          isOpen={!!moving}
+          folders={folders}
+          current={moving ? movingFrom(moving) : null}
+          excluded={excluded}
+          onPick={(target) => void moveTo(target)}
+          onCreate={createAndMove}
+          onDismiss={() => setMoving(undefined)}
         />
       </IonContent>
+      {selected && (
+        <IonFooter>
+          <IonToolbar>
+            <IonTitle size="small" data-testid="selection-count">{t('select.count', { count: selected.length })}</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setSelected(undefined)} data-testid="selection-done">{t('select.done')}</IonButton>
+              <IonButton fill="solid" color="primary" onClick={() => setMoving({ kind: 'scores', ids: selected })} data-testid="selection-move">
+                {t('select.move')}
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonFooter>
+      )}
     </IonPage>
   );
 }

@@ -70,6 +70,16 @@ describe('importScore', () => {
     expect(outcome.status === 'imported' && outcome.score.title).toBe('unity transposé');
   });
 
+  it('imports into a folder; a duplicate stays in its folder', async () => {
+    const { repo, deps } = setup();
+    const folder = await repo.createFolder('Brass');
+    const first = await importScore({ name: 'a.mscz', bytes: msczBytes() }, { ...deps, folderId: folder.id });
+    expect(first.status === 'imported' && first.score.folderId).toBe(folder.id);
+    const again = await importScore({ name: 'a.mscz', bytes: msczBytes() }, { ...deps, newId: () => 'id-2' });
+    expect(again.status === 'duplicate' && again.existing.folderId).toBe(folder.id);
+    expect((await repo.get('id-1'))?.folderId).toBe(folder.id);
+  });
+
   it('detects duplicates by content hash without calling the engine again', async () => {
     const engine = fakeEngine();
     const { deps } = setup(engine);

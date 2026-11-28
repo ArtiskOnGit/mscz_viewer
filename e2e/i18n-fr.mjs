@@ -81,7 +81,7 @@ check('tabs', (await text('ion-segment-button')).toLowerCase().includes('partiti
 check('empty library', (await text(`${visible} ion-content`)).includes('Aucune partition'));
 await page.screenshot({ path: `${shots}/fr-library-empty.png` });
 
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles([`${root}/test-scores/unity_transpos_.mscz`, `${root}/test-scores/Toccata_v2.mscz`]);
 await page.waitForFunction(() => document.querySelectorAll('ion-item-sliding').length >= 2, null, { timeout: 120000 });
 await page.waitForTimeout(1500);

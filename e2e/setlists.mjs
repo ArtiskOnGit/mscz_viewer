@@ -31,7 +31,7 @@ const waitTitle = (text) =>
     .catch(() => undefined);
 
 await page.goto('http://127.0.0.1:5192/library');
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(files);
 await page.waitForFunction(() => document.querySelectorAll('ion-item-sliding').length >= 2, null, { timeout: 120000 });
 

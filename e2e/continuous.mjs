@@ -68,7 +68,7 @@ await page.addInitScript(() => {
   if (!localStorage.getItem('CapacitorStorage.settings')) localStorage.setItem('CapacitorStorage.settings', JSON.stringify({ countInMeasures: 0 }));
 });
 await page.goto(`${base}/library`);
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(file);
 await page.waitForSelector('ion-item-sliding', { timeout: 60000 });
 await page.locator('ion-item-sliding ion-item').first().click();

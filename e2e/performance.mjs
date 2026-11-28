@@ -29,7 +29,7 @@ const round = (x) => Math.round(x);
 
 await page.goto(`http://127.0.0.1:${port}/library`);
 let t0 = Date.now();
-const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('ion-fab-button').click()]);
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-testid=fab-add]').click().then(() => page.locator('[data-testid=fab-import]').click())]);
 await chooser.setFiles(scores.map((s) => `${root}/test-scores/${s.file}`));
 await page.waitForFunction((n) => document.querySelectorAll('ion-item-sliding').length >= n, scores.length, { timeout: 180000 });
 const importMs = Date.now() - t0;

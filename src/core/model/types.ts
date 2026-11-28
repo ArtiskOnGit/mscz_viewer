@@ -1,6 +1,15 @@
 // Domain model — see docs/SPECIFICATIONS_TECHNIQUES.md §3.
 
 export type ScoreId = string;
+export type FolderId = string;
+
+/** Folder of the library (ADR-029). Folders may be nested; no parentId = at the root of the library. */
+export interface Folder {
+  id: FolderId;
+  name: string;
+  parentId?: FolderId;
+  createdAt: string;
+}
 
 export type SourceFormat = 'mscz' | 'mscx' | 'mxl' | 'musicxml';
 
@@ -46,6 +55,8 @@ export interface Score {
   parts: Part[];
   rehearsalMarks: { label: string; measureIndex: number }[];
   tags: string[];
+  /** Folder of the score; absent = at the root of the library. */
+  folderId?: FolderId;
 }
 
 export interface TimeSignature {

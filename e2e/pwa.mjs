@@ -132,9 +132,9 @@ async function run(name, browserType, device, launchArgs = {}) {
     await openPage(); // the app opened again (from the home screen)
     await first.close();
     await page.goto(`${APP}library`);
-    await page.waitForSelector(`${visible} ion-fab-button`, { timeout: 30000 });
+    await page.waitForSelector(`${visible} [data-testid=fab-add]`, { timeout: 30000 });
     check(true, 'offline: the app starts');
-    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator(`${visible} ion-fab-button`).click()]);
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator(`${visible} [data-testid=fab-add]`).click().then(() => page.locator(`${visible} [data-testid=fab-import]`).click())]);
     await chooser.setFiles(`${root}/test-scores/onlyfuhnbrass_-_medley_Russ.mscz`);
     await page.waitForSelector('ion-item-sliding', { timeout: 120000 });
     check(true, 'offline: score imported (webmscore from the cache)');
