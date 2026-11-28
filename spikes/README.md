@@ -25,6 +25,7 @@ npm install        # copie aussi les fichiers de webmscore dans device-test/publ
 | `npm run device` | S5/S6 | Sert le **banc de test** sur le réseau local, pour un vrai téléphone. |
 | `for f in test-scores/*.mscz; do node spikes/s7-midi/compare.mjs "$f"; done` (depuis la racine de l'application) | S7 (2026-11-26, ADR-026) | MIDI de webmscore (`saveMidi(true, true)`) contre la timeline : pistes, canaux, parties, écart maximal début de mesure / note (≤ 0,71 ms sur le corpus). |
 | `node spikes/s7-midi/multistaff.mjs` (depuis la racine) | S7 | Pistes MIDI d'une partie à deux portées et d'une batterie (une piste par portée, canaux partagés, batterie canal 10). |
+| `node spikes/s8-audio-debug/export.mjs test-scores/<f>.mscz` puis `analyse.mjs out/<nom>/score.mid [--bends]`, `separate.mjs out/<nom>`, `window.mjs <mid> <canal> <de s> <à s>`, `raw.mjs <mid> <piste> <de tick> <à tick>`, `passages.mjs out/<nom>`, `node --import ./spikes/s8-audio-debug/ts-resolve.mjs spikes/s8-audio-debug/pickup.mjs out/<nom>` (depuis la racine) | S8 (2026-11-28) | Débogage audio (Stay With Me) : MIDI exporté comme à l'import, pistes / canaux / programmes, appariement des notes (pendantes, superposées), pitch bend, RPN, CC 64 ; canaux partagés entre parties et leur séparation ; levées et décompte. |
 
 ## Tester sur un téléphone Android (S5, S6, performances réelles)
 

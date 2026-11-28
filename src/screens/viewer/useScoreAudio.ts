@@ -119,15 +119,27 @@ function exposeForTests(synth: SynthHandle, midi: MidiFile, metronomeChannel: nu
   }, 20);
   // Note-ons sent to the synth (channel, AudioContext time), the last 2000. The handle is shared: wrapped once.
   const sent: { channel: number; time: number; key: number }[] = [];
-  const tapped = synth as SynthHandle & { __send?: SynthHandle['send'] };
+  const tapped = synth as SynthHandle & { __send?: SynthHandle['send']; __setChannelGain?: SynthHandle['setChannelGain'] };
   tapped.__send ??= synth.send.bind(synth);
   const send = tapped.__send;
+  // Every message sent (channel, AudioContext time, bytes), the last 50000 (e2e/audio-stay-with-me.mjs rebuilds the
+  // program, sounding notes and pitch bend of each channel); the channel gains set by the mixer.
+  const log: { channel: number; time: number; message: number[] }[] = [];
+  const gains = new Map<number, number>();
   synth.send = (message, channel, time) => {
     if ((message[0]! & 0xf0) === 0x90 && message[2]) {
       sent.push({ channel, time, key: message[1]! });
       if (sent.length > 2000) sent.shift();
     }
+    log.push({ channel, time, message: message.slice() });
+    if (log.length > 50000) log.splice(0, 10000);
     send(message, channel, time);
+  };
+  tapped.__setChannelGain ??= synth.setChannelGain.bind(synth);
+  const setGain = tapped.__setChannelGain;
+  synth.setChannelGain = (channel, gain) => {
+    gains.set(channel, gain);
+    setGain(channel, gain);
   };
   const w = window as unknown as { __pupitreAudio?: { stop(): void } };
   w.__pupitreAudio?.stop();
@@ -143,6 +155,11 @@ function exposeForTests(synth: SynthHandle, midi: MidiFile, metronomeChannel: nu
       ctx: synth.ctx,
       output: synth.output,
       sent: () => sent.slice(),
+      log: () => log.slice(),
+      clearLog: () => (log.length = 0),
+      gains: () => Object.fromEntries(gains),
+      /** MIDI tracks (named after the parts) and their channels. */
+      tracks: () => midi.tracks.map((t) => ({ name: t.name, channels: t.channels })),
     },
   } as { stop(): void };
 }

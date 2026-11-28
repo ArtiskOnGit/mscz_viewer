@@ -182,6 +182,8 @@ node e2e/display-settings.mjs "$PWD" /tmp/shots  # police, numéros de mesure, t
 node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clair + sombre, cibles ≥ 48 px, noms des boutons
 node e2e/audio.mjs "$PWD" /tmp/shots        # son de la partition : chargement à la demande, mixeur, niveau de sortie, pause
 node e2e/metronome-sync.mjs "$PWD" /tmp/shots  # son activé : sortie du synthétiseur enregistrée, écart clic du métronome / note < 5 ms, ligne Métronome du mixeur
+node e2e/audio-stay-with-me.mjs "$PWD" /tmp/shots  # test-scores/Stay_With_Me.mscz (ignoré s'il manque) : décompte sur une levée, pas de voix
+                                             # ni de note pendante, glissandos (pitch bend recentré), solo trompette = sousaphone muet
 node e2e/pickbar.mjs "$PWD" /tmp/shots      # appui long sur une mesure
 node e2e/performance.mjs "$PWD" /tmp/shots  # temps d'ouverture, cache de rendu, workers
 node e2e/render-race.mjs "$PWD" /tmp/shots  # gros conducteur (test-scores/Motorcrypt.mscz, ignoré s'il manque) : zoom / rotation

@@ -81,3 +81,34 @@ Installation : README, « Installer sur iPhone ». Les tests automatiques passen
 - **Correctif** : avant conversion, les armures sont réécrites au format ancien (`<accidental>` = armure écrite de la portée : `actualKey` pour un instrument transpositeur, sinon `concertKey`) — `convertKeySignatures` dans `src/core/import/unhideParts.ts`, testé. Version d'import 4 : les partitions déjà importées sont **réimportées automatiquement** au premier lancement.
 - **Vérifié** : export webmscore (Motorcrypt : sax alto −1, trompette −2, trombone −4… ; medley/unity : 1 ♯) et rendu dans l'application (24 altérations d'armure sur la page 1 de Motorcrypt).
 - **À revérifier sur le téléphone** : après la mise à jour, laisser la réimportation se terminer, puis contrôler l'armure de quelques partitions récentes.
+
+## Stay With Me : voix qui continue, glissandos bizarres, solo trompette, décompte trop rapide (2026-11-28) — corrigé, à retester
+
+**Signalement** (téléphone, `test-scores/Stay_With_Me.mscz`, arrangement pour brass band avec une intro « chantée ») :
+1. « La voix continue même quand on revient aux instruments. »
+2. « Les glissandos sont très bizarres. »
+3. « Quand je mets la trompette en solo, j'entends encore le sousaphone. »
+4. « Le décompte est beaucoup trop rapide, pas au tempo du morceau. »
+
+**Analyse** (`spikes/s8-audio-debug/` : MIDI exporté comme à l'import, analysé piste par piste, comparé au `.mscx`) :
+- La partition utilise **19 canaux MuseScore** : trompette et trombone ont chacun « ouvert » + « sourdine », et les trompette, trombone, euphonium et sousaphone ont un **changement d'instrument « Voix »** (Chœur « Aah », programme 52) dans l'intro, puis reviennent à leur instrument sur un nouveau canal. Au-delà de 16, **webmscore (MuseScore 4.0) écrit le canal modulo 16 et toujours le port 0** (`FF 21 00`) : les canaux 16, 17, 18 deviennent 0, 1, 2, déjà pris par le sax alto, le sax baryton et la trompette.
+- **Bug 1 (la voix)** : le canal 1 recevait le programme du sax baryton (67) **puis celui de la « Voix » du sousaphone (52)** : le **sax baryton jouait tout le morceau avec un son de chœur** (et le sax alto avec le son d'euphonium du canal 0). S'y ajoutaient des **notes pendantes** (ci-dessous) qui continuaient des dizaines de secondes.
+- **Bug 2 (glissandos)** : MuseScore écrit chaque pas de glissando (sousaphone : gamme chromatique ; trombone : pitch bend) sous la forme « note on, note off, note on » au même instant (une note de durée nulle puis la vraie). Notre lecteur MIDI triait **toutes les note off en premier** à un instant donné (pour les portées de piano qui partagent un canal) : « off, on, on » → **deux voix pour une seule note off** ; spessasynth relâche une voix par note off (la plus ancienne), l'autre **restait jouée** (jusqu'à 55 s pour le sousaphone, 100 s pour le trombone), en plus doublée en volume. Glissando « bizarre » = nuage de notes tenues. Le pitch bend, lui, revenait bien au centre dans le fichier (plage ±12 demi-tons réglée par RPN au début, rejouée au démarrage).
+- **Bug 3 (solo)** : les notes du sousaphone étaient sur le canal 2 (son canal 18 écrit modulo 16), qui est aussi un canal de la trompette : en solo trompette, le canal 2 restait ouvert.
+- **Bug 4 (décompte)** : le morceau commence par une **levée d'un temps** (mesure 0, 536 ms en 4/4 à 112). Le décompte divisait la durée de la première mesure par 4 : **4 clics en 536 ms** (134 ms d'écart, 4 fois trop vite).
+
+**Corrections** :
+- **Un jeu de canaux par partie** (`src/core/audio/midiChannels.ts`) : à l'import, le fichier MIDI est réécrit pour qu'aucun canal ne soit partagé par deux parties ; le premier propriétaire garde le sien, les autres prennent des canaux libres (au-delà de 16 : ports MIDI, que spessasynth gère) ; les canaux de batterie restent des canaux de batterie et un canal mélodique ne tombe jamais sur un canal 10. Stay With Me : euphonium 6, 15, **16** ; sousaphone 7, **17, 18**. Le solo, le muet et les programmes sont donc exacts par partie.
+- **Notes sûres** (`normalizeNotes`, `src/core/audio/midiFile.ts`) : note on / note off appariées dans l'ordre du fichier par piste, canal et touche ; notes de durée nulle et note off orphelines ignorées ; notes qui se chevauchent sur un canal fusionnées (rejouée, relâchée une fois) ; une note jamais relâchée s'arrête à la fin. Plus aucune voix pendante ni doublée.
+- **Arrêt / pause / saut** : sur tous les canaux, pédale relâchée (CC 64), all notes off, all sound off, « reset all controllers » et **pitch bend recentré** (un glissando coupé ne désaccorde plus la suite).
+- **Décompte et levées** : la timeline note les **mesures incomplètes** (longueur réelle lue dans le MusicXML). Le temps du métronome est celui du tempo ; une **levée compte ses temps depuis sa fin** (levée d'un temps en 4/4 = un clic, sur le 4e temps, aligné sur la musique) ; les autres mesures courtes (fin de morceau, première moitié d'une mesure coupée par une reprise) depuis leur début. Le **décompte** est fait de N mesures entières au tempo, sur la même grille, **plus les temps qui manquent à la levée** : levée d'un temps, décompte d'une mesure = « 1 2 3 4 | 1 2 3 », puis la levée sur 4. Même chose pour les clics du synthétiseur, de l'oscillateur et le point de pulsation. (Le medley avait aussi une mesure de 3 temps en 4/4 : 3 clics au tempo au lieu de 4 serrés.)
+- `IMPORTER_VERSION` passe à **5** : les partitions sont **réimportées automatiquement**.
+- **Tests** : unitaires (`midiSafety.test.ts` : glissandos, chevauchements, canaux partagés et solo, arrêt ; `playback.test.ts` et `metronome.test.ts` : levées de 1 et 2 temps en 4/4, levée en 6/8, levée d'une croche, mesure courte) ; e2e `e2e/audio-stay-with-me.mjs` (ignoré sans le fichier) : décompte à 536 ms, aucune note sur les canaux « Voix » mesure 28, sax baryton avec son programme, aucune note pendante, glissandos du trombone recentrés, pause qui recentre tout, solo trompette mesure 16 = silence (le sousaphone y joue seul).
+
+**À retester sur le téléphone** (laisser la réimportation se terminer après la mise à jour) :
+1. Stay With Me, son activé, du début : la **voix** (chœur) ne s'entend que dans l'intro ; ensuite plus de « aah » ; le sax baryton sonne comme un sax.
+2. **Glissandos** du trombone et du sousaphone (vers 1 min 43 – 1 min 47, mesures 43–45) : un glissement propre, sans notes qui restent tenues ensuite ; la note suivante est juste.
+3. **Solo trompette** : plus de sousaphone ; essayer aussi solo sousaphone, euphonium, sax alto (chaque partie seule), et « Moi seul ».
+4. **Décompte** : au tempo du morceau (« 1 2 3 4 | 1 2 3 », puis la levée) ; métronome activé : un clic sur la levée (4e temps), puis les temps de la mesure 1 avec la musique ; à 50 % et 150 %.
+5. Pause au milieu d'un glissando puis reprise ou « aller à » : rien ne reste désaccordé ni tenu.
+6. Les autres partitions (medley, Toccata, Motorcrypt) sonnent comme avant.
