@@ -153,6 +153,7 @@ interface Folder {
   name: string;
   parentId?: FolderId;      // dossiers imbriqués ; absent = racine
   createdAt: string;        // ISO 8601
+  color?: FolderColor;      // 'blue' | 'green' | 'yellow' | 'orange' | 'red' | 'pink' | 'purple' | 'brown' | 'grey' ; absent = couleur par défaut
 }
 
 interface Part {
@@ -236,7 +237,7 @@ Directory.Cache/render-cache/
     └── <n>.svg                     # pages déjà rendues
 ```
 - Migrations : par `importerVersion` pour les partitions (réimport) et par fusion avec les valeurs par défaut pour les paramètres et les réglages de partition. **`library.json`** a un `schemaVersion` : **1 → 2** (dossiers, ADR-029) ajoute `folders: []`, les partitions existantes restent à la racine ; le fichier est réécrit à la prochaine modification. Un index plus récent que l'application est refusé. À la lecture, les références cassées sont réparées (dossier parent ou dossier d'une partition inexistant → racine ; un cycle, impossible par l'application, est coupé).
-- **Dossiers** (`LibraryRepository`, fonctions pures dans `src/core/model/folders.ts`) : `createFolder`, `renameFolder`, `deleteFolder` (partitions et sous-dossiers remontent au parent, aucune partition supprimée), `moveScores` (une ou plusieurs), `moveFolder` (refuse le dossier lui-même ou l'un de ses sous-dossiers : `FolderCycleError`). Toutes passent par la même file d'écritures atomiques que les partitions. Le réimport (`IMPORTER_VERSION`) garde le dossier ; supprimer une partition ne touche pas aux dossiers.
+- **Dossiers** (`LibraryRepository`, fonctions pures dans `src/core/model/folders.ts`) : `createFolder` (nom, parent, couleur facultative), `renameFolder`, `setFolderColor` (une couleur inconnue = par défaut ; stockée par nom, les nuances par thème sont dans `src/screens/library/folderColors.ts`, sans changement de schéma), `deleteFolder` (partitions et sous-dossiers remontent au parent, aucune partition supprimée), `moveScores` (une ou plusieurs), `moveFolder` (refuse le dossier lui-même ou l'un de ses sous-dossiers : `FolderCycleError`). Toutes passent par la même file d'écritures atomiques que les partitions. Le réimport (`IMPORTER_VERSION`) garde le dossier ; supprimer une partition ne touche pas aux dossiers.
 - Passage à SQLite derrière les mêmes interfaces si le volume l'exige.
 
 ## 4. Pipeline d'import (`src/core/import/importScore.ts`)

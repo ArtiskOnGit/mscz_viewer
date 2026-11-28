@@ -7,7 +7,7 @@
 ## Ce que fait l'application
 
 - 📂 **Importer** des fichiers `.mscz` / `.mscx` (**MuseScore 2.x, 3.x et 4.x** ; testés : 2.1, 3.6, 4.5, 4.6) et `.mxl` / `.musicxml` / `.xml`, depuis le sélecteur de fichiers (multi-sélection), « Ouvrir avec… » ou « Partager vers » (mail, messagerie, Drive) sur Android. Doublons détectés, recherche, tri, renommage, informations.
-- 🗂️ **Ranger dans des dossiers** (imbricables) : créer, renommer, déplacer, supprimer (les partitions remontent au dossier parent), import dans le dossier affiché, « Déplacer vers… » une ou plusieurs partitions (appui long pour sélectionner), recherche dans toute la bibliothèque avec le chemin de chaque résultat.
+- 🗂️ **Ranger dans des dossiers** (imbricables, **de la couleur de son choix**) : créer, renommer, changer la couleur, déplacer, supprimer (les partitions remontent au dossier parent), import dans le dossier affiché, « Déplacer vers… » une ou plusieurs partitions (appui long pour sélectionner), recherche dans toute la bibliothèque avec le chemin de chaque résultat.
 - 🎼 **Afficher** la partition (lecture seule), toujours **remise en page pour l'écran** du téléphone ou de la tablette.
 - 🎷 **Choisir les instruments** à afficher (un seul, plusieurs, ou le conducteur complet), avec silences multi-mesures regroupés et profil **« My instrument »** qui présélectionne sa partie.
 - 📄 **Deux modes d'affichage** : **Pages** (balayage, zones de tap, boutons, clavier/pédalier, option **demi-page**) ou **Continu** (un seul rouleau vertical).
@@ -169,7 +169,7 @@ Tests de bout en bout (Chromium headless de Playwright, émulation Pixel 7 ; par
 ```bash
 node e2e/smoke.mjs "$PWD"                    # les 3 écrans s'affichent sans erreur
 node e2e/library.mjs "$PWD" /tmp/shots       # import du corpus, doublons, persistance
-node e2e/folders.mjs "$PWD" /tmp/shots [fr]  # dossiers : créer, renommer, importer dedans, déplacer, sélection multiple, imbrication, retour, recherche, suppression, rechargement
+node e2e/folders.mjs "$PWD" /tmp/shots [fr]  # dossiers : créer (avec une couleur), renommer, changer la couleur, importer dedans, déplacer, sélection multiple, imbrication, retour, recherche, suppression, rechargement
 node e2e/viewer.mjs "$PWD" /tmp/shots        # pages, tap, parties, zoom, rechargement
 node e2e/continuous.mjs "$PWD" /tmp/shots    # mode Continu : rouleau, pédalier, zoom, aller à, défilement auto
 node e2e/navigation.mjs "$PWD" /tmp/shots    # aller à, verrouillage, touches du pédalier, demi-page, métronome seul

@@ -59,7 +59,7 @@ L'application a **trois écrans** principaux. La Bibliothèque a deux onglets, *
 
 **Contenu**
 - ✅ Liste des partitions importées. Chaque ligne montre : **miniature** (page 1), **titre**, compositeur, nombre d'instruments, durée. ✏️ Pas de vue en grille ni de date de dernière ouverture affichée (le tri « Recently opened » en tient lieu).
-- ✅ **Bouton flottant « + »** qui s'ouvre sur **deux boutons** (cibles de 48 px, nommés pour les lecteurs d'écran) : **Importer** (icône de document : sélecteur de fichiers du système, avec **sélection multiple**) et **Nouveau dossier** (icône de dossier : demande un nom, crée le dossier dans le dossier affiché).
+- ✅ **Bouton flottant « + »** qui s'ouvre sur **deux boutons** (cibles de 48 px, nommés pour les lecteurs d'écran) : **Importer** (icône de document : sélecteur de fichiers du système, avec **sélection multiple**) et **Nouveau dossier** (icône de dossier : petite fenêtre avec le nom et la **couleur** — pastilles, « Par défaut » présélectionnée —, crée le dossier dans le dossier affiché).
 - ✅ **Dossiers** (ADR-029, 2026-11-28) : pour ranger les partitions, **imbricables**. L'écran montre le **dossier courant** : à la racine, le titre « Library » et les onglets ; dans un dossier, son nom en titre, une **flèche de retour** et le **chemin** (« Library › Concerts › 2026 »). Les **sous-dossiers d'abord** (icône, nom, nombre d'éléments), triés par nom, **puis les partitions**. Chaque dossier est une page (`/library/folder/<id>`) : la flèche de l'en-tête et le **bouton retour d'Android** remontent d'un niveau ; un lien direct vers un dossier (rechargement de la PWA) remonte aussi vers son parent. Dossier supprimé entre-temps : message « Ce dossier n'existe plus ».
 - ✅ **Recherche** par titre ou compositeur, dans **toute la bibliothèque** (pas seulement le dossier affiché) : chaque résultat montre son **chemin** (« Dans Library › Concerts »). Les dossiers dont le nom correspond sont listés aussi.
 - ✅ **Tri** : dernière ouverture (par défaut), titre, compositeur, date d'import — **à l'intérieur du dossier** ; les dossiers sont toujours triés par nom.
@@ -67,6 +67,7 @@ L'application a **trois écrans** principaux. La Bibliothèque a deux onglets, *
 **Actions sur un dossier** (bouton ⋮ « plus d'actions » ou glissement de la ligne, comme pour une partition)
 - ✅ Ouvrir (tap).
 - ✅ Renommer (un nom vide garde l'ancien).
+- ✅ **Couleur…** (complément d'ADR-029) : 10 pastilles nommées (par défaut, bleu, vert, jaune, orange, rouge, rose, violet, marron, gris), la couleur courante cochée ; un appui l'applique. L'icône du dossier (pleine) prend cette couleur dans la liste et dans « Déplacer vers… », avec une nuance adaptée au thème clair ou sombre.
 - ✅ **Déplacer vers…** un autre dossier ou la racine. Le dossier lui-même et ses sous-dossiers sont grisés dans le choix (pas de cycle).
 - ✅ Supprimer (avec confirmation) : **aucune partition n'est supprimée**, ses partitions et sous-dossiers remontent dans le dossier parent (ou la racine).
 
