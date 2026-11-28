@@ -7,6 +7,7 @@
 ## Ce que fait l'application
 
 - 📂 **Importer** des fichiers `.mscz` / `.mscx` (**MuseScore 2.x, 3.x et 4.x** ; testés : 2.1, 3.6, 4.5, 4.6) et `.mxl` / `.musicxml` / `.xml`, depuis le sélecteur de fichiers (multi-sélection), « Ouvrir avec… » ou « Partager vers » (mail, messagerie, Drive) sur Android. Doublons détectés, recherche, tri, renommage, informations.
+- 🗂️ **Ranger dans des dossiers** (imbricables) : créer, renommer, déplacer, supprimer (les partitions remontent au dossier parent), import dans le dossier affiché, « Déplacer vers… » une ou plusieurs partitions (appui long pour sélectionner), recherche dans toute la bibliothèque avec le chemin de chaque résultat.
 - 🎼 **Afficher** la partition (lecture seule), toujours **remise en page pour l'écran** du téléphone ou de la tablette.
 - 🎷 **Choisir les instruments** à afficher (un seul, plusieurs, ou le conducteur complet), avec silences multi-mesures regroupés et profil **« My instrument »** qui présélectionne sa partie.
 - 📄 **Deux modes d'affichage** : **Pages** (balayage, zones de tap, boutons, clavier/pédalier, option **demi-page**) ou **Continu** (un seul rouleau vertical).
@@ -23,7 +24,7 @@
 
 ## Écrans
 
-1. **Bibliothèque** : onglets **Scores** (liste, recherche, tri, bouton **Import**) et **Setlists**.
+1. **Bibliothèque** : onglets **Scores** (dossiers et partitions du dossier courant, recherche, tri, bouton **+** : Importer / Nouveau dossier) et **Setlists**.
 2. **Visualisation** : la partition en plein écran, avec instruments, transposition, zoom, mode Pages/Continu, verrouillage, défilement automatique, métronome et « aller à ».
 3. **Paramètres** : profil « My instrument », affichage, navigation, pédalier, défilement automatique et métronome, système, à propos et licences.
 
@@ -168,6 +169,7 @@ Tests de bout en bout (Chromium headless de Playwright, émulation Pixel 7 ; par
 ```bash
 node e2e/smoke.mjs "$PWD"                    # les 3 écrans s'affichent sans erreur
 node e2e/library.mjs "$PWD" /tmp/shots       # import du corpus, doublons, persistance
+node e2e/folders.mjs "$PWD" /tmp/shots [fr]  # dossiers : créer, renommer, importer dedans, déplacer, sélection multiple, imbrication, retour, recherche, suppression, rechargement
 node e2e/viewer.mjs "$PWD" /tmp/shots        # pages, tap, parties, zoom, rechargement
 node e2e/continuous.mjs "$PWD" /tmp/shots    # mode Continu : rouleau, pédalier, zoom, aller à, défilement auto
 node e2e/navigation.mjs "$PWD" /tmp/shots    # aller à, verrouillage, touches du pédalier, demi-page, métronome seul
@@ -195,7 +197,7 @@ node e2e/pwa.mjs "$PWD" /tmp/shots          # application web : build, manifeste
 | Dossier | Contenu |
 |---|---|
 | `src/app/` | Coquille de l'application, routes, thème, licences tierces |
-| `src/screens/library/` | Bibliothèque (liste, import, informations) |
+| `src/screens/library/` | Bibliothèque (dossiers, liste, import, déplacement, informations) |
 | `src/screens/viewer/` | Visualisation : pages, mode Continu (`ContinuousView`), gestes, défilement auto, son et mixeur (`useScoreAudio`, `MixerModal`), modales (instruments, transposition, aller à, tempo) |
 | `src/screens/setlists/` | Onglet et détail des setlists, mode « Play », pré-chargement du morceau suivant |
 | `src/screens/settings/` | Paramètres, capture des touches du pédalier |

@@ -59,12 +59,21 @@ L'application a **trois écrans** principaux. La Bibliothèque a deux onglets, *
 
 **Contenu**
 - ✅ Liste des partitions importées. Chaque ligne montre : **miniature** (page 1), **titre**, compositeur, nombre d'instruments, durée. ✏️ Pas de vue en grille ni de date de dernière ouverture affichée (le tri « Recently opened » en tient lieu).
-- ✅ **Bouton « Import »** (bouton flottant « + ») qui ouvre le sélecteur de fichiers du système, avec **sélection multiple**.
-- ✅ **Recherche** par titre ou compositeur.
-- ✅ **Tri** : dernière ouverture (par défaut), titre, compositeur, date d'import.
+- ✅ **Bouton flottant « + »** qui s'ouvre sur **deux boutons** (cibles de 48 px, nommés pour les lecteurs d'écran) : **Importer** (icône de document : sélecteur de fichiers du système, avec **sélection multiple**) et **Nouveau dossier** (icône de dossier : demande un nom, crée le dossier dans le dossier affiché).
+- ✅ **Dossiers** (ADR-029, 2026-11-28) : pour ranger les partitions, **imbricables**. L'écran montre le **dossier courant** : à la racine, le titre « Library » et les onglets ; dans un dossier, son nom en titre, une **flèche de retour** et le **chemin** (« Library › Concerts › 2026 »). Les **sous-dossiers d'abord** (icône, nom, nombre d'éléments), triés par nom, **puis les partitions**. Chaque dossier est une page (`/library/folder/<id>`) : la flèche de l'en-tête et le **bouton retour d'Android** remontent d'un niveau ; un lien direct vers un dossier (rechargement de la PWA) remonte aussi vers son parent. Dossier supprimé entre-temps : message « Ce dossier n'existe plus ».
+- ✅ **Recherche** par titre ou compositeur, dans **toute la bibliothèque** (pas seulement le dossier affiché) : chaque résultat montre son **chemin** (« Dans Library › Concerts »). Les dossiers dont le nom correspond sont listés aussi.
+- ✅ **Tri** : dernière ouverture (par défaut), titre, compositeur, date d'import — **à l'intérieur du dossier** ; les dossiers sont toujours triés par nom.
 
-**Actions sur une partition** (glissement de la ligne)
+**Actions sur un dossier** (bouton ⋮ « plus d'actions » ou glissement de la ligne, comme pour une partition)
 - ✅ Ouvrir (tap).
+- ✅ Renommer (un nom vide garde l'ancien).
+- ✅ **Déplacer vers…** un autre dossier ou la racine. Le dossier lui-même et ses sous-dossiers sont grisés dans le choix (pas de cycle).
+- ✅ Supprimer (avec confirmation) : **aucune partition n'est supprimée**, ses partitions et sous-dossiers remontent dans le dossier parent (ou la racine).
+
+**Actions sur une partition** (glissement de la ligne ou bouton ⋮)
+- ✅ Ouvrir (tap).
+- ✅ **Déplacer vers…** : fenêtre de choix du dossier (arborescence, entrée « Library (racine) », dossier actuel grisé, **« Nouveau dossier »** qui crée un dossier dans le dossier affiché et y déplace aussitôt).
+- ✅ **Sélection multiple** : **appui long** sur une partition (ou « Sélectionner » dans le menu ⋮, pour le lecteur d'écran et le clavier) ; un tap ajoute ou retire une partition ; barre du bas « n sélectionnées · Terminé · Déplacer ». Le bouton retour d'Android quitte d'abord la sélection.
 - ✅ Renommer (titre affiché uniquement, le fichier n'est pas modifié ; vide = titre d'origine).
 - ✅ Informations : métadonnées, version de MuseScore d'origine, instruments (avec les parties masquées), tempo initial, nombre de mesures, durée, marques de répétition, dates.
 - ✅ Réinitialiser les réglages d'affichage de cette partition (depuis les informations).
@@ -73,7 +82,8 @@ L'application a **trois écrans** principaux. La Bibliothèque a deux onglets, *
 - ⬜ *(phase 4)* Étiquettes, partager le fichier d'origine.
 
 **Import**
-- ✅ Depuis le bouton « Import » (sélecteur de fichiers : stockage local, Google Drive…).
+- ✅ Depuis le bouton « Import » (sélecteur de fichiers : stockage local, Google Drive…), **dans le dossier affiché**.
+- ✅ **Destination des autres imports** (« Ouvrir avec… », « Partager vers… », fichiers rendus par Android après le redémarrage de l'application pendant le sélecteur) : le dossier affiché par la bibliothèque **si une page de la bibliothèque est à l'écran**, sinon la **racine** (par exemple depuis la visualisation ou les paramètres, ou au démarrage à froid). Un doublon reste dans son dossier.
 - ✅ **« Ouvrir avec… »** (Android, intent `VIEW`) : la partition est importée puis ouverte. Validé sur téléphone le 2026-11-26.
 - ✅ **« Partager vers… »** (Android, intents `SEND` / `SEND_MULTIPLE`, depuis la messagerie, le mail, Drive…) : un fichier partagé est importé puis ouvert ; plusieurs fichiers sont importés, avec le bilan habituel (importés, doublons, erreurs). Mêmes types de fichiers que « Ouvrir avec… » (ADR-024). *(À essayer sur téléphone.)*
 - ✅ Progression (« Importing x (2/5)… ») et bilan (importées, déjà présentes, en échec). Un fichier en échec affiche un message clair avec un conseil (exporter en MusicXML depuis MuseScore).

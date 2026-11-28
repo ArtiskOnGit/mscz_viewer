@@ -218,6 +218,17 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - **Préréglage brass band « Si♭ clé de sol »** (fenêtre Transposition) : +2 demi-tons +1 octave (neuvième majeure) et passage en clé de sol des parties affichées en clé de fa, ut 4e ou sol 8vb. La transposition reste globale (comme le reste de l'application) : le préréglage vise une partie affichée seule. **Non retenu** : basses en Mi♭ / Si♭ (tuba de brass band, +21 / +26) : à ajouter si demandé.
 - **Stockage** : `clefOverrides?: Record<musicXmlId, ClefChoice>` dans `ScoreViewState` (absent = clés de la partition, pas de migration) et dans la surcharge d'entrée de setlist (une table vide y signifie « clés de la partition » quand la partition a ses propres choix).
 
+### ADR-029 — Dossiers dans la bibliothèque — *Acceptée (2026-11-28)*
+- **Demande du porteur** : ranger les partitions dans des dossiers.
+- **Modèle** : `Folder { id, name, parentId?, createdAt }` (dossiers **imbricables**) dans l'index `library.json` (et non un fichier à part : une seule écriture atomique pour « supprimer un dossier et remonter son contenu ») ; `Score.folderId?` (absent = racine). `schemaVersion` 1 → 2, migration sans perte (partitions à la racine). Une partition est dans **un seul** dossier (pas d'étiquettes multiples : ce sera le rôle des tags, phase 4).
+- **Suppression** d'un dossier : jamais de partition supprimée ; son contenu (partitions et sous-dossiers) remonte au parent. **Déplacement** d'un dossier : refusé dans lui-même ou un sous-dossier (contrôle dans le dépôt + entrées grisées dans le choix).
+- **Navigation** : une route par dossier, `/library/folder/:folderId`, rendue par le même `LibraryScreen` ; chaque niveau est une page de la pile Ionic, donc la flèche de l'en-tête et le **bouton retour d'Android** remontent d'un niveau sans code spécifique (le `defaultHref` de la flèche pointe vers le dossier parent pour un lien direct). **Non retenu** : un paramètre `?folder=` sur `/library` (une seule page Ionic pour tous les niveaux : retour matériel et animations à gérer à la main).
+- **Bouton « + »** : `IonFab` + `IonFabList` vers le haut (Importer, Nouveau dossier), boutons agrandis à 48 px. **Non retenu** : une feuille d'actions (une étape de lecture de plus, les icônes demandées disparaissent).
+- **Imports sans bouton** (« Ouvrir avec… », « Partager vers… », sélection rendue après un redémarrage d'Android) : gérés **une seule fois** pour toute l'application (`ExternalImports`, plus dans l'écran — plusieurs pages de bibliothèque peuvent être empilées), vers le dossier dont l'URL est affichée (`/library/folder/<id>`), sinon la racine. Les fenêtres de progression d'import sont, de même, uniques (`LibraryProgress`).
+- **Sélection multiple** : appui long (0,5 s, annulé si le doigt bouge) ou « Sélectionner » dans le menu ⋮ ; seule action groupée : **Déplacer**. Le retour Android quitte la sélection (priorité 150 sur `ionBackButton`).
+- **Recherche** : toute la bibliothèque, chemin affiché sous chaque résultat. Le tri s'applique dans le dossier ; les dossiers sont triés par nom.
+- **Tests** : `libraryRepository.test.ts` (migration, réparation, création, renommage, déplacements, cycles, suppression), `importScore.test.ts` (import dans un dossier), e2e `folders.mjs` (en et fr).
+
 ## Questions encore ouvertes
 
 3. **Téléphone ou tablette en priorité** pour les tests et l'ergonomie Android ? Par défaut, les deux sont prévus, avec le téléphone en priorité.

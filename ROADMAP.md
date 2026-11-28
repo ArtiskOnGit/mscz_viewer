@@ -57,6 +57,7 @@ Légende : ⬜ à faire · 🟨 en cours ou partiel · ✅ fait · ⏭️ report
 - ✅ Liste des partitions avec miniature, titre et compositeur. Recherche et tri.
 - ✅ Supprimer, renommer, informations (avec remise à zéro des réglages d'affichage).
 - ✅ Détection des doublons. Messages d'erreur d'import compréhensibles.
+- ✅ **Dossiers** (2026-11-28, ADR-029, demande du porteur) : dossiers imbricables (créer depuis le bouton « + » qui s'ouvre sur Importer / Nouveau dossier, renommer, déplacer, supprimer sans perdre de partition : le contenu remonte au parent), navigation par niveau (flèche et bouton retour d'Android, chemin affiché), import dans le dossier affiché, « Déplacer vers… » (arborescence, création de dossier) et **sélection multiple** par appui long, recherche dans toute la bibliothèque avec le chemin de chaque résultat ; `library.json` passe au schéma 2 (migration). Tests unitaires + e2e `folders.mjs` (en, fr). ⬜ À essayer sur téléphone : appui long, retour matériel, « Ouvrir avec… » depuis un dossier.
 
 **Visualisation**
 - ✅ Worker de rendu Verovio (mise en page adaptée à l'écran), rendu paresseux et pré-rendu des pages voisines.
