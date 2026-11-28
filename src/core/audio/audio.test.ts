@@ -49,8 +49,7 @@ describe('parseMidi', () => {
     const notes = midi.events.filter((e) => e.type !== 0xc0).map((e) => [e.type.toString(16), e.channel, e.a, Math.round(e.ms)]);
     expect(notes).toEqual([
       ['90', 0, 60, 0],
-      ['80', 0, 60, 500], // running status 0x90 with velocity 0
-      ['80', 0, 62, 500],
+      ['80', 0, 60, 500], // running status 0x90 with velocity 0 (the note off of 62 without a note on is dropped)
       ['90', 0, 64, 1000], // 960 ticks at 120 BPM
       ['90', 25, 38, 1000],
       ['80', 0, 64, 2000], // then 480 ticks at 60 BPM = 1 s

@@ -64,6 +64,20 @@ export function chaseMessages(events: readonly MidiEvent[], ms: number, channels
   return out;
 }
 
+/**
+ * Messages that leave every channel silent and neutral after a stop (pause, seek, end): sustain released, all notes
+ * off, all sound off, "reset all controllers" (spessasynth follows RP-015: pitch bend centred, sustain, modulation,
+ * expression… but not volume, pan or program, nor the drum flag of the metronome channel), and the pitch bend
+ * centred explicitly (a glissando cut halfway must not detune the next start). Playback restores each channel's
+ * state at the start position afterwards (chaseMessages).
+ */
+export function silenceMessages(channels: readonly number[]): { channel: number; message: number[] }[] {
+  return channels.flatMap((channel) => {
+    const c = channel & 0x0f;
+    return [[0xb0 | c, 64, 0], [0xb0 | c, 123, 0], [0xb0 | c, 120, 0], [0xb0 | c, 121, 0], [0xe0 | c, 0, 64]].map((message) => ({ channel, message }));
+  });
+}
+
 /** Channels used by a list of events, sorted. */
 export function usedChannels(events: readonly MidiEvent[]): number[] {
   return [...new Set(events.map((e) => e.channel))].sort((a, b) => a - b);

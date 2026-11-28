@@ -14,24 +14,19 @@ export function staffCounts(doc: Document): number[] {
 }
 
 /**
- * Channels of each part (index = part index).
+ * Part of each MIDI track (index = track index; −1 for a track without channel events, e.g. the conductor track).
  * Tracks are given to parts in order, `staffCounts[i]` tracks for part i. When the track count does not match the
  * staves (unknown staff count, or an engine that writes one track per part), a track goes to the part of the same
  * name, else to the part of the previous track if it has the same name (another staff), else to the next part.
  */
-export function midiChannelsByPart(midi: MidiFile, staffCounts: readonly number[], partNames: readonly string[]): number[][] {
-  const byPart: number[][] = staffCounts.map(() => []);
-  const tracks = midi.tracks.filter((t) => t.channels.length > 0);
-  const add = (part: number, channels: readonly number[]) => {
-    const list = byPart[part];
-    if (!list) return;
-    for (const c of channels) if (!list.includes(c)) list.push(c);
-  };
+export function trackParts(midi: MidiFile, staffCounts: readonly number[], partNames: readonly string[]): number[] {
+  const owners = midi.tracks.map(() => -1);
+  const tracks = midi.tracks.map((t, index) => ({ ...t, index })).filter((t) => t.channels.length > 0);
   const totalStaves = staffCounts.reduce((a, b) => a + b, 0);
   if (tracks.length === totalStaves) {
     let t = 0;
     staffCounts.forEach((n, part) => {
-      for (let k = 0; k < n; k++) add(part, tracks[t++]!.channels);
+      for (let k = 0; k < n; k++) owners[tracks[t++]!.index] = part;
     });
   } else {
     let last = -1; // part of the previous track: the next track belongs to it (same name) or to a later part
@@ -40,11 +35,27 @@ export function midiChannelsByPart(midi: MidiFile, staffCounts: readonly number[
       const named = track.name ? partNames.findIndex((n, i) => i >= Math.max(0, last) && n === track.name) : -1;
       const sameAsPrevious = last >= 0 && !!track.name && track.name === lastName; // another staff of that part
       const part = named >= 0 ? named : sameAsPrevious ? last : Math.min(last + 1, partNames.length - 1);
-      add(part, track.channels);
+      owners[track.index] = part;
       last = part;
       lastName = track.name;
     }
   }
+  return owners;
+}
+
+/** Channels of each part (index = part index), from the part of each track (trackParts). */
+export function channelsByPart(midi: MidiFile, owners: readonly number[], partCount: number): number[][] {
+  const byPart: number[][] = Array.from({ length: partCount }, () => []);
+  midi.tracks.forEach((track, t) => {
+    const list = byPart[owners[t] ?? -1];
+    if (!list) return;
+    for (const c of track.channels) if (!list.includes(c)) list.push(c);
+  });
   for (const list of byPart) list.sort((a, b) => a - b);
   return byPart;
+}
+
+/** Channels of each part (index = part index): trackParts + channelsByPart. */
+export function midiChannelsByPart(midi: MidiFile, staffCounts: readonly number[], partNames: readonly string[]): number[][] {
+  return channelsByPart(midi, trackParts(midi, staffCounts, partNames), staffCounts.length);
 }

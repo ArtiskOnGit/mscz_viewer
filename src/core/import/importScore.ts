@@ -7,15 +7,18 @@ import { detectFormat, extensionOf, extractMsczThumbnail, sha256Hex, type Import
 import type { EngineResult, ScoreEngine } from './scoreEngine';
 import { unhideParts } from './unhideParts';
 import { parseMidi } from '../audio/midiFile';
-import { midiChannelsByPart, staffCounts } from '../audio/partMapping';
+import { channelsByPart, staffCounts, trackParts } from '../audio/partMapping';
+import { separatePartChannels } from '../audio/midiChannels';
 
 /**
  * Bump when the pipeline output changes: older scores are re-imported from their original file.
  * 2: hidden MuseScore parts/staves are made visible before conversion (their beams were missing).
  * 3: MIDI file (repeats unfolded) + MIDI channels of each part, for audio playback (ADR-026).
  * 4: key signatures of MuseScore ≥ 4.4 files (<concertKey>/<actualKey>) converted for the 4.0 engine (they were lost).
+ * 5: MIDI channels shared by several parts (past 16 channels) separated, each part has its own (midiChannels.ts);
+ *    MIDI notes normalized at parse time (glissandi).
  */
-export const IMPORTER_VERSION = 4;
+export const IMPORTER_VERSION = 5;
 
 export interface ImportInput {
   name: string;
@@ -132,7 +135,9 @@ async function convert(input: ImportInput, format: ImportFormat, deps: ImportDep
     };
   });
 
-  const midiChannels = readMidiChannels(result.midi, doc, parts);
+  const drums = scoreParts.map((_, i) => meta.parts?.[i]?.drums ?? hasUnpitchedNotes(doc, parts[i]!.musicXmlId));
+  const audio = readMidi(result.midi, doc, parts, drums);
+  const midiChannels = audio?.channels;
   if (midiChannels) parts.forEach((p, i) => (p.midiChannels = midiChannels[i] ?? []));
 
   const timeline = timelineFromWebMscore(result.positions, readTimeSignatures(doc), meta.duration ? meta.duration * 1000 : undefined);
@@ -148,18 +153,31 @@ async function convert(input: ImportInput, format: ImportFormat, deps: ImportDep
     rehearsalMarks: readRehearsalMarks(doc),
     hasMidi: !!midiChannels,
   };
-  return { fields, title: meaningful(meta.title), musicXml: result.musicXml, timeline, midi: midiChannels ? result.midi : undefined };
+  return { fields, title: meaningful(meta.title), musicXml: result.musicXml, timeline, midi: audio?.bytes };
 }
 
-/** Channels of each part in the engine's MIDI file; undefined without a readable MIDI file (no audio). */
-function readMidiChannels(midi: Uint8Array | undefined, doc: Document, parts: Part[]): number[][] | undefined {
+/**
+ * MIDI file to store and channels of each part; undefined without a readable MIDI file (no audio). Channels shared
+ * by several parts in the engine's file (past 16) are separated first (midiChannels.ts).
+ */
+function readMidi(midi: Uint8Array | undefined, doc: Document, parts: Part[], drums: readonly (boolean | undefined)[]): { bytes: Uint8Array; channels: number[][] } | undefined {
   if (!midi?.length) return undefined;
   try {
-    return midiChannelsByPart(parseMidi(midi), staffCounts(doc), parts.map((p) => p.name));
+    const file = parseMidi(midi);
+    const owners = trackParts(file, staffCounts(doc), parts.map((p) => p.name));
+    const separated = separatePartChannels(midi, owners, drums);
+    const bytes = separated ?? midi;
+    return { bytes, channels: channelsByPart(separated ? parseMidi(separated) : file, owners, parts.length) };
   } catch (e) {
     console.warn('unreadable MIDI file: no audio playback', e);
     return undefined;
   }
+}
+
+/** The MusicXML part has unpitched notes (drum kit), when the engine does not say. */
+function hasUnpitchedNotes(doc: Document, partId: string): boolean | undefined {
+  const part = Array.from(doc.getElementsByTagName('part')).find((p) => p.getAttribute('id') === partId);
+  return part ? part.getElementsByTagName('unpitched').length > 0 : undefined;
 }
 
 /** "onlyfuhnbrass_-_medley_Russ.mscz" → "onlyfuhnbrass - medley Russ" */

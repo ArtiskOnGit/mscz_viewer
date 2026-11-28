@@ -5,6 +5,7 @@ import type { ScoreEngine } from './scoreEngine';
 import { LibraryRepository } from '../storage/libraryRepository';
 import { MemoryFileStore } from '../storage/fileStore';
 import { xmlEnv } from '../../test/xmlEnv';
+import { parseMidi } from '../audio/midiFile';
 
 const MUSICXML = `<?xml version="1.0"?><score-partwise version="4.0">
   <part-list><score-part id="P1"><part-name>Trumpet in B♭</part-name></score-part><score-part id="P2"><part-name>Tuba</part-name></score-part></part-list>
@@ -111,6 +112,18 @@ describe('MIDI file (audio playback)', () => {
     expect(score.parts.map((p) => p.midiChannels)).toEqual([[0, 1], [2]]);
     expect(fs.files.has('scores/id-1/score.mid')).toBe(true);
     expect(await repo.readMidi('id-1')).toEqual(midi);
+  });
+
+  it('separates channels shared by two parts (past 16 channels) before storing the MIDI file', async () => {
+    const shared = new Uint8Array([0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 2, 1, 0xe0, ...track('Trumpet', 0), ...track('Tuba', 0)]);
+    const base = fakeEngine();
+    const { repo, deps } = setup({ convert: async (f, b) => ({ ...(await base.convert(f, b)), midi: shared }) });
+    await importScore({ name: 'a.mscz', bytes: msczBytes() }, deps);
+    const score = (await repo.list())[0]!;
+    expect(score.parts.map((p) => p.midiChannels)).toEqual([[0], [1]]);
+    const stored = await repo.readMidi('id-1');
+    expect(stored).not.toEqual(shared);
+    expect(parseMidi(stored!).tracks.map((t) => t.channels)).toEqual([[0], [1]]);
   });
 
   it('imports without audio when the engine gives no (readable) MIDI file', async () => {

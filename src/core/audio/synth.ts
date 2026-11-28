@@ -6,6 +6,8 @@
 // bank such as GeneralUser GS or MuseScore_General.sf3) and scripts/fetch-soundfont.mjs; nothing else depends on it.
 // Its licence must allow redistribution in a GPL app, and goes into src/app/thirdPartyLicenses.ts.
 
+import { silenceMessages } from './midiSchedule';
+
 export const SOUND_BANK = {
   url: 'soundfonts/FluidR3Mono_GM.sf3',
   id: 'fluidr3mono',
@@ -134,11 +136,7 @@ async function createSynth(ctx: AudioContext): Promise<SynthHandle> {
       synth.stopAll(true);
       // Messages already queued in the worklet still play up to `queuedUntil`: cut them right after (stays closed).
       const kill = Math.max(now + FADE_S, queuedUntil + 0.002);
-      for (const c of channels) {
-        const status = 0xb0 | (c & 0x0f);
-        handle.send([status, 123, 0], c, kill); // all notes off
-        handle.send([status, 120, 0], c, kill); // all sound off
-      }
+      for (const message of silenceMessages(channels)) handle.send(message.message, message.channel, kill);
       return kill + 0.01;
     },
     open(time) {

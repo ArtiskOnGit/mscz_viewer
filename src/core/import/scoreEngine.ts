@@ -12,7 +12,8 @@ export interface EngineMetadata {
   duration?: number;
   /** BPM of the first tempo mark */
   tempo?: number;
-  parts?: { name: string; instrumentId?: string; program?: number }[];
+  /** Parts in score order; `drums`: the part has a drum staff (its MIDI channel 10 is a drum kit). */
+  parts?: { name: string; instrumentId?: string; program?: number; drums?: boolean }[];
 }
 
 export interface EngineResult {

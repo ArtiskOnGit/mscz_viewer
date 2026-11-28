@@ -7,7 +7,7 @@ import type { ImportFormat } from './formats';
 import type { EngineResult, ScoreEngine } from './scoreEngine';
 
 interface WebMscoreInstance {
-  metadata(): Promise<Record<string, unknown> & { parts?: { name: string; instrumentId?: string; program?: number }[] }>;
+  metadata(): Promise<Record<string, unknown> & { parts?: { name: string; instrumentId?: string; program?: number; hasDrumStaff?: string | boolean }[] }>;
   saveXml(): Promise<string>;
   savePositions(ofSegments: boolean): Promise<string>;
   saveMidi(midiExpandRepeats?: boolean, exportRPNs?: boolean): Promise<Uint8Array>;
@@ -70,7 +70,7 @@ export const webMscoreEngine: ScoreEngine = {
           measures: num(meta.measures),
           duration: num(meta.duration),
           tempo: num(meta.tempo),
-          parts: meta.parts,
+          parts: meta.parts?.map(({ name, instrumentId, program, hasDrumStaff }) => ({ name, instrumentId, program, drums: hasDrumStaff === undefined ? undefined : String(hasDrumStaff) === 'true' })),
         },
       };
     } finally {
