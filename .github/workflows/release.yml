@@ -25,6 +25,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          # Keep Android/Gradle dependencies between runs (fewer downloads from Maven Central,
+          # which once failed a build with a network error).
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle*
+            android/gradle/wrapper/gradle-wrapper.properties
       - name: Restore the fixed signing key (required for releases)
         run: |
           if [ -z "$DEBUG_KEYSTORE_B64" ]; then echo "::error::secret ANDROID_DEBUG_KEYSTORE_B64 missing: refusing to publish an APK with a random signature"; exit 1; fi
