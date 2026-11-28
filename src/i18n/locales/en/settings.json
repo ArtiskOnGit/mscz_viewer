@@ -50,7 +50,7 @@
   "about": {
     "version": "Version {{version}}",
     "license": "Free software under the GNU GPL v3 or later.",
-    "source": "Source code",
+    "source": "Source code on GitHub",
     "credits": "Uses webmscore (MuseScore engine) and Verovio.",
     "licenses": "Open source licenses",
     "trademark": "MuseScore is a trademark of its owners. This app is not affiliated with MuseScore."

@@ -50,7 +50,7 @@
   "about": {
     "version": "Version {{version}}",
     "license": "Logiciel libre sous licence GNU GPL v3 ou ultérieure.",
-    "source": "Code source",
+    "source": "Code source sur GitHub",
     "credits": "Utilise webmscore (moteur de MuseScore) et Verovio.",
     "licenses": "Licences open source",
     "trademark": "MuseScore est une marque de ses détenteurs. Cette application n’est pas affiliée à MuseScore."

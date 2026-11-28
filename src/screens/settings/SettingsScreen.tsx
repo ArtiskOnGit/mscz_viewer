@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IonBackButton, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonNote,
-  IonPage, IonRange, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar,
-} from '@ionic/react';
+  IonPage, IonRange, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar, IonIcon } from '@ionic/react';
 import { routes } from '../../app/routes';
+import { logoGithub } from 'ionicons/icons';
 import { SOURCE_URL, THIRD_PARTY } from '../../app/thirdPartyLicenses';
 import { useSettings } from '../../state/settingsStore';
 import type { AppTheme, OrientationLock, ScoreTheme } from '../../core/settings';
@@ -253,7 +253,10 @@ export function SettingsScreen() {
           <IonListHeader>{t('sections.about')}</IonListHeader>
           <IonItem><IonLabel>{t('common:appName')}<IonNote style={{ display: 'block' }}>{t('about.version', { version: __APP_VERSION__ })}</IonNote></IonLabel></IonItem>
           <IonItem><IonLabel className="ion-text-wrap">{t('about.license')}</IonLabel></IonItem>
-          <IonItem href={SOURCE_URL} target="_blank" detail><IonLabel>{t('about.source')}</IonLabel></IonItem>
+          <IonItem href={SOURCE_URL} target="_blank" rel="noopener" detail data-testid="github-link">
+            <IonIcon slot="start" icon={logoGithub} aria-hidden="true" />
+            <IonLabel>{t('about.source')}<IonNote style={{ display: 'block' }}>{SOURCE_URL.replace(/^https:\/\//, '')}</IonNote></IonLabel>
+          </IonItem>
           <IonItem button detail onClick={() => setLicensesOpen(true)}><IonLabel>{t('about.licenses')}</IonLabel></IonItem>
           <IonItem><IonLabel className="ion-text-wrap"><IonNote>{t('about.credits')} {t('about.trademark')}</IonNote></IonLabel></IonItem>
         </IonList>

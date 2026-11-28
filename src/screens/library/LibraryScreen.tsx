@@ -5,7 +5,7 @@ import {
   IonBackButton, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonFabList, IonFooter, IonHeader, IonIcon, IonLabel, IonList,
   IonPage, IonSearchbar, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonText, IonTitle, IonToolbar, useIonAlert, useIonToast,
 } from '@ionic/react';
-import { add, documentAttachOutline, folderOutline, settingsOutline } from 'ionicons/icons';
+import { add, downloadOutline, folderOutline, settingsOutline } from 'ionicons/icons';
 import { routes } from '../../app/routes';
 import type { Folder, FolderId, Score, ScoreId } from '../../core/model/types';
 import { childFolders, folderPath, isInside, itemCount } from '../../core/model/folders';
@@ -288,7 +288,7 @@ export function LibraryScreen() {
             </IonFabButton>
             <IonFabList side="top">
               <IonFabButton aria-label={t('import.button')} title={t('import.button')} data-testid="fab-import" onClick={() => void pickScoreFiles().then(runImport)}>
-                <IonIcon icon={documentAttachOutline} aria-hidden="true" />
+                <IonIcon icon={downloadOutline} aria-hidden="true" />
               </IonFabButton>
               <IonFabButton aria-label={t('folders.new')} title={t('folders.new')} data-testid="fab-new-folder" onClick={askNewFolder}>
                 <IonIcon icon={folderOutline} aria-hidden="true" />
