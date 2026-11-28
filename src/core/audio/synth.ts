@@ -24,6 +24,8 @@ export interface SynthHandle {
   /** Linear gain of a MIDI channel (mixer). */
   setChannelGain(channel: number, gain: number): void;
   setMaster(gain: number): void;
+  /** Makes the channel a drum channel (bank 128), e.g. the metronome's. */
+  setDrums(channel: number): void;
   /** Makes sure channels up to `channel` exist (MIDI ports) and channel 10 of every port plays drums. */
   ensureChannels(maxChannel: number): Promise<void>;
   /**
@@ -87,6 +89,7 @@ async function createSynth(ctx: AudioContext): Promise<SynthHandle> {
     import('spessasynth_lib/dist/spessasynth_processor.min.js?url'),
     fetchBank(),
   ]);
+  await addClockSync(ctx);
   await ctx.audioWorklet.addModule(processorUrl);
   const synth = new WorkletSynthesizer(ctx, { decodedSampleBudget: DECODED_SAMPLE_BUDGET, eventsEnabled: false });
   await synth.isReady;
@@ -108,6 +111,9 @@ async function createSynth(ctx: AudioContext): Promise<SynthHandle> {
     },
     setChannelGain(channel, gain) {
       synth.midiChannels[channel]?.setSystemParameter('gain', gain);
+    },
+    setDrums(channel) {
+      synth.midiChannels[channel]?.setDrums(true);
     },
     setMaster(gain) {
       master.gain.setTargetAtTime(gain, ctx.currentTime, 0.015);
@@ -174,6 +180,47 @@ async function createSynth(ctx: AudioContext): Promise<SynthHandle> {
     },
   };
   return handle;
+}
+
+/**
+ * Keeps the synth's clock on the AudioContext clock (ADR-026, metronome sync fix of 2026-11-28).
+ *
+ * The synth plays a timed message when ITS clock reaches the message time; that clock starts at the context time
+ * when the processor is created and then only adds the samples it renders. Whenever the audio thread misses render
+ * quanta (the SoundFont parsed in the worklet thread at load, the samples decoded before playing, a busy phone),
+ * the context clock jumps ahead and the synth's does not: measured in headless Chromium, every note was heard
+ * ≈ 260 ms after its scheduled time once the SoundFont was loaded, while the Web Audio metronome clicks were on time
+ * — the drift the owner heard on his phone, larger there and growing with every glitch.
+ *
+ * Fix: a tiny worklet module, loaded before spessasynth's processor, wraps `registerProcessor` so that the processor
+ * class is extended with a `process()` that sets the synth's clock to the context time of the block (+ half a block:
+ * a message is then played at the block boundary nearest to its time, ±1.3 ms at 48 kHz, instead of up to one block
+ * late). It reads spessasynth_lib 4.4 internals (`processor.core.synthesizer.currentTime`) and does nothing if they
+ * change (e2e/metronome-sync.mjs measures the alignment, so a library update that breaks it is caught).
+ */
+const CLOCK_SYNC_MODULE = `
+const register = globalThis.registerProcessor;
+globalThis.registerProcessor = (name, Processor) => register(name, class extends Processor {
+  process(inputs, outputs, parameters) {
+    const synth = this.core && this.core.synthesizer;
+    if (synth && typeof synth.currentTime === 'number') synth.currentTime = currentTime + 64 / sampleRate;
+    return super.process(inputs, outputs, parameters);
+  }
+});`;
+
+const clockSynced = new WeakSet<AudioContext>();
+
+async function addClockSync(ctx: AudioContext): Promise<void> {
+  if (clockSynced.has(ctx)) return; // once per context (the processor module is only evaluated once)
+  clockSynced.add(ctx);
+  const url = URL.createObjectURL(new Blob([CLOCK_SYNC_MODULE], { type: 'text/javascript' }));
+  try {
+    await ctx.audioWorklet.addModule(url);
+  } catch (e) {
+    console.warn('synth clock sync unavailable', e); // sound still works, possibly late (ADR-026)
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 async function fetchBank(): Promise<ArrayBuffer> {
