@@ -87,6 +87,44 @@ describe('LibraryRepository folders', () => {
     expect(folderPath(await reloaded.listFolders(), b.id).map((f) => f.name)).toEqual(['Concerts', 'Season 2026']);
   });
 
+  it('creates a folder with a colour, changes it, back to the default, and persists it by name', async () => {
+    const { fs, repo } = setup();
+    const plain = await repo.createFolder('Plain');
+    const red = await repo.createFolder('Red', undefined, 'red');
+    expect(plain.color).toBeUndefined(); // default colour: no field
+    expect(red.color).toBe('red');
+    await repo.setFolderColor(plain.id, 'green');
+    await repo.setFolderColor(red.id, undefined);
+    const stored = index(fs).folders as { name: string; color?: string }[];
+    expect(stored.map((f) => [f.name, f.color])).toEqual([['Plain', 'green'], ['Red', undefined]]);
+    expect('color' in stored[1]!).toBe(false);
+    expect(index(fs).schemaVersion).toBe(LIBRARY_SCHEMA_VERSION); // optional field: no schema change
+    const reloaded = new LibraryRepository(fs);
+    expect((await reloaded.listFolders()).map((f) => f.color)).toEqual(['green', undefined]);
+  });
+
+  it('ignores an unknown colour (in a call or read from disk): the default colour', async () => {
+    const fs = new MemoryFileStore();
+    fs.files.set(
+      'library.json',
+      JSON.stringify({ schemaVersion: 2, folders: [{ id: 'x', name: 'X', createdAt: '', color: 'chartreuse' }, { id: 'y', name: 'Y', createdAt: '', color: 'blue' }], scores: [] }),
+    );
+    const { repo } = setup(fs);
+    expect((await repo.listFolders()).map((f) => f.color)).toEqual([undefined, 'blue']);
+    await repo.setFolderColor('y', 'magenta' as never);
+    expect((await repo.listFolders()).map((f) => f.color)).toEqual([undefined, undefined]);
+    expect((await repo.createFolder('Z', undefined, 'teal' as never)).color).toBeUndefined();
+  });
+
+  it('keeps the colour of a folder when it is renamed or moved', async () => {
+    const { repo } = setup();
+    const a = await repo.createFolder('A', undefined, 'purple');
+    const b = await repo.createFolder('B');
+    await repo.renameFolder(a.id, 'A2');
+    await repo.moveFolder(a.id, b.id);
+    expect((await repo.listFolders()).find((f) => f.id === a.id)).toMatchObject({ name: 'A2', parentId: b.id, color: 'purple' });
+  });
+
   it('moves scores into a folder and back to the root', async () => {
     const { fs, repo } = setup();
     await repo.add(score('a'), files);

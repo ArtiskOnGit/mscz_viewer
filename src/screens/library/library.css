@@ -25,7 +25,80 @@
 }
 .folder-thumb ion-icon {
   font-size: 40px;
-  color: var(--ion-color-primary);
+}
+/* Folder colour: the shade of the app theme (folderColors.ts sets both). */
+.folder-icon,
+.folder-swatch {
+  --folder-color: var(--folder-light, var(--ion-color-primary));
+}
+.ion-palette-dark .folder-icon,
+.ion-palette-dark .folder-swatch {
+  --folder-color: var(--folder-dark, var(--ion-color-primary));
+}
+.folder-icon {
+  color: var(--folder-color);
+}
+/* Small centred dialog ("New folder", "Color"): as high as its content. */
+ion-modal.folder-dialog {
+  --width: min(400px, calc(100% - 32px));
+  --height: auto;
+  --border-radius: 12px;
+}
+ion-modal.folder-dialog .ion-page {
+  position: relative;
+  contain: content;
+}
+.folder-dialog-body {
+  padding: 16px 16px 8px;
+  background: var(--ion-background-color, #fff);
+}
+.folder-dialog-label {
+  margin: 16px 0 8px;
+  font-size: 0.9em;
+  color: var(--ion-color-step-600, var(--ion-text-color-step-400, #666));
+}
+.folder-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 48px); /* two rows of five */
+  gap: 8px;
+  justify-content: space-between;
+}
+.folder-swatch {
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--folder-color);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.ion-palette-dark .folder-swatch {
+  color: #000;
+}
+.folder-swatch ion-icon {
+  font-size: 28px;
+}
+/* The current colour: a ring around the swatch (not only the check mark). */
+.folder-swatch[aria-pressed='true'] {
+  box-shadow: 0 0 0 3px var(--ion-background-color, #fff), 0 0 0 5px var(--ion-text-color, #000);
+}
+.folder-swatch:focus-visible {
+  outline: 2px solid var(--ion-text-color, #000);
+  outline-offset: 6px;
+}
+.folder-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.folder-dialog-buttons ion-button {
+  min-height: 48px;
 }
 .item-path {
   font-size: 0.8em;

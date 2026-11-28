@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonModal, IonNote, IonTitle, IonToolbar } from '@ionic/react';
-import { addOutline, folderOutline, libraryOutline } from 'ionicons/icons';
+import { addOutline, libraryOutline } from 'ionicons/icons';
 import type { Folder, FolderId } from '../../core/model/types';
 import { folderTree } from '../../core/model/folders';
+import { FolderIcon } from './FolderIcon';
 
 interface Props {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface Props {
   /** Folders that cannot receive the items (a moved folder and its sub-folders). */
   excluded?: ReadonlySet<FolderId>;
   onPick(folderId: FolderId | undefined): void;
-  /** "New folder…": asks a name, creates the folder and moves there. */
+  /** "New folder…": asks a name and a colour, creates the folder and moves there. */
   onCreate(): void;
   onDismiss(): void;
 }
@@ -56,7 +57,7 @@ export function FolderPickerModal({ isOpen, folders, current, excluded, onPick, 
               data-folder={folder.name}
               style={{ '--padding-start': `${16 + 24 * (depth + 1)}px` }}
             >
-              <IonIcon slot="start" icon={folderOutline} aria-hidden="true" />
+              <FolderIcon slot="start" color={folder.color} />
               <IonLabel>{folder.name}</IonLabel>
               {folder.id === current && note}
             </IonItem>

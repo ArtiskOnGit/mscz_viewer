@@ -3,12 +3,17 @@
 export type ScoreId = string;
 export type FolderId = string;
 
+/** Colour of a folder icon, by name (ADR-029): each app theme has its own shade. Absent = the default colour. */
+export type FolderColor = 'blue' | 'green' | 'yellow' | 'orange' | 'red' | 'pink' | 'purple' | 'brown' | 'grey';
+
 /** Folder of the library (ADR-029). Folders may be nested; no parentId = at the root of the library. */
 export interface Folder {
   id: FolderId;
   name: string;
   parentId?: FolderId;
   createdAt: string;
+  /** Absent = the default colour. */
+  color?: FolderColor;
 }
 
 export type SourceFormat = 'mscz' | 'mscx' | 'mxl' | 'musicxml';

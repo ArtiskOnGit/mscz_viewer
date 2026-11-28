@@ -16,6 +16,7 @@ import { useLibrary } from '../../state/libraryStore';
 import { ScoreItem } from './ScoreItem';
 import { FolderItem } from './FolderItem';
 import { FolderPickerModal } from './FolderPickerModal';
+import { FolderDialog, type FolderDialogRequest } from './FolderDialog';
 import { SetlistsTab } from '../setlists/SetlistsTab';
 import { useSetlists } from '../../state/setlistStore';
 import { ScoreInfoModal } from './ScoreInfoModal';
@@ -44,7 +45,7 @@ export function LibraryScreen() {
   const { folderId } = useParams<{ folderId?: string }>();
   const inFolder = folderId !== undefined;
   const {
-    scores, folders, loaded, importing, load, importFiles, rename, remove, markOpened, createFolder, renameFolder, deleteFolder, moveScores, moveFolder,
+    scores, folders, loaded, importing, load, importFiles, rename, remove, markOpened, createFolder, renameFolder, setFolderColor, deleteFolder, moveScores, moveFolder,
   } = useLibrary();
   const [tab, setTab] = useState<Tab>('scores');
   const [query, setQuery] = useState('');
@@ -118,7 +119,10 @@ export function LibraryScreen() {
       ],
     });
 
-  const askNewFolder = () => askName(t('folders.new'), '', t('folders.create'), (name) => void createFolder(name, folder?.id));
+  // "New folder" (name and colour) and "Color…" of a folder.
+  const [dialog, setDialog] = useState<FolderDialogRequest>();
+  const askNewFolder = () => setDialog({ kind: 'create', then: (name, color) => void createFolder(name, folder?.id, color) });
+  const askFolderColor = (f: Folder) => setDialog({ kind: 'color', name: f.name, color: f.color, then: (color) => void setFolderColor(f.id, color) });
 
   const askRename = (score: Score) =>
     void presentAlert({
@@ -188,7 +192,7 @@ export function LibraryScreen() {
   };
   // "New folder" in the picker: created in the folder shown here, then the items move into it.
   const createAndMove = () =>
-    askName(t('folders.new'), '', t('folders.create'), (name) => void createFolder(name, folder?.id).then((f) => moveTo(f.id)));
+    setDialog({ kind: 'create', then: (name, color) => void createFolder(name, folder?.id, color).then((f) => moveTo(f.id)) });
 
   const scoreItems = visibleScores.map((s) => (
     <ScoreItem
@@ -213,6 +217,7 @@ export function LibraryScreen() {
       path={searching ? pathText(f.parentId) : undefined}
       onOpen={() => navigate(routes.libraryFolder(f.id))}
       onRename={() => askRenameFolder(f)}
+      onColor={() => askFolderColor(f)}
       onMove={() => setMoving({ kind: 'folder', folder: f })}
       onDelete={() => askDeleteFolder(f)}
     />
@@ -306,6 +311,7 @@ export function LibraryScreen() {
           onCreate={createAndMove}
           onDismiss={() => setMoving(undefined)}
         />
+        <FolderDialog request={dialog} onDismiss={() => setDialog(undefined)} />
       </IonContent>
       {selected && (
         <IonFooter>

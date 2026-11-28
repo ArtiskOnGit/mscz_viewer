@@ -1,5 +1,18 @@
 // Pure helpers over the library folders (ADR-029). A folder or a score without parent / folder is at the root.
-import type { Folder, FolderId, Score } from './types';
+import type { Folder, FolderColor, FolderId, Score } from './types';
+
+/** The colours a folder icon can take, in the order of the colour picker (the default colour comes first, apart). */
+export const FOLDER_COLORS = ['blue', 'green', 'yellow', 'orange', 'red', 'pink', 'purple', 'brown', 'grey'] as const satisfies readonly FolderColor[];
+
+export function isFolderColor(value: unknown): value is FolderColor {
+  return (FOLDER_COLORS as readonly unknown[]).includes(value);
+}
+
+/** The folder with this colour (undefined = the default colour: the field is removed). */
+export function withColor(f: Folder, color: FolderColor | undefined): Folder {
+  const { color: _c, ...rest } = f;
+  return color ? { ...rest, color } : rest;
+}
 
 /** Ancestors of a folder, from the root down to the folder itself ([] for the root or an unknown id). */
 export function folderPath(folders: readonly Folder[], id: FolderId | undefined): Folder[] {
@@ -43,11 +56,14 @@ export function folderTree(folders: readonly Folder[], compare: (a: string, b: s
 
 /**
  * Repairs an index read from disk: a parent or a folder that does not exist means the root, and a cycle (impossible
- * through the app, but the file may have been edited) is broken by moving one of its folders to the root.
+ * through the app, but the file may have been edited) is broken by moving one of its folders to the root. An unknown
+ * colour means the default colour.
  */
 export function sanitizeFolders(folders: Folder[], scores: Score[]): { folders: Folder[]; scores: Score[] } {
   const ids = new Set(folders.map((f) => f.id));
-  let fixed = folders.map((f) => (f.parentId && (!ids.has(f.parentId) || f.parentId === f.id) ? withoutParent(f) : f));
+  let fixed = folders
+    .map((f) => (f.parentId && (!ids.has(f.parentId) || f.parentId === f.id) ? withoutParent(f) : f))
+    .map((f) => (f.color !== undefined && !isFolderColor(f.color) ? withColor(f, undefined) : f)); // unknown colour (newer app, edited file)
   for (const { id } of fixed) {
     const byId = new Map(fixed.map((x) => [x.id, x]));
     const seen = new Set<FolderId>([id]);

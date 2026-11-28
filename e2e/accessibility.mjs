@@ -1,9 +1,10 @@
 // Accessibility E2E (phase 3): axe-core (WCAG 2.1 A/AA) on the main screens in light and dark app themes — fails on
 // serious or critical violations —, touch targets of at least 48 px, names of icon-only buttons, screen-reader text
-// of the library items (headless Chromium, Pixel 7). Exits with code 1 on a failed check.
+// of the library items, folder colour dialogs and contrast (headless Chromium, Pixel 7). Exits with code 1 on a failed check.
 // Usage: node e2e/accessibility.mjs "$PWD" [screenshot-dir] [en|fr]
 import { createServer } from 'vite';
 import { chromium, devices } from 'playwright';
+import { readFileSync } from 'node:fs';
 
 const root = process.argv[2];
 const shots = process.argv[3] ?? '/tmp';
@@ -35,7 +36,7 @@ const setTheme = (appTheme) =>
   }, appTheme);
 
 /** axe-core on the visible page; serious and critical violations fail. */
-const audit = async (name) => {
+const audit = async (name, scope = visiblePage) => {
   await page.waitForTimeout(600); // Ionic transitions
   if (!(await page.evaluate(() => 'axe' in window))) await page.addScriptTag({ path: `${root}/node_modules/axe-core/axe.min.js` });
   const violations = await page.evaluate(async (sel) => {
@@ -45,7 +46,7 @@ const audit = async (name) => {
       resultTypes: ['violations'],
     });
     return r.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.map((n) => n.target.join(' ')).slice(0, 4) }));
-  }, visiblePage);
+  }, scope);
   const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   for (const v of violations) console.log(`     ${v.impact} ${v.id}: ${v.nodes.join(' | ')}`);
   check(`${name}: no serious axe violation`, serious.length === 0, serious.map((v) => v.id).join(', '));
@@ -170,6 +171,67 @@ await page.waitForFunction(() => document.querySelectorAll('ion-reorder-group io
 
 await screens('light');
 await screens('dark');
+
+// Folder colours (ADR-029): the "New folder" and "Color…" dialogs, and a contrast of at least 3:1 (WCAG 1.4.11) of
+// every colour against the list and dialog backgrounds, in both app themes.
+const FL = JSON.parse(readFileSync(`${root}/src/i18n/locales/${lang}/library.json`, 'utf8')).folders;
+const dialogSel = 'ion-modal[data-testid=folder-dialog]';
+const dialogClosed = () => page.waitForFunction((sel) => !document.querySelector(`${sel}.show-modal`), dialogSel, { timeout: 5000 }).catch(() => undefined);
+for (const theme of ['light', 'dark']) {
+  await setTheme(theme);
+  await page.goto(`${base}/library`);
+  await page.waitForSelector('ion-item-sliding', { timeout: 60000 });
+  await page.locator('[data-testid=fab-add]').click();
+  await page.locator('[data-testid=fab-new-folder]').click();
+  await page.waitForSelector(`${dialogSel} [data-testid=folder-swatch]`, { state: 'visible' });
+  await page.waitForTimeout(600);
+  await audit(`${theme} new folder dialog`, `${dialogSel} .ion-page`);
+  const snap = await page.locator(dialogSel).ariaSnapshot();
+  check(
+    `${theme} new folder dialog: named field, colour group and swatches`,
+    snap.includes(FL.nameLabel) && snap.includes(`group "${FL.colorLabel}"`) && snap.includes(`button "${FL.colors.yellow}"`) && snap.includes('[pressed]'),
+    snap.split('\n').slice(0, 8).join(' / '),
+  );
+  if (theme === 'light') {
+    await page.locator(`${dialogSel} [data-testid=folder-name-input] input`).fill('Yellow');
+    await page.locator(`${dialogSel} [data-testid=folder-swatch][data-color=yellow]`).click();
+    await page.locator(`${dialogSel} [data-testid=folder-dialog-create]`).click();
+  } else await page.locator(`${dialogSel} [data-testid=folder-dialog-cancel]`).click();
+  await dialogClosed();
+  await page.waitForSelector('[data-testid=folder-open][data-folder=Yellow]');
+  await audit(`${theme} library with a folder`);
+  await page.locator('[data-testid=folder-open][data-folder=Yellow]').locator('xpath=ancestor::ion-item').locator('[data-testid=folder-more]').click();
+  await page.locator('ion-action-sheet button', { hasText: FL.color }).click();
+  await page.waitForSelector(`${dialogSel} [data-testid=folder-swatch]`, { state: 'visible' });
+  await page.waitForTimeout(600);
+  await audit(`${theme} folder colour dialog`, `${dialogSel} .ion-page`);
+  const contrasts = await page.evaluate((sel) => {
+    const channels = (c) => c.match(/[\d.]+/g).slice(0, 3).map(Number);
+    const lum = (c) => {
+      const [r, g, b] = channels(c).map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+    const item = document.querySelector('ion-item.folder-item');
+    const backgrounds = [
+      getComputedStyle(item.shadowRoot.querySelector('.item-native')).backgroundColor,
+      getComputedStyle(document.querySelector(`${sel} .folder-dialog-body`)).backgroundColor,
+    ];
+    return [...document.querySelectorAll(`${sel} [data-testid=folder-swatch]`)].map((s) => {
+      const c = getComputedStyle(s).backgroundColor;
+      return { color: s.dataset.color, min: Math.min(...backgrounds.map((b) => ratio(c, b))), backgrounds };
+    });
+  }, dialogSel);
+  const low = contrasts.filter((c) => c.min < 3);
+  check(
+    `${theme}: every folder colour has a contrast ≥ 3:1 (${contrasts[0]?.backgrounds.join(' / ')})`,
+    contrasts.length === 10 && low.length === 0,
+    contrasts.map((c) => `${c.color} ${c.min.toFixed(2)}`).join(', '),
+  );
+  await page.screenshot({ path: `${shots}/a11y-${theme}-folder-colors.png` });
+  await page.locator(`${dialogSel} [data-testid=folder-dialog-cancel]`).click();
+  await dialogClosed();
+}
 
 check('no console errors', errors.length === 0, errors.join(' | '));
 await browser.close();

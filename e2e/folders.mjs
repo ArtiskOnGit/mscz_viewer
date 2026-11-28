@@ -1,6 +1,7 @@
 // Folders E2E (ADR-029): create, rename, import inside, move scores (menu and multi-selection), nested folders, move
 // a folder (cycles refused), back navigation (header and history / Android back), search with paths, delete (contents
-// move up), reload persistence (headless Chromium, Pixel 7). Exits with code 1 on a failed check.
+// move up), folder colours (at creation and from the ⋮ menu, light and dark themes), reload persistence (headless
+// Chromium, Pixel 7). Exits with code 1 on a failed check.
 // Usage: node e2e/folders.mjs "$PWD" [screenshot-dir] [en|fr]
 import { createServer } from 'vite';
 import { chromium, devices } from 'playwright';
@@ -54,11 +55,26 @@ const answerPrompt = async (name, button) => {
   await page.waitForSelector('ion-alert', { state: 'detached' });
   await settle();
 };
-const newFolder = async (name) => {
+const dialog = 'ion-modal[data-testid=folder-dialog]';
+const dialogClosed = () => page.waitForFunction((sel) => !document.querySelector(`${sel}.show-modal`), dialog, { timeout: 5000 }).catch(() => undefined).then(settle);
+/** Fill the "New folder" dialog (name, optional colour) and create. */
+const answerNewFolder = async (name, color) => {
+  await page.waitForSelector(`${dialog} [data-testid=folder-name-input] input`, { state: 'visible' });
+  await page.waitForTimeout(300);
+  await page.locator(`${dialog} [data-testid=folder-name-input] input`).fill(name);
+  if (color) await page.locator(`${dialog} [data-testid=folder-swatch][data-color=${color}]`).click();
+  await page.locator(`${dialog} [data-testid=folder-dialog-create]`).click();
+  await dialogClosed();
+};
+const newFolder = async (name, color) => {
   await visible().locator('[data-testid=fab-add]').click();
   await visible().locator('[data-testid=fab-new-folder]').click();
-  await answerPrompt(name, L.folders.create);
+  await answerNewFolder(name, color);
 };
+/** Computed colour of the icon of a folder of the visible list. */
+const iconColor = (name) => folderItem(name).locator('.folder-icon').evaluate((el) => getComputedStyle(el).color);
+const rgb = (hex) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+const primary = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ion-color-primary').trim());
 const actionSheet = async (text) => {
   await page.locator('ion-action-sheet button', { hasText: text }).click();
   await page.waitForSelector('ion-action-sheet', { state: 'detached' });
@@ -108,6 +124,56 @@ await folderItem('Concerts').locator('xpath=ancestor::ion-item').locator('[data-
 await actionSheet(C.actions.rename);
 await answerPrompt('Gigs', C.actions.rename);
 check('folder renamed', (await folderItem('Gigs').count()) === 1 && (await folderItem('Concerts').count()) === 0);
+check('no colour chosen: the default colour (primary)', (await iconColor('Gigs')) === rgb(await primary()), `${await iconColor('Gigs')} / ${await primary()}`);
+
+// 2b. Colours: the "New folder" dialog (name + swatches, default preselected), then "Color…" in the ⋮ menu.
+await visible().locator('[data-testid=fab-add]').click();
+await visible().locator('[data-testid=fab-new-folder]').click();
+await page.waitForSelector(`${dialog} [data-testid=folder-swatch]`, { state: 'visible' });
+await page.waitForTimeout(400);
+const swatches = await page.locator(`${dialog} [data-testid=folder-swatch]`).evaluateAll((els) =>
+  els.map((e) => ({ color: e.dataset.color, label: e.getAttribute('aria-label'), pressed: e.getAttribute('aria-pressed'), tag: e.tagName, w: e.getBoundingClientRect().width, h: e.getBoundingClientRect().height })),
+);
+check('dialog: 10 swatches, translated names', swatches.length === 10 && swatches.every((s) => s.tag === 'BUTTON' && s.label === L.folders.colors[s.color]), swatches.map((s) => s.label).join('|'));
+check('dialog: the default colour is preselected', swatches.filter((s) => s.pressed === 'true').map((s) => s.color).join() === 'default');
+check('dialog: swatches are ≥ 48 px', swatches.every((s) => s.w >= 47.5 && s.h >= 47.5));
+check('dialog: Create disabled without a name', await page.locator(`${dialog} [data-testid=folder-dialog-create]`).evaluate((e) => e.disabled === true || e.hasAttribute('disabled')));
+check('dialog: the name field has the focus', await page.waitForFunction((sel) => document.activeElement?.closest(`${sel} [data-testid=folder-name-input]`), dialog, { timeout: 3000 }).then(() => true).catch(() => false));
+await page.locator(`${dialog} [data-testid=folder-name-input] input`).fill('Rehearsals');
+await page.locator(`${dialog} [data-testid=folder-swatch][data-color=green]`).click();
+check('dialog: the chosen swatch is pressed', (await page.locator(`${dialog} [data-testid=folder-swatch][aria-pressed=true]`).getAttribute('data-color')) === 'green');
+await page.screenshot({ path: `${shots}/folders-new-dialog-${lang}.png` });
+await page.locator(`${dialog} [data-testid=folder-dialog-create]`).click();
+await dialogClosed();
+check('created with a colour: green icon', (await iconColor('Rehearsals')) === rgb('#2b8a3e'), await iconColor('Rehearsals'));
+await folderItem('Rehearsals').locator('xpath=ancestor::ion-item').locator('[data-testid=folder-more]').click();
+await actionSheet(L.folders.color);
+await page.waitForSelector(`${dialog} [data-testid=folder-swatch]`, { state: 'visible' });
+await page.waitForTimeout(400);
+check('"Color…": titled with the folder, current colour selected, no name field',
+  (await page.locator(`${dialog} ion-title`).innerText()) === L.folders.colorTitle.replace('{{name}}', 'Rehearsals')
+    && (await page.locator(`${dialog} [data-testid=folder-swatch][aria-pressed=true]`).getAttribute('data-color')) === 'green'
+    && (await page.locator(`${dialog} [data-testid=folder-name-input]`).count()) === 0);
+await page.screenshot({ path: `${shots}/folders-color-dialog-${lang}.png` });
+await page.locator(`${dialog} [data-testid=folder-swatch][data-color=red]`).click(); // applies and closes
+await dialogClosed();
+check('"Color…": changed to red', (await iconColor('Rehearsals')) === rgb('#c92a2a'), await iconColor('Rehearsals'));
+// Cancel keeps the colour.
+await folderItem('Rehearsals').locator('xpath=ancestor::ion-item').locator('[data-testid=folder-more]').click();
+await actionSheet(L.folders.color);
+await page.waitForSelector(`${dialog} [data-testid=folder-dialog-cancel]`, { state: 'visible' });
+await page.waitForTimeout(400);
+await page.locator(`${dialog} [data-testid=folder-dialog-cancel]`).click();
+await dialogClosed();
+check('"Color…" cancelled: colour kept', (await iconColor('Rehearsals')) === rgb('#c92a2a'));
+// Dark app theme: the dark shade of the same colour.
+await page.evaluate(() => document.documentElement.classList.add('ion-palette-dark'));
+await settle();
+check('dark theme: the dark shade', (await iconColor('Rehearsals')) === rgb('#ff8787') && (await iconColor('Gigs')) === rgb(await primary()), await iconColor('Rehearsals'));
+await page.screenshot({ path: `${shots}/folders-colors-dark-${lang}.png` });
+await page.evaluate(() => document.documentElement.classList.remove('ion-palette-dark'));
+await settle();
+await page.screenshot({ path: `${shots}/folders-colors-light-${lang}.png` });
 
 // 3. Open it, import inside: the score lands in the folder.
 await folderItem('Gigs').click();
@@ -188,12 +254,14 @@ await folderItem('2026').locator('xpath=ancestor::ion-item').locator('[data-test
 await actionSheet(L.folders.move);
 await page.waitForSelector('ion-modal [data-testid=picker-new-folder]', { state: 'visible' });
 await page.waitForTimeout(400);
+check('picker: folder icons in their colour', (await page.locator('ion-modal [data-testid=picker-folder][data-folder=Rehearsals] .folder-icon').evaluate((el) => getComputedStyle(el).color)) === rgb('#c92a2a'));
 await page.locator('ion-modal [data-testid=picker-new-folder]').click();
-await answerPrompt('Season', L.folders.create);
+await answerNewFolder('Season', 'purple');
 await page.locator('ion-modal[data-testid=folder-picker]').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => undefined);
 const toast = await page.locator('ion-toast').last().evaluate((el) => el.message).catch(() => '');
 check('move toast names the new folder', toast.includes('Season'), toast);
 check('picker "New folder": created here, folder moved into it', (await folderNames()).join('|') === 'Season' && (await folderCount('Season')) === items(1), (await folderNames()).join('|'));
+check('picker "New folder": with its colour', (await iconColor('Season')) === rgb('#7048e8'), await iconColor('Season'));
 
 // 9. Search: the whole library, with the folder path.
 await visible().locator('[data-testid=folder-back]').click();
@@ -212,14 +280,15 @@ await actionSheet(C.actions.delete);
 await page.locator('ion-alert button', { hasText: C.actions.delete }).click();
 await page.waitForSelector('ion-alert', { state: 'detached' });
 await settle();
-check('deleted folder: its sub-folder moved to the root', (await folderNames()).join('|') === 'Season', (await folderNames()).join('|'));
+check('deleted folder: its sub-folder moved to the root', (await folderNames()).join('|') === 'Rehearsals|Season', (await folderNames()).join('|'));
 check('scores kept', (await scoreTitles()).join('|') === 'Motorcrypt');
 
 // 11. Reload: folders and scores are persisted; a folder URL opens the folder, its back button goes up.
 await page.reload();
 await page.waitForSelector('[data-testid=folder-open]');
 await settle();
-check('after reload: folders and scores', (await folderNames()).join('|') === 'Season' && (await scoreTitles()).join('|') === 'Motorcrypt');
+check('after reload: folders and scores', (await folderNames()).join('|') === 'Rehearsals|Season' && (await scoreTitles()).join('|') === 'Motorcrypt');
+check('after reload: colours kept', (await iconColor('Rehearsals')) === rgb('#c92a2a') && (await iconColor('Season')) === rgb('#7048e8'));
 await folderItem('Season').click();
 await waitTitle('Season');
 await folderItem('2026').click();

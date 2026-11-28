@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { IonButton, IonIcon, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonThumbnail, useIonActionSheet } from '@ionic/react';
-import { ellipsisVertical, folderOutline } from 'ionicons/icons';
+import { ellipsisVertical } from 'ionicons/icons';
 import type { Folder } from '../../core/model/types';
+import { FolderIcon } from './FolderIcon';
 import './library.css';
 
 interface Props {
@@ -12,12 +13,14 @@ interface Props {
   path?: string;
   onOpen(): void;
   onRename(): void;
+  /** "Color…": the colour picker. */
+  onColor(): void;
   onMove(): void;
   onDelete(): void;
 }
 
 // Same layout as ScoreItem: an "open" button, a "more actions" button beside it, the same actions on swipe.
-export function FolderItem({ folder, count, path, onOpen, onRename, onMove, onDelete }: Props) {
+export function FolderItem({ folder, count, path, onOpen, onRename, onColor, onMove, onDelete }: Props) {
   const { t } = useTranslation(['library', 'common']);
   const [presentActions] = useIonActionSheet();
   const items = t('folders.items', { count });
@@ -26,6 +29,7 @@ export function FolderItem({ folder, count, path, onOpen, onRename, onMove, onDe
       header: folder.name,
       buttons: [
         { text: t('common:actions.rename'), handler: onRename },
+        { text: t('folders.color'), handler: onColor },
         { text: t('folders.move'), handler: onMove },
         { text: t('common:actions.delete'), role: 'destructive', handler: onDelete },
         { text: t('common:actions.cancel'), role: 'cancel' },
@@ -37,7 +41,7 @@ export function FolderItem({ folder, count, path, onOpen, onRename, onMove, onDe
       <IonItem className="folder-item">
         <button type="button" className="item-open" onClick={onOpen} data-testid="folder-open" data-folder={folder.name}>
           <IonThumbnail className="folder-thumb">
-            <IonIcon icon={folderOutline} aria-hidden="true" />
+            <FolderIcon color={folder.color} />
           </IonThumbnail>
           <IonLabel>
             <h2>{folder.name}</h2>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Folder, FolderId, Score, ScoreId } from '../core/model/types';
+import type { Folder, FolderColor, FolderId, Score, ScoreId } from '../core/model/types';
 import { libraryRepository, viewStateRepository } from '../core/services';
 import { IMPORTER_VERSION, ImportError, importScore, reimportScore, type ImportInput } from '../core/import/importScore';
 import { webMscoreEngine } from '../core/import/webmscoreEngine';
@@ -25,8 +25,10 @@ interface LibraryState {
   rename(id: ScoreId, title: string): Promise<void>;
   remove(id: ScoreId): Promise<void>;
   markOpened(id: ScoreId): Promise<void>;
-  createFolder(name: string, parentId?: FolderId): Promise<Folder>;
+  createFolder(name: string, parentId?: FolderId, color?: FolderColor): Promise<Folder>;
   renameFolder(id: FolderId, name: string): Promise<void>;
+  /** undefined = the default colour. */
+  setFolderColor(id: FolderId, color: FolderColor | undefined): Promise<void>;
   /** Its scores and sub-folders move to its parent folder. */
   deleteFolder(id: FolderId): Promise<void>;
   moveScores(ids: readonly ScoreId[], folderId: FolderId | undefined): Promise<void>;
@@ -107,14 +109,19 @@ export const useLibrary = create<LibraryState>((set, get) => ({
     await get().load();
   },
 
-  async createFolder(name, parentId) {
-    const folder = await libraryRepository.createFolder(name, parentId);
+  async createFolder(name, parentId, color) {
+    const folder = await libraryRepository.createFolder(name, parentId, color);
     await get().load();
     return folder;
   },
 
   async renameFolder(id, name) {
     await libraryRepository.renameFolder(id, name);
+    await get().load();
+  },
+
+  async setFolderColor(id, color) {
+    await libraryRepository.setFolderColor(id, color);
     await get().load();
   },
 

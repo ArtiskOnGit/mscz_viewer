@@ -1,6 +1,6 @@
 // Library index (library.json) + per-score files. See SPECIFICATIONS_TECHNIQUES §3.2.
-import type { Folder, FolderId, Score, ScoreId, Timeline } from '../model/types';
-import { isInside, sanitizeFolders, withoutFolder, withoutParent } from '../model/folders';
+import type { Folder, FolderColor, FolderId, Score, ScoreId, Timeline } from '../model/types';
+import { isFolderColor, isInside, sanitizeFolders, withColor, withoutFolder, withoutParent } from '../model/folders';
 import type { FileStore } from './fileStore';
 
 const INDEX = 'library.json';
@@ -135,14 +135,15 @@ export class LibraryRepository {
 
   // --- Folders (ADR-029) ---
 
-  /** New folder in `parentId` (undefined or an unknown folder = the root). An empty name is refused. */
-  async createFolder(name: string, parentId?: FolderId): Promise<Folder> {
+  /** New folder in `parentId` (undefined or an unknown folder = the root), of colour `color` (undefined = default). An empty name is refused. */
+  async createFolder(name: string, parentId?: FolderId, color?: FolderColor): Promise<Folder> {
     const trimmed = name.trim();
     if (!trimmed) throw new Error('empty folder name');
     let folder: Folder | undefined;
     await this.mutate((index) => {
       folder = { id: this.newId(), name: trimmed, createdAt: this.now().toISOString() };
       if (parentId && index.folders.some((f) => f.id === parentId)) folder.parentId = parentId;
+      if (isFolderColor(color)) folder.color = color;
       return { ...index, folders: [...index.folders, folder] };
     });
     return folder!;
@@ -153,6 +154,12 @@ export class LibraryRepository {
     const trimmed = name.trim();
     if (!trimmed) return;
     await this.mutate((index) => ({ ...index, folders: index.folders.map((f) => (f.id === id ? { ...f, name: trimmed } : f)) }));
+  }
+
+  /** Colour of the folder icon; undefined (or an unknown colour) = the default colour. */
+  async setFolderColor(id: FolderId, color: FolderColor | undefined): Promise<void> {
+    const valid = isFolderColor(color) ? color : undefined;
+    await this.mutate((index) => ({ ...index, folders: index.folders.map((f) => (f.id === id ? withColor(f, valid) : f)) }));
   }
 
   /** Deletes a folder only: its scores and sub-folders move to its parent folder (never deletes a score). */
