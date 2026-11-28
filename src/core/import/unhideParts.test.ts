@@ -34,3 +34,25 @@ describe('unhideParts', () => {
     expect(r.bytes).toBe(plain);
   });
 });
+
+describe('convertKeySignatures (MuseScore ≥ 4.4 key format)', () => {
+  const ms47 = `<museScore version="4.70"><Score>
+    <Part id="1"><Staff id="1"/><trackName>Trumpet</trackName></Part>
+    <Staff id="1"><Measure><voice>
+      <KeySig><concertKey>-4</concertKey><actualKey>-2</actualKey></KeySig>
+    </voice></Measure></Staff>
+    <Staff id="2"><Measure><voice><KeySig><concertKey>-4</concertKey></KeySig></voice></Measure></Staff>
+    <Staff id="3"><Measure><voice><KeySig><custom>1</custom><mode>none</mode></KeySig></voice></Measure></Staff>
+  </Score></museScore>`;
+
+  it('rewrites concertKey/actualKey as the written key in <accidental> (MuseScore 3 format)', () => {
+    const text = new TextDecoder().decode(unhideParts('mscx', strToU8(ms47), xmlEnv).bytes);
+    const keys = [...text.matchAll(/<KeySig>([\s\S]*?)<\/KeySig>/g)].map((m) => m[1]!.replace(/\s+/g, ''));
+    expect(keys).toEqual(['<accidental>-2</accidental>', '<accidental>-4</accidental>', '<custom>1</custom><mode>none</mode>']);
+  });
+
+  it('leaves MuseScore 3 key signatures untouched', () => {
+    const ms3 = strToU8('<museScore version="3.02"><Score><Part><trackName>A</trackName></Part><Staff id="1"><Measure><voice><KeySig><accidental>2</accidental></KeySig></voice></Measure></Staff></Score></museScore>');
+    expect(unhideParts('mscx', ms3, xmlEnv).bytes).toBe(ms3);
+  });
+});

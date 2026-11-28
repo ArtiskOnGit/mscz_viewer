@@ -13,8 +13,9 @@ import { midiChannelsByPart, staffCounts } from '../audio/partMapping';
  * Bump when the pipeline output changes: older scores are re-imported from their original file.
  * 2: hidden MuseScore parts/staves are made visible before conversion (their beams were missing).
  * 3: MIDI file (repeats unfolded) + MIDI channels of each part, for audio playback (ADR-026).
+ * 4: key signatures of MuseScore ≥ 4.4 files (<concertKey>/<actualKey>) converted for the 4.0 engine (they were lost).
  */
-export const IMPORTER_VERSION = 3;
+export const IMPORTER_VERSION = 4;
 
 export interface ImportInput {
   name: string;

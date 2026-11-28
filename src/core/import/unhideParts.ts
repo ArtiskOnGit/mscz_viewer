@@ -63,7 +63,32 @@ function unhideInMscx(text: string, env: XmlEnv): { text: string | undefined; hi
     }
     if (partHidden || (staves.length > 0 && hiddenStaves === staves.length)) hidden.push(index);
   });
+  if (convertKeySignatures(doc)) changed = true;
   return { text: changed ? new env.XMLSerializer().serializeToString(doc) : undefined, hidden };
+}
+
+/**
+ * MuseScore ≥ 4.4 writes key signatures as <KeySig><concertKey>-4</concertKey><actualKey>-1</actualKey>, a format
+ * the MuseScore 4.0 engine of webmscore does not read: every key came out as C major (reported on a device with a
+ * MuseScore 4.7 file in A♭; MuseScore 4.5/4.6 files were affected too). Rewrite them in the older format,
+ * <accidental>N</accidental> = key of the staff as written (actualKey for transposing instruments, else concertKey),
+ * as MuseScore 3 files do. Custom/atonal key signatures (no concertKey) are left untouched.
+ */
+export function convertKeySignatures(doc: Document): boolean {
+  let changed = false;
+  for (const keySig of Array.from(doc.getElementsByTagName('KeySig'))) {
+    const concert = childElements(keySig, 'concertKey')[0];
+    if (!concert) continue;
+    const actual = childElements(keySig, 'actualKey')[0];
+    const value = (actual ?? concert).textContent?.trim() ?? '0';
+    const accidental = keySig.ownerDocument.createElement('accidental');
+    accidental.textContent = value;
+    keySig.insertBefore(accidental, concert);
+    keySig.removeChild(concert);
+    if (actual) keySig.removeChild(actual);
+    changed = true;
+  }
+  return changed;
 }
 
 const childElements = (el: Element | null, tag: string): Element[] =>
