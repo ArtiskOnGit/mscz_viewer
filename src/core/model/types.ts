@@ -61,6 +61,13 @@ export interface TimelineEvent {
   startMs: number;
   durationMs: number;
   timeSig: TimeSignature;
+  /**
+   * Incomplete measure (pickup, a bar split by a repeat, a short last bar): its actual length / the length of its
+   * time signature (< 1). Absent for a full measure (and in timelines imported before IMPORTER_VERSION 5).
+   */
+  fill?: number;
+  /** Incomplete measure whose beats are counted from its END (pickup: a 1-beat pickup in 4/4 is beat 4). */
+  fromEnd?: boolean;
 }
 
 export interface Timeline {

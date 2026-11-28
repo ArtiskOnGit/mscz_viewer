@@ -39,6 +39,23 @@ describe('metronomeNotes (the metronome track)', () => {
     expect(notes.find((n) => !n.countIn)?.scoreMs).toBe(2000);
   });
 
+  it('starting on a 1-beat pickup (Stay With Me): count-in at the tempo, the pickup click on beat 4, no accent', () => {
+    const tl: Timeline = {
+      source: 'webmscore',
+      totalMs: 2500,
+      events: [
+        { measureIndex: 0, startMs: 0, durationMs: 536, timeSig: sig(4, 4), fill: 0.25, fromEnd: true },
+        { measureIndex: 1, startMs: 536, durationMs: 2144, timeSig: sig(4, 4) },
+      ],
+    };
+    const notes = [...metronomeNotes(tl, 0, 1)];
+    const gaps = notes.slice(1).map((n, i) => Math.round(n.scoreMs - notes[i]!.scoreMs));
+    expect(gaps.every((g) => g === 536)).toBe(true); // one beat everywhere (was 134 ms in the count-in)
+    expect(notes.filter((n) => n.countIn).map((n) => n.downbeat)).toEqual([true, false, false, false, true, false, false]);
+    const pickup = notes.find((n) => !n.countIn)!;
+    expect([pickup.scoreMs, pickup.downbeat, pickup.key]).toEqual([0, false, LO]);
+  });
+
   it('restarts at a position (tempo change while playing), count-in included', () => {
     expect([...metronomeNotes(TL, 1, 1, { fromMs: 1000 })].map((n) => n.scoreMs).slice(0, 4)).toEqual([1000, 1500, 2000, 2500]);
     expect([...metronomeNotes(TL, 0, 0, { fromMs: 5600 })].map((n) => n.scoreMs)).toEqual([6500, 7500, 8500]);

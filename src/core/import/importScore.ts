@@ -2,7 +2,7 @@
 import type { Part, Score } from '../model/types';
 import type { LibraryRepository } from '../storage/libraryRepository';
 import type { XmlEnv } from '../musicxml/filterParts';
-import { readTimeSignatures, timelineFromWebMscore } from '../timeline/timeline';
+import { readMeasureFills, readTimeSignatures, timelineFromWebMscore } from '../timeline/timeline';
 import { detectFormat, extensionOf, extractMsczThumbnail, sha256Hex, type ImportFormat } from './formats';
 import type { EngineResult, ScoreEngine } from './scoreEngine';
 import { unhideParts } from './unhideParts';
@@ -16,7 +16,7 @@ import { separatePartChannels } from '../audio/midiChannels';
  * 3: MIDI file (repeats unfolded) + MIDI channels of each part, for audio playback (ADR-026).
  * 4: key signatures of MuseScore ≥ 4.4 files (<concertKey>/<actualKey>) converted for the 4.0 engine (they were lost).
  * 5: MIDI channels shared by several parts (past 16 channels) separated, each part has its own (midiChannels.ts);
- *    MIDI notes normalized at parse time (glissandi).
+ *    pickups and other incomplete measures marked in the timeline (count-in and clicks at the real tempo).
  */
 export const IMPORTER_VERSION = 5;
 
@@ -140,7 +140,7 @@ async function convert(input: ImportInput, format: ImportFormat, deps: ImportDep
   const midiChannels = audio?.channels;
   if (midiChannels) parts.forEach((p, i) => (p.midiChannels = midiChannels[i] ?? []));
 
-  const timeline = timelineFromWebMscore(result.positions, readTimeSignatures(doc), meta.duration ? meta.duration * 1000 : undefined);
+  const timeline = timelineFromWebMscore(result.positions, readTimeSignatures(doc), meta.duration ? meta.duration * 1000 : undefined, readMeasureFills(doc));
   const fields: ConvertedFields = {
     subtitle: meaningful(meta.subtitle),
     composer: meaningful(meta.composer),
