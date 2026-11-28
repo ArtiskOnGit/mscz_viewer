@@ -1,5 +1,5 @@
 // Generates the Android launcher icons, splash screens, the web favicon and the PWA icons (public/icons/: manifest
-// 192/512/maskable, iOS apple-touch-icon 180) from the logo (design/logo/4-ligne-epuree.svg).
+// 192/512/maskable, iOS apple-touch-icon 180) from the logo (design/logo/pupitre-dessin.svg).
 // Usage: node scripts/generate-icons.mjs   (needs the "playwright" dev dependency and its Chromium)
 import { chromium } from 'playwright';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ const res = new URL('android/app/src/main/res/', root);
 const BG = '#f4ecd8';
 
 // The drawing of logo 4 without its background (content box ≈ x 104–408, y 110–440, centre (256, 275)).
-const logo = await readFile(new URL('design/logo/4-ligne-epuree.svg', root), 'utf8');
+const logo = await readFile(new URL('design/logo/pupitre-dessin.svg', root), 'utf8');
 const drawing = logo.replace(/^[\s\S]*?<rect[^>]*\/>/, '').replace(/<\/svg>\s*$/, '');
 const svg = (body, { background = '' } = {}) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">${background}${body}</svg>`;
 const centred = (scale) => `<g transform="translate(256 256) scale(${scale}) translate(-256 -275)">${drawing}</g>`;
@@ -69,5 +69,5 @@ await browser.close();
 // Adaptive icon background colour.
 await writeFile(new URL('values/ic_launcher_background.xml', res), `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${BG.toUpperCase()}</color>\n</resources>\n`);
 // Web favicon.
-await copyFile(new URL('design/logo/4-ligne-epuree.svg', root), new URL('public/favicon.svg', root));
+await copyFile(new URL('design/logo/pupitre-dessin.svg', root), new URL('public/favicon.svg', root));
 console.log('icons, splash screens, favicon and PWA icons generated');

@@ -53,6 +53,8 @@ Format : chaque décision a un statut **Proposée** (en attente), **Acceptée**,
 - Reste à faire avant publication : vérifier la disponibilité sur Google Play et F-Droid et l'absence de marque déposée gênante ; ~~créer l'icône~~ : **logo 4 « version épurée »** retenu le 2026-11-26 (cinq lignes de portée formant le plateau d'un pupitre, bleu nuit `#24398f` et orange `#e8590c` sur crème `#f4ecd8`, formes géométriques SVG uniquement ; `design/logo/4-ligne-epuree.svg`). Icônes Android (adaptative, carrée, ronde), écrans de démarrage et favicon générés par `scripts/generate-icons.mjs`.
 - **Identifiant Android** (`applicationId`, immuable une fois publié) : **`io.github.artiskongit.pupitre`** (2026-11-26), basé sur le compte GitHub du porteur (convention F-Droid, aucun domaine à posséder). Il remplace `app.pupitre.viewer` : une réinstallation unique a été nécessaire sur le téléphone de test. Le nom ne doit pas contenir « MuseScore ».
 
+- **Nouveau logo (2026-11-28)** : le logo 4 est remplacé par un **dessin à main levée du porteur du projet** (pupitre avec une clé de sol), conservé tel quel : fond rendu transparent, trait épaissi (variante « B · fin », choisie parmi 5 épaisseurs, `design/logo/epaisseurs.png`) et recoloré en bleu nuit `#24398f` sur crème `#f4ecd8`. Source : `design/logo/pupitre-dessin.svg` (+ `.png`) ; toutes les icônes (Android, écrans de démarrage, favicon, PWA/iPhone) sont régénérées par `scripts/generate-icons.mjs`.
+
 ### ADR-007 — Stockage : fichiers + index JSON — *Acceptée*
 - Index `library.json` et `setlists.json`, fichiers dans l'espace privé de l'application, derrière les interfaces `LibraryRepository` et `SetlistRepository`. Passage à SQLite si le volume ou la recherche le demandent.
 
