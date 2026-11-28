@@ -85,6 +85,11 @@ export interface MixerState {
   master?: number;
   /** By MusicXML part id. */
   parts: Record<string, PartMix>;
+  /**
+   * Metronome volume 0..1 for this score; undefined = the settings' metronome volume. Played by the synth with the
+   * sound on, by the Web Audio click otherwise. Not affected by solo (see ADR-026).
+   */
+  metronome?: number;
 }
 
 /**

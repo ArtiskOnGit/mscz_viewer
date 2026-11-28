@@ -62,12 +62,13 @@ export function useScoreAudio({ score, mixer, defaultMaster }: Args): ScoreAudio
         release.current.synth ??= holdSynth();
         const [synth, midi] = await Promise.all([loadSynth(ctx), readMidi(scoreId)]);
         if (!midi) throw new Error('no MIDI file');
-        await synth.ensureChannels(Math.max(15, ...usedChannels(midi.file.events)));
+        const player = new MidiPlayer(synth, midi.file);
+        // Score channels + the metronome's dedicated drum channel (core/audio/metronome.ts).
+        await synth.ensureChannels(player.metronomeChannel);
         await synth.preload(midi.bytes);
         synthRef.current = synth;
         midiRef.current = midi;
-        const player = new MidiPlayer(synth, midi.file);
-        exposeForTests(synth, midi.file);
+        exposeForTests(synth, midi.file, player.metronomeChannel);
         setSource(player);
         setStatus('ready');
         return player;
@@ -102,9 +103,10 @@ async function readMidi(scoreId: string): Promise<{ bytes: Uint8Array; file: Mid
 
 /**
  * e2e hook (dev server, or a page where the test set `window.__pupitreE2E`, e.g. the PWA build in e2e/pwa.mjs): level
- * of the synth output and voices, to check that sound is produced.
+ * of the synth output and voices, to check that sound is produced; the AudioContext, the synth output and the note-ons
+ * sent with their times (e2e/metronome-sync.mjs records the output and measures the click / note alignment).
  */
-function exposeForTests(synth: SynthHandle, midi: MidiFile) {
+function exposeForTests(synth: SynthHandle, midi: MidiFile, metronomeChannel: number) {
   if (!import.meta.env.DEV && !(window as { __pupitreE2E?: boolean }).__pupitreE2E) return;
   const analyser = synth.ctx.createAnalyser();
   analyser.fftSize = 2048;
@@ -115,6 +117,18 @@ function exposeForTests(synth: SynthHandle, midi: MidiFile) {
     analyser.getFloatTimeDomainData(buf);
     for (const v of buf) peak = Math.max(peak, Math.abs(v));
   }, 20);
+  // Note-ons sent to the synth (channel, AudioContext time), the last 2000. The handle is shared: wrapped once.
+  const sent: { channel: number; time: number; key: number }[] = [];
+  const tapped = synth as SynthHandle & { __send?: SynthHandle['send'] };
+  tapped.__send ??= synth.send.bind(synth);
+  const send = tapped.__send;
+  synth.send = (message, channel, time) => {
+    if ((message[0]! & 0xf0) === 0x90 && message[2]) {
+      sent.push({ channel, time, key: message[1]! });
+      if (sent.length > 2000) sent.shift();
+    }
+    send(message, channel, time);
+  };
   const w = window as unknown as { __pupitreAudio?: { stop(): void } };
   w.__pupitreAudio?.stop();
   w.__pupitreAudio = {
@@ -125,6 +139,10 @@ function exposeForTests(synth: SynthHandle, midi: MidiFile) {
       resetPeak: () => (peak = 0),
       voices: () => synth.voiceCount,
       channels: () => usedChannels(midi.events),
+      metronomeChannel: () => metronomeChannel,
+      ctx: synth.ctx,
+      output: synth.output,
+      sent: () => sent.slice(),
     },
   } as { stop(): void };
 }

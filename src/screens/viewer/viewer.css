@@ -328,6 +328,9 @@ ion-footer .page-indicator {
 .mixer-part ion-range {
   padding-top: 0;
 }
+.mixer-part .mixer-note {
+  padding: 0 0 4px;
+}
 
 /* A layout or page that could not be drawn: message + Retry over the stage (never a blank page). */
 .score-error {

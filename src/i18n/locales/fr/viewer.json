@@ -138,6 +138,8 @@
     "mute": "Couper {{name}}",
     "solo": "{{name}} en solo",
     "soloShort": "S",
+    "metronome": "Métronome",
+    "metronomeHint": "Clics sur les temps, calés sur le son. Le solo ne le coupe pas, le bouton muet arrête le métronome.",
     "setlistNote": "Dans cette setlist, le mixage est gardé pour ce morceau seulement."
   },
   "zoom": "Zoom",

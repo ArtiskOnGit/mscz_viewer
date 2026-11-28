@@ -31,6 +31,23 @@ Version testée : APK de debug de la phase 2, avant l'ajout du mode Continu.
 6. **Son de la partition** (ADR-026) : au premier lancement de la nouvelle version, les partitions sont réimportées (bandeau de mise à jour) ; ouvrir une partition, bouton haut-parleur → activer le son (temps de chargement ?), ▶ : le son commence après le décompte, **aligné** avec le surlignage (latence de sortie compensée : le surlignage paraît-il en avance ou en retard ?) ; tempo 50 % et 150 % ; reprises ; « aller à » et appui long pendant la lecture ; pause qui coupe net ; mixeur (muet, solo, volume, « Moi seul » / « Sans moi ») pendant la lecture ; métronome en même temps ; craquements sur un gros conducteur (Toccata) ; mémoire avec le son ; écran éteint / application en arrière-plan (la lecture se met en pause) ; casque Bluetooth (latence plus grande).
 7. **Tempo** : sur téléphone en portrait, toucher la valeur du tempo ouvre la petite fenêtre (−/+, curseur, retour à 100 %).
 
+## Métronome et son pas synchronisés (2026-11-28) — corrigé, à retester
+
+**Retour** (téléphone Android, son de la partition activé) : les clics du métronome et la musique ne sont pas bien synchronisés.
+
+**Cause** (mesurée dans Chromium headless, ADR-026, complément du 2026-11-28) : le métronome (oscillateurs Web Audio) était à l'heure, mais **le synthétiseur jouait chaque note en retard**, d'environ 260 ms sur PC : son horloge interne prenait du retard sur celle de l'`AudioContext` à chaque fois que le fil audio était bloqué (chargement de la banque de sons, décodage des échantillons, téléphone chargé). Sur un téléphone, le retard est sans doute plus grand et peut grandir pendant la lecture (à chaque craquement). Le surlignage de la mesure était donc lui aussi en avance sur le son.
+
+**Correction** : l'horloge du synthétiseur est recalée sur celle de l'`AudioContext` à chaque bloc audio ; et, **son activé, le métronome est joué par le synthétiseur** (Wood Block aigu au premier temps, grave aux autres, sur un canal de batterie dédié), dans la même file et à la même heure que les notes : clic et note du même temps démarrent ensemble (écart mesuré : 1 ms ; avant : ≈ 260 ms). Son coupé (défilement silencieux, « métronome seul ») : le clic habituel reste. Le mixeur a une ligne **« Métronome »** : volume (par défaut celui des Paramètres, mémorisé par partition), bouton muet = métronome coupé ; le solo d'une partie ne coupe pas le métronome.
+
+**À retester sur le téléphone** :
+1. Son activé + métronome, ▶ : clics et musique **ensemble** du décompte à la fin (écouter les notes au premier temps, la batterie) ; le **point de pulsation** et le surlignage de la mesure tombent-ils sur ce qu'on entend ?
+2. Même chose à **tempo 50 % et 150 %**, après **« aller à »** et un **appui long** sur une mesure pendant la lecture, après **pause / reprise**, sur une partition avec **reprises** et **changements de mesure** (6/8 : clic à la noire pointée).
+3. Longue lecture (plusieurs minutes, gros conducteur comme Toccata) : l'écart ne doit **plus grandir** avec le temps, même s'il y a des craquements.
+4. **Couper / remettre le métronome** pendant la lecture (bouton de la barre et ligne « Métronome » du mixeur) : il s'arrête net (au plus un clic déjà parti), repart au bon temps.
+5. Mixeur : **volume du métronome** (le son des clics est-il bien dosé face à la musique, à 70 % par défaut ?), **solo** d'une partie (le métronome reste), « Moi seul » + métronome.
+6. Son coupé : défilement avec métronome et **métronome seul** (appui long) : clic Web Audio comme avant, point de pulsation aligné.
+7. Casque Bluetooth : clics et musique restent ensemble (même chemin) ; seul l'écart avec l'écran dépend de la latence annoncée par le casque.
+
 ## iPhone : application web (ADR-027) — à tester
 
 Installation : README, « Installer sur iPhone ». Les tests automatiques passent dans **WebKit de Playwright avec le profil iPhone 14** (`e2e/pwa.mjs` : hors ligne, import, rendu, son), mais ce n'est **pas Safari iOS** : bouton silencieux, sélecteur de fichiers, mémoire, stockage et écran de l'iPhone ne s'y voient pas. Noter le modèle d'iPhone et la version d'iOS.

@@ -2,7 +2,7 @@
 // "Metronome only" mode: the same engine clicks along the timeline from the first measure of the displayed page
 // (tempo changes included), without count-in, highlight or page turns; pages are turned by hand meanwhile.
 // Score audio (ADR-026): with the sound on, the engine plays the score's MIDI on the same clock (never in
-// "metronome only" mode).
+// "metronome only" mode). The metronome then goes through the synth too (PlaybackEngine), oscillators otherwise.
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { Timeline } from '../../core/model/types';
 import { PlaybackEngine } from '../../core/playback/playbackEngine';
@@ -34,6 +34,8 @@ interface Args {
   /** Continuous mode: the view follows the current measure (no page turns) and tells what is on screen. */
   continuous: RefObject<ContinuousHandle | null> | undefined;
   audio?: PlaybackAudio;
+  /** Metronome volume 0..1 (the mixer's, else the settings'). */
+  metronomeVolume?: number;
 }
 
 export function usePlayback(a: Args) {
@@ -155,6 +157,7 @@ export function usePlayback(a: Args) {
     const e = engine.current;
     if (!e) return;
     const { settings, tempoFactor, metronome, audio } = latest.current;
+    const volume = latest.current.metronomeVolume ?? settings.metronomeVolume;
     if (mode.current === 'metronome') e.pause();
     mode.current = 'scroll';
     setMetronomeOnly(false);
@@ -178,7 +181,7 @@ export function usePlayback(a: Args) {
       countInSound: settings.countInSound,
       tempoFactor,
       metronome,
-      volume: settings.metronomeVolume,
+      volume,
       accent: settings.metronomeAccent,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -207,6 +210,7 @@ export function usePlayback(a: Args) {
     if (mode.current === 'metronome') return pause();
     if (e.playing) pause();
     const { settings, tempoFactor } = latest.current;
+    const volume = latest.current.metronomeVolume ?? settings.metronomeVolume;
     mode.current = 'metronome';
     setMetronomeOnly(true);
     e.setAudio(latest.current.audio?.source, false);
@@ -217,7 +221,7 @@ export function usePlayback(a: Args) {
       countInSound: false,
       tempoFactor,
       metronome: true,
-      volume: settings.metronomeVolume,
+      volume,
       accent: settings.metronomeAccent,
     });
   }, [pause]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -272,11 +276,12 @@ export function usePlayback(a: Args) {
   useEffect(() => {
     engine.current?.setAudio(audioSource, audioOn && mode.current === 'scroll');
   }, [audioOn, audioSource, a.timeline]);
+  const metronomeVolume = a.metronomeVolume ?? a.settings.metronomeVolume;
   useEffect(() => {
     // The metronome-only mode always clicks, whatever the metronome toggle of the auto-scroll.
-    if (mode.current !== 'metronome') engine.current?.setMetronome(a.metronome, a.settings.metronomeVolume);
-    else engine.current?.setMetronome(true, a.settings.metronomeVolume);
-  }, [a.metronome, a.settings.metronomeVolume]);
+    if (mode.current !== 'metronome') engine.current?.setMetronome(a.metronome, metronomeVolume);
+    else engine.current?.setMetronome(true, metronomeVolume);
+  }, [a.metronome, metronomeVolume]);
 
   // Pause when the app goes to the background.
   useEffect(() => {

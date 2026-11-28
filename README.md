@@ -14,7 +14,7 @@
 - ♯♭ **Transposer** (demi-tons, octave, préréglages Si♭/Mi♭/Fa, hauteur réelle, choix ♯/♭ pour les tonalités enharmoniques).
 - 𝄢 **Changer la clé** d'un instrument : clé de sol, de sol 8 en bas, de fa, d'ut 3e ou 4e ligne (ex. trombone ou tuba lu en clé de sol), avec le préréglage brass band **« Si♭ clé de sol »** (clé de sol + neuvième majeure).
 - ▶️ **Faire défiler automatiquement** au tempo de la partition, avec les changements de tempo et les **reprises**, un facteur de tempo (50–150 %), un décompte et le surlignage de la mesure en cours ; départ depuis la page affichée, une mesure choisie (« aller à ») ou **touchée** (appui long).
-- 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul »).
+- 🥁 **Métronome optionnel** (clic + indicateur visuel), calé sur le tempo de la partition, avec ou sans défilement (« métronome seul ») ; avec le son, il est joué par le synthétiseur, exactement en même temps que les notes, et réglé dans le mixeur (volume par partition, jamais coupé par un solo).
 - 🔊 **Entendre la partition** pendant le défilement (instruments General MIDI synthétisés, hors ligne), parfaitement calée sur le défilement (tempo 50–150 %, reprises, décompte, départ depuis une mesure), avec un **mixeur** : volume, muet et solo par partie, volume général, raccourcis « Tous / Moi seul / Sans moi » (profil « My instrument ») ; mémorisé par partition et par morceau de setlist.
 - 🧭 **Aller à une mesure** ou à une **marque de répétition** ; **mode verrouillé** contre les touchers accidentels.
 - 🦶 **Pédalier Bluetooth / clavier** : touches configurables pour page suivante/précédente, lecture/pause, métronome, morceau suivant/précédent.
@@ -181,6 +181,7 @@ node e2e/i18n-fr.mjs "$PWD" /tmp/shots       # interface en français, langue, n
 node e2e/display-settings.mjs "$PWD" /tmp/shots  # police, numéros de mesure, titre, zones de tap, animation, métronome par défaut
 node e2e/accessibility.mjs "$PWD" /tmp/shots [fr]  # axe-core (WCAG 2.1 AA) clair + sombre, cibles ≥ 48 px, noms des boutons
 node e2e/audio.mjs "$PWD" /tmp/shots        # son de la partition : chargement à la demande, mixeur, niveau de sortie, pause
+node e2e/metronome-sync.mjs "$PWD" /tmp/shots  # son activé : sortie du synthétiseur enregistrée, écart clic du métronome / note < 5 ms, ligne Métronome du mixeur
 node e2e/pickbar.mjs "$PWD" /tmp/shots      # appui long sur une mesure
 node e2e/performance.mjs "$PWD" /tmp/shots  # temps d'ouverture, cache de rendu, workers
 node e2e/render-race.mjs "$PWD" /tmp/shots  # gros conducteur (test-scores/Motorcrypt.mscz, ignoré s'il manque) : zoom / rotation

@@ -3,10 +3,15 @@
 // - The UI reads the same clock in requestAnimationFrame (current measure, page turns, beat flashes), shifted by the
 //   output latency so that the highlight matches what is heard.
 // - Score audio (ADR-026): an optional ScoreAudioSource (MidiPlayer) is fed by the same scheduler, on the same clock.
+// - Sound on: the clicks are played BY THE SYNTH (ScoreAudioSource.click, dedicated drum channel), in the same message
+//   queue as the notes, so that they cannot drift apart (owner's report of 2026-11-28). Sound off (silent auto-scroll,
+//   "metronome only"): Web Audio oscillators. Both follow the same click stream (core/audio/metronome.ts) and the
+//   beat dot flashes at the time each click is heard.
 import type { Timeline } from '../model/types';
 import { eventIndexAt } from '../timeline/timeline';
 import { PlaybackClock } from './clock';
-import { clicksFrom, countInClicks, countInDurationMs, type Click } from './clicks';
+import { countInDurationMs } from './clicks';
+import { metronomeNotes, type MetronomeNote } from '../audio/metronome';
 import { acquireAudioContext, outputLatencyOf, releaseAudioContext } from '../audio/audioContext';
 import type { ScoreAudioSource } from '../audio/midiPlayer';
 
@@ -40,9 +45,9 @@ export interface PlayOptions {
 export class PlaybackEngine {
   private ctx: AudioContext | undefined;
   private clock: PlaybackClock | undefined;
-  private clicks: Iterator<Click> | undefined;
-  private nextClick: Click | undefined;
-  private countIn: Click[] = [];
+  private clicks: Iterator<MetronomeNote> | undefined;
+  private nextClick: MetronomeNote | undefined;
+  private startEventIndex = 0;
   private scheduled: { osc: OscillatorNode; t: number }[] = [];
   private flashes: { t: number; accent: boolean; countIn: boolean }[] = [];
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -79,8 +84,8 @@ export class PlaybackEngine {
     const audio = opts.sound ? this.audio : undefined;
     this.clock.start(this.startMs - leadIn, Math.max(START_DELAY_S, (audio?.readyAt ?? 0) - ctx.currentTime + 0.01));
     audio?.start(this.startMs);
-    this.countIn = countInClicks(this.timeline, opts.startEventIndex, opts.countInMeasures);
-    this.resetClicks(this.startMs);
+    this.startEventIndex = opts.startEventIndex;
+    this.resetClicks(-Infinity);
     this.timer = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS);
     this.schedule();
     const frame = () => {
@@ -104,20 +109,19 @@ export class PlaybackEngine {
     if (this.opts) this.opts.tempoFactor = factor;
     if (!this.clock) return;
     this.clock.setTempoFactor(factor);
-    if (this.clock.playing) {
-      // Clicks already scheduled were computed with the old tempo.
-      this.cancelScheduled();
-      const now = this.clock.scoreMs();
-      this.countIn = this.countIn.filter((c) => c.scoreMs >= now);
-      this.resetClicks(Math.max(now, this.startMs));
-    }
+    // Oscillator clicks already scheduled were computed with the old tempo: scheduled again. Clicks sent to the synth
+    // cannot be taken back: they are kept, like the notes sent with them (same times), and the next ones follow.
+    if (this.clock.playing && !this.clicksViaSynth()) this.rescheduleClicks();
   }
 
   setMetronome(on: boolean, volume?: number): void {
     if (!this.opts) return;
     this.opts.metronome = on;
     if (volume !== undefined) this.opts.volume = volume;
-    if (!on) this.cancelScheduled((s) => s.t > (this.ctx?.currentTime ?? 0));
+    if (!on) {
+      this.cancelScheduled((s) => s.t > (this.ctx?.currentTime ?? 0));
+      if (this.clicksViaSynth()) this.audio?.cancelClicks?.();
+    }
   }
 
   /**
@@ -126,6 +130,7 @@ export class PlaybackEngine {
    */
   setAudio(source: ScoreAudioSource | undefined, on: boolean): void {
     const wasOn = !!(this.opts?.sound && this.audio);
+    const viaSynthBefore = this.clicksViaSynth();
     const changed = this.audio !== source;
     if (this.audio && changed) this.audio.stop();
     this.audio = source;
@@ -134,6 +139,9 @@ export class PlaybackEngine {
     if (!clock?.playing) return;
     if (on && source && (!wasOn || changed)) source.start(Math.max(this.startMs, clock.scoreMs()));
     else if (!on) source?.stop();
+    // The clicks change path: the ones already scheduled on the other path (cut by stop(), or oscillators) are
+    // scheduled again on the new one from now.
+    if (viaSynthBefore !== this.clicksViaSynth() || changed) this.rescheduleClicks();
   }
 
   dispose(): void {
@@ -143,8 +151,23 @@ export class PlaybackEngine {
   }
 
   private resetClicks(fromMs: number) {
-    this.clicks = clicksFrom(this.timeline, fromMs);
+    this.clicks = metronomeNotes(this.timeline, this.startEventIndex, this.opts?.countInMeasures ?? 0, { accent: this.opts?.accent, fromMs });
     this.nextClick = this.clicks.next().value ?? undefined;
+  }
+
+  /** Sound on with a source that plays clicks: the metronome goes through the synth. */
+  private clicksViaSynth(): boolean {
+    return !!(this.opts?.sound && this.audio?.click);
+  }
+
+  /** Cancels the oscillator clicks not heard yet and restarts the click stream at the current position. */
+  private rescheduleClicks() {
+    const ctx = this.ctx;
+    const clock = this.clock;
+    if (!ctx || !clock?.playing) return;
+    this.cancelScheduled((s) => s.t > ctx.currentTime);
+    this.flashes = this.flashes.filter((f) => f.t <= ctx.currentTime);
+    this.resetClicks(clock.scoreMs());
   }
 
   private schedule() {
@@ -157,17 +180,19 @@ export class PlaybackEngine {
       this.audio.schedule(until, (ms) => clock.timeOf(ms), ctx.currentTime);
     }
     const horizon = ctx.currentTime + LOOKAHEAD_S;
+    const viaSynth = this.clicksViaSynth();
     for (;;) {
-      const isCountIn = this.countIn.length > 0;
-      const click = isCountIn ? this.countIn[0] : this.nextClick;
+      const click = this.nextClick;
       if (!click) return;
       const t = clock.timeOf(click.scoreMs);
       if (t > horizon) return;
-      if (isCountIn) this.countIn.shift();
-      else this.nextClick = this.clicks?.next().value ?? undefined;
+      this.nextClick = this.clicks?.next().value ?? undefined;
       if (t < ctx.currentTime - 0.01) continue; // late (tab was frozen): skip, never play a burst
-      if (opts.metronome || (isCountIn && opts.countInSound)) this.playClick(t, click.accent && opts.accent !== false, opts.volume);
-      this.flashes.push({ t, accent: click.accent, countIn: isCountIn });
+      if (opts.metronome || (click.countIn && opts.countInSound)) {
+        if (viaSynth) this.audio!.click!(t, click, opts.volume);
+        else this.playClick(t, click.accent, opts.volume);
+      }
+      this.flashes.push({ t, accent: click.downbeat, countIn: click.countIn });
     }
   }
 

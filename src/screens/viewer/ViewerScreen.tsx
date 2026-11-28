@@ -145,6 +145,7 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
     settings,
     continuous: continuous ? contRef : undefined,
     audio: { on: soundOn, source: audio.source, prepare: audio.prepare },
+    metronomeVolume: mixer?.metronome ?? settings.metronomeVolume,
   });
   // Tap on the metronome button / pedal "metronome" action: metronome with the auto-scroll on/off (stops "metronome only").
   const toggleMetronome = () => (pb.metronomeOnly ? pb.pause() : v.update({ metronomeEnabled: !metronome }));
@@ -568,6 +569,9 @@ function ScoreViewerScreen({ scoreId }: { scoreId: string }) {
         mine={myParts}
         noProfile={!settings.myInstrument.names.length && !settings.myInstrument.instrumentIds.length}
         inSetlist={sp.active}
+        metronome={metronome}
+        defaultMetronomeVolume={settings.metronomeVolume}
+        onMetronome={(on) => v.update({ metronomeEnabled: on })}
         onSound={setSound}
         onChange={setMixer}
         onDismiss={() => setMixerOpen(false)}

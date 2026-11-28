@@ -1,5 +1,6 @@
 // Sound and mixer sheet (ADR-026): sound on/off, master volume, quick mixes ("My instrument" shortcuts), and per part
-// volume, mute and solo. Changes apply live (the sheet leaves the score visible while playing).
+// volume, mute and solo, and a metronome row (volume; mute = metronome off; never silenced by a solo). Changes apply
+// live (the sheet leaves the score visible while playing).
 import { useTranslation } from 'react-i18next';
 import {
   IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonModal, IonNote, IonRange, IonSpinner,
@@ -24,6 +25,10 @@ interface Props {
   /** The "My instrument" profile is empty. */
   noProfile: boolean;
   inSetlist: boolean;
+  /** Metronome on (auto-scroll), and its default volume (settings) when the mixer has none. */
+  metronome: boolean;
+  defaultMetronomeVolume: number;
+  onMetronome(on: boolean): void;
   onSound(on: boolean): void;
   onChange(mixer: MixerState): void;
   onDismiss(): void;
@@ -38,6 +43,8 @@ export function MixerModal(p: Props) {
   const anySolo = p.parts.some((part) => partMix(p.mixer, part.musicXmlId).solo);
   // Only parts that have sound in the MIDI file.
   const parts = p.parts.filter((part) => part.midiChannels?.length);
+  const metronomePercent = Math.round((p.mixer?.metronome ?? p.defaultMetronomeVolume) * 100);
+  const metronomeName = t('sound.metronome');
 
   return (
     <IonModal isOpen={p.isOpen} onDidDismiss={p.onDismiss} breakpoints={[0, 0.75, 1]} initialBreakpoint={0.75} expandToScroll={false} className="mixer-modal" data-testid="mixer-modal">
@@ -102,6 +109,34 @@ export function MixerModal(p: Props) {
 
         <IonList>
           <IonListHeader>{t('sound.parts')}</IonListHeader>
+          {/* Metronome: works with or without the sound (synth or Web Audio click); no solo button, never silenced by one. */}
+          <IonItem className="mixer-part" data-testid="mixer-metronome" data-silent={String(!p.metronome)}>
+            <div className="mixer-part-body">
+              <div className="mixer-part-head">
+                <span className={p.metronome ? 'mixer-part-name' : 'mixer-part-name silent'}>{metronomeName}</span>
+                <button
+                  type="button"
+                  className={p.metronome ? 'mixer-btn mixer-mute' : 'mixer-btn mixer-mute on'}
+                  aria-label={t('sound.mute', { name: metronomeName })}
+                  aria-pressed={!p.metronome}
+                  onClick={() => p.onMetronome(!p.metronome)}
+                  data-testid="mixer-mute"
+                >
+                  <IonIcon icon={p.metronome ? volumeHighOutline : volumeMuteOutline} aria-hidden="true" />
+                </button>
+              </div>
+              <IonRange
+                aria-label={t('sound.volume', { name: metronomeName, percent: metronomePercent })}
+                min={0}
+                max={100}
+                step={5}
+                value={metronomePercent}
+                onIonChange={(e) => p.onChange({ ...(p.mixer ?? { parts: {} }), metronome: Number(e.detail.value) / 100 })}
+                data-testid="mixer-volume"
+              />
+              <IonNote className="ion-text-wrap mixer-note">{t('sound.metronomeHint')}</IonNote>
+            </div>
+          </IonItem>
           {parts.map((part) => {
             const m = partMix(p.mixer, part.musicXmlId);
             const percent = Math.round(m.volume * 100);

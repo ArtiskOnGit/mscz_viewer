@@ -305,7 +305,8 @@ Le défilement, le métronome et le son de la partition lisent la **même horlog
 
 ### 6.4 Métronome
 
-- **Son** : Web Audio, oscillateur court avec enveloppe, fréquence plus aiguë pour l'accent du premier temps. Aucun fichier audio.
+- **Son, son de la partition coupé** : Web Audio, oscillateur court avec enveloppe, fréquence plus aiguë pour l'accent du premier temps. Aucun fichier audio.
+- **Son, son de la partition activé** (ADR-026, complément du 2026-11-28) : notes MIDI du synthétiseur sur un canal de batterie dédié (Wood Block aigu 76 au premier temps, grave 77 aux autres), envoyées par le même ordonnanceur et à la même heure que les notes de la partition (`MidiPlayer.click`) : clics et notes ne peuvent pas dériver. Horloge du synthétiseur recalée à chaque bloc sur celle de l'`AudioContext`. Volume : ligne « Métronome » du mixeur (par partition, défaut = Paramètres), non affectée par le solo.
 - **Ordonnancement** : « lookahead scheduler » (minuterie toutes les 25 ms qui programme les clics des 120 ms suivantes avec `osc.start(t)`). Jamais de son déclenché par `setTimeout`.
 - **Temps des clics** : calculés depuis la timeline (métrique de chaque mesure, reprises comprises) et le facteur de tempo.
 - **Métronome seul** : le même moteur suit la timeline depuis la première mesure de la page affichée, sans décompte, surlignage ni tournage.

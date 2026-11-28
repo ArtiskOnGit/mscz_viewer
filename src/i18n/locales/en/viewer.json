@@ -138,6 +138,8 @@
     "mute": "Mute {{name}}",
     "solo": "Solo {{name}}",
     "soloShort": "S",
+    "metronome": "Metronome",
+    "metronomeHint": "Clicks on the beats, in time with the sound. Solo does not silence it; the mute button switches the metronome off.",
     "setlistNote": "In this setlist, the mix is kept for this piece only."
   },
   "zoom": "Zoom",

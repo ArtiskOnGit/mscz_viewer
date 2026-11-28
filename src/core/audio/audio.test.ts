@@ -185,12 +185,24 @@ describe('MidiPlayer scheduling on the playback clock', () => {
       send(message: number[], channel: number, time: number) {
         sent.push({ message, channel, time });
       },
-      silence: (_channels: readonly number[], queuedUntil: number) => queuedUntil + 0.05,
+      silenced: [] as number[][],
+      drums: [] as number[],
+      gains: new Map<number, number>(),
+      silence(channels: readonly number[], queuedUntil: number) {
+        this.silenced.push([...channels]);
+        return queuedUntil + 0.05;
+      },
       open(time: number) {
         this.opened.push(time);
       },
+      setDrums(channel: number) {
+        this.drums.push(channel);
+      },
+      setChannelGain(channel: number, gain: number) {
+        this.gains.set(channel, gain);
+      },
     };
-    return synth as unknown as SynthHandle & { sent: typeof sent; opened: number[] };
+    return synth as unknown as SynthHandle & { sent: typeof sent; opened: number[]; silenced: number[][]; drums: number[]; gains: Map<number, number> };
   };
   const midi = parseMidi(smf([[tempo(120), [0, 0xc0, 56], [0, 0x90, 60, 100], [480, 0x80, 60, 0], [0, 0x90, 62, 100], [480, 0x80, 62, 0], [0, 0x90, 64, 100], [480, 0x80, 64, 0]]]));
 
@@ -201,7 +213,8 @@ describe('MidiPlayer scheduling on the playback clock', () => {
     clock.setTempoFactor(0.5);
     clock.start(0, 0.15);
     player.start(0);
-    expect(synth.sent.map((s) => s.message)).toEqual([[0xb0, 121, 0]]); // chase at 0: reset only
+    const score = synth.sent.filter((s) => s.channel !== player.metronomeChannel);
+    expect(score.map((s) => s.message)).toEqual([[0xb0, 121, 0]]); // chase at 0: reset only
     synth.sent.length = 0;
     player.schedule(clock.scoreMsAt(10.2 + 1), (ms) => clock.timeOf(ms), 10); // horizon: score ms ≤ 525
     expect(synth.sent.map((s) => [s.message[1], s.time])).toEqual([
